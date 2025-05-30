@@ -11,12 +11,11 @@
 using System;
 using System.Reflection;
 
-[assembly: Microsoft.AspNetCore.Identity.UI.UIFrameworkAttribute("Bootstrap5")]
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("aspnet-Kajsmentkeri.Web-545e1edc-28ae-4df4-bdb8-07f2dadf71b8")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("Kajsmentkeri.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+62be176cb981d0dbbcd6681e48f52a1139f486d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("Kajsmentkeri.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Kajsmentkeri.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

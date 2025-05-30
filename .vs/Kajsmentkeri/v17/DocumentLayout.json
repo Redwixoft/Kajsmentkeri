@@ -3,16 +3,16 @@
   "WorkspaceRootPath": "C:\\Redwik\\IT\\Kajsmentkeri\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -158,7 +158,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 9,
+          "SelectedChildIndex": 4,
           "Children": [
             {
               "$type": "Document",
@@ -171,8 +171,7 @@
               "ViewState": "AgIAABsAAAAAAAAAAAAcwDMAAABAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-05-24T17:46:28.64Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "IsPinned": true
             },
             {
               "$type": "Document",
@@ -197,13 +196,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Program.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Program.cs",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Program.cs",
               "RelativeToolTip": "Kajsmentkeri.Web\\Program.cs",
-              "ViewState": "AgIAADAAAAAAAAAAAAAAAFQAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACoAAAAAAAAAAAAAAD8AAAAuAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-28T08:50:51.686Z",
               "EditorCaption": ""
@@ -246,7 +245,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\appsettings.json",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\appsettings.json",
@@ -254,12 +253,11 @@
               "RelativeToolTip": "Kajsmentkeri.Web\\appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-05-24T10:44:43.457Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-24T10:44:43.457Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "appsettings.Development.json",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\appsettings.Development.json",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\appsettings.Development.json",
@@ -340,8 +338,7 @@
               "RelativeToolTip": "Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
               "ViewState": "AgIAAJEAAAAAAAAAAAAQwKsAAAAIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-27T12:04:10.746Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-05-27T12:04:10.746Z"
             },
             {
               "$type": "Document",
