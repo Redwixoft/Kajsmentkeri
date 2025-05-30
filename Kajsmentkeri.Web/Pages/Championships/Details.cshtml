@@ -1,0 +1,290 @@
+﻿@page "{id:guid}"
+@using Kajsmentkeri.Domain
+@using System
+@inject Kajsmentkeri.Application.Interfaces.IPredictionService PredictionService
+@model Kajsmentkeri.Web.Pages.Championships.DetailsModel
+@{
+    ViewData["Title"] = "Championship Details";
+}
+
+<h2>@Model.Championship?.Name (@Model.Championship?.Year)</h2>
+<p>@Model.Championship?.Description</p>
+
+@if (Model.IsAdmin)
+{
+    <a class="btn btn-primary mb-3" asp-page="/Matches/Add" asp-route-championshipId="@Model.Championship!.Id">
+        ➕ Add Match
+    </a>
+    <hr />
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <h5 class="mt-3">Leaderboard</h5>
+        <table class="table table-bordered table-sm table-striped text-center align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Points</th>
+                    <th>Match winners</th>
+                    <th>One-goal misses</th>
+                    <th>Luckers</th>
+                    <th>Only ones</th>                    
+                </tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Leaderboard.Count; i++)
+                {
+                    var entry = Model.Leaderboard[i];
+                    var rank = i + 1;
+
+                    var nameCellClass = rank switch
+                    {
+                        1 => "bg-warning text-dark",   // gold
+                        2 => "bg-light text-dark border border-secondary", // silver
+                        3 => "bg-warning bg-opacity-50 text-dark", // bronze
+                        _ => ""
+                    };
+                    <tr>
+                        <td>@($"{(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : rank.ToString())}")</td>
+                        <td class="@nameCellClass">
+                            @if (Model.CurrentUserId == entry.UserId)
+                            {
+                                <span>👉</span>
+                            }
+                            @entry.UserName
+                            @if (Model.CurrentUserId == entry.UserId)
+                            {
+                                <span>👈</span>
+                            }
+                        </td>
+                        <th>@entry.TotalPoints</th>
+                        <td>@entry.CorrectWinners</td>
+                        <td>@entry.OneGoalMisses</td>
+                        <td>@entry.ExactScores</td>
+                        <td>@entry.OnlyCorrect</td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+</div>
+
+<hr />
+
+<table class="table table-bordered table-sm table-striped text-center align-middle">
+    <thead>
+        <tr>
+            <th>Match</th>
+            <th>Date</th>
+            <th>Result</th>
+            @foreach (var user in Model.Users)
+            {
+                <th>@user.UserName</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var match in Model.Matches)
+        {
+            var hasResult = match.HomeScore != null && match.AwayScore != null;
+            var matchStarted = match.StartTimeUtc <= DateTime.UtcNow;            
+            <tr>
+                <td>@match.HomeTeam - @match.AwayTeam</td>
+                <td>@GetStartTimeInOutTimezone(match.StartTimeUtc)</td>
+
+                <!-- RESULT -->
+                <th>
+                    @{
+                        var result = hasResult ? $"{match.HomeScore}:{match.AwayScore}" : "";
+                        var resultCellId = $"result-{match.Id}";
+                    }
+
+                    @if (hasResult)
+                    {
+                        <div id="@resultCellId-display">
+                            <span>@result</span>
+                            @if (Model.IsAdmin && matchStarted)
+                            {
+                                <button type="button" class="btn btn-warning btn-sm ms-1" onclick="showEdit('@resultCellId')">
+                                    ✏️
+                                </button>
+                            }
+                        </div>
+
+                        @if (Model.IsAdmin && matchStarted)
+                        {
+                            <form id="@resultCellId-form" asp-page-handler="UpdateResult" method="post" class="d-none" style="display: flex; gap: 0.25rem;">
+                                <input type="hidden" name="id" value="@Model.Championship!.Id" />
+                                <input type="hidden" name="MatchId" value="@match.Id" />
+                                <input name="ResultInput" class="form-control form-control-sm" style="width: 60px;" value="@result" />
+                                <button type="submit" class="btn btn-sm btn-success">✔</button>
+                            </form>
+                        }
+                    }
+                    else if (Model.IsAdmin && matchStarted)
+                    {
+                        <form asp-page-handler="UpdateResult" method="post" style="display: flex; gap: 0.25rem;">
+                            <input type="hidden" name="id" value="@Model.Championship!.Id" />
+                            <input type="hidden" name="MatchId" value="@match.Id" />
+                            <input name="ResultInput" class="form-control form-control-sm" style="width: 60px;" placeholder="3:2" />
+                            <button type="submit" class="btn btn-sm btn-success">✔</button>
+                        </form>
+                    }
+                </th>
+
+                <!-- PREDICTIONS -->
+                @foreach (var user in Model.Users)
+                {
+                    var key = (match.Id, user.UserId);
+                    var hasPrediction = Model.PredictionMap.TryGetValue(key, out var prediction);
+                    var isPredictionLocked = await IsPredictionLocked(Model.Championship!.Id, match.Id, user.UserId);
+                    var predictionCss = @GetPredictionCssClass(prediction, hasResult);
+                    <td class="prediction-cell @predictionCss">
+                        @{
+                            var isOwnColumn = user.UserId == Model.CurrentUserId;                            
+                            var cellId = $"edit-{match.Id}-{user.UserId}";
+                        }
+
+                        @if (hasPrediction)
+                        {
+                            <div id="@cellId-display">
+                                <span>@prediction</span>
+                                @if (isOwnColumn && !isPredictionLocked)
+                                {
+                                    <button type="button" class="btn btn-warning btn-sm ms-1" onclick="showEdit('@cellId')">
+                                        ✏️
+                                    </button>
+                                }
+                            </div>
+
+                            @if (isOwnColumn && !isPredictionLocked)
+                            {
+                                <form id="@cellId-form" method="post" class="d-none" style="display: flex; gap: 0.25rem;">
+                                    <input type="hidden" name="id" value="@Model.Championship!.Id" />
+                                    <input type="hidden" name="MatchId" value="@match.Id" />
+                                    <input name="PredictionInput" class="form-control form-control-sm" style="width: 60px;" value="@prediction" />
+                                    <button type="submit" class="btn btn-sm btn-success">✔</button>
+                                </form>
+                            }
+                        }
+                        else if (isOwnColumn && !isPredictionLocked)
+                        {
+                            <form method="post" style="display: flex; gap: 0.25rem;">
+                                <input type="hidden" name="id" value="@Model.Championship!.Id" />
+                                <input type="hidden" name="MatchId" value="@match.Id" />
+                                <input name="PredictionInput" class="form-control form-control-sm" style="width: 60px;" placeholder="0:0" />
+                                <button type="submit" class="btn btn-sm btn-success">✔</button>
+                            </form>
+                        }
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="container">
+    <canvas id="leaderboardChart" style="width: 100%; height: 600px;"></canvas>
+</div>
+
+
+
+@functions {
+    public string GetPredictionCssClass(Prediction? prediction, bool hasResult)
+    {
+        if (!hasResult || prediction is null)
+            return "";
+
+        return prediction.Points switch
+        {
+            0 => "bg-danger text-white",
+            3 => "bg-success text-white",
+            5 => "bg-primary text-white",
+            7 => "bg-warning text-dark",
+            _ => ""
+        };
+    }
+
+    public async Task<bool> IsPredictionLocked(Guid championshipId, Guid matchId, Guid userId)
+    {
+        var predictionLockTime = await PredictionService.GetPredictionLockTimeAsync(championshipId, matchId, userId);
+        return predictionLockTime <= DateTime.UtcNow;
+    }
+
+    public string GetStartTimeInOutTimezone(DateTime utcDateTime)
+    {
+        var bratislavaTz = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time");
+        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, bratislavaTz).ToString("dd.MM.yyyy HH:mm");
+    }
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Existing validation partial if any -->
+    <script>
+        function showEdit(id) {
+            const display = document.getElementById(`${id}-display`);
+            const form = document.getElementById(`${id}-form`);
+            if (display && form) {
+                display.style.display = 'none';
+                form.classList.remove("d-none");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll("form").forEach(form => {
+                form.addEventListener("submit", function (e) {
+                    const input = form.querySelector("input[name='PredictionInput'], input[name='ResultInput']");
+                        if (!input) return;
+
+                    const value = input.value.trim();
+                    const regex = /^\d+:\d+$/;
+
+                    if (!regex.test(value)) {
+                        e.preventDefault();
+                        alert("Invalid format. Please use format like 2:1 you fucking moron!");
+                        input.focus();
+                    }
+                });
+            });
+        });
+
+        const ctx = document.getElementById('leaderboardChart').getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(Json.Serialize(Model.Graph.Labels)),
+                datasets: [
+                    @foreach (var series in Model.Graph.Series)
+                    {
+                            <text>
+                            {
+                                label: "@series.Name",
+                                data: @Html.Raw(Json.Serialize(series.Data)),
+                                fill: false,
+                                tension: 0.2
+                            },
+                            </text>
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Points Progress by Match'
+                    }
+                },
+                scales: {
+                    x: { title: { display: true, text: 'Match' } },
+                    y: { title: { display: true, text: 'Points' }, beginAtZero: true }
+                }
+            }
+        });
+    </script>
+}

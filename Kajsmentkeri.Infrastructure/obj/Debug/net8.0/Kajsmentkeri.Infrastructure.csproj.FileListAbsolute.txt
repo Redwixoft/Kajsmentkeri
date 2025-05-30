@@ -1,0 +1,17 @@
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\bin\Debug\net8.0\Kajsmentkeri.Infrastructure.deps.json
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\bin\Debug\net8.0\Kajsmentkeri.Infrastructure.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\bin\Debug\net8.0\Kajsmentkeri.Infrastructure.pdb
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.AssemblyInfoInputs.cache
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.AssemblyInfo.cs
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\refint\Kajsmentkeri.Infrastructure.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.pdb
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\ref\Kajsmentkeri.Infrastructure.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\bin\Debug\net8.0\Kajsmentkeri.Domain.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\bin\Debug\net8.0\Kajsmentkeri.Domain.pdb
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.csproj.AssemblyReference.cache
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsment.1E0CE34E.Up2Date
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\bin\Debug\net8.0\Kajsmentkeri.Infrastructure.runtimeconfig.json
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Infrastructure\obj\Debug\net8.0\Kajsmentkeri.Infrastructure.genruntimeconfig.cache

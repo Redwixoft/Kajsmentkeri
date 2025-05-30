@@ -1,0 +1,44 @@
+﻿@page
+@model Kajsmentkeri.Web.Pages.Championships.ListModel
+@{
+    ViewData["Title"] = "Championships";
+}
+
+<h2>Championships</h2>
+
+@if (Model.IsAdmin)
+{
+    <a class="btn btn-primary mb-3" asp-page="/Championships/Add">Add Championship</a>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Year</th>
+            @if (Model.IsAdmin)
+            {
+                <th>Created by</th>
+            }
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Championships)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Year</td>
+                @if (Model.IsAdmin)
+                {
+                    <td>@item.CreatedByUserName</td>
+                }
+                <td>
+                    <a asp-page="/Championships/Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                        View
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

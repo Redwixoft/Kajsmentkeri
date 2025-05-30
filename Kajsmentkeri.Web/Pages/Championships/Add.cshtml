@@ -1,0 +1,51 @@
+﻿@page
+@model Kajsmentkeri.Web.Pages.Championships.AddModel
+@{
+    ViewData["Title"] = "Add Championship";
+}
+
+<h2>Add Championship</h2>
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="Input.Name" class="form-label"></label>
+        <input asp-for="Input.Name" class="form-control" />
+        <span asp-validation-for="Input.Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Year" class="form-label"></label>
+        <input asp-for="Input.Year" class="form-control" />
+        <span asp-validation-for="Input.Year" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.Description" class="form-label"></label>
+        <textarea asp-for="Input.Description" class="form-control"></textarea>
+        <span asp-validation-for="Input.Description" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.PointsForCorrectWinner" class="form-label"></label>
+        <input asp-for="Input.PointsForCorrectWinner" class="form-control" />
+        <span asp-validation-for="Input.PointsForCorrectWinner" class="text-danger" value="3"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.PointsForExactScore" class="form-label"></label>
+        <input asp-for="Input.PointsForExactScore" class="form-control" />
+        <span asp-validation-for="Input.PointsForExactScore" class="text-danger" value="2"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.PointsForOnlyCorrectWinner" class="form-label"></label>
+        <input asp-for="Input.PointsForOnlyCorrectWinner" class="form-control" />
+        <span asp-validation-for="Input.PointsForOnlyCorrectWinner" class="text-danger" value="2"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

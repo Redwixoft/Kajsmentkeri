@@ -1,0 +1,35 @@
+﻿@page
+@model Kajsmentkeri.Web.Pages.Matches.AddModel
+@{
+    ViewData["Title"] = "Add Match";
+}
+
+<h2>Add Match</h2>
+
+<form method="post">
+    <input type="hidden" asp-for="ChampionshipId" />
+
+    <div class="mb-3">
+        <label asp-for="Input.HomeTeam" class="form-label"></label>
+        <input asp-for="Input.HomeTeam" class="form-control" />
+        <span asp-validation-for="Input.HomeTeam" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.AwayTeam" class="form-label"></label>
+        <input asp-for="Input.AwayTeam" class="form-control" />
+        <span asp-validation-for="Input.AwayTeam" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Input.StartTime" class="form-label"></label>
+        <input asp-for="Input.StartTime" type="datetime-local" class="form-control" />
+        <span asp-validation-for="Input.StartTime" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

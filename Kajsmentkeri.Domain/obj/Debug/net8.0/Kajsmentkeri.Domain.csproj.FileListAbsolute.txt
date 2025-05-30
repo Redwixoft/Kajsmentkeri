@@ -1,0 +1,12 @@
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\bin\Debug\net8.0\Kajsmentkeri.Domain.deps.json
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\bin\Debug\net8.0\Kajsmentkeri.Domain.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\bin\Debug\net8.0\Kajsmentkeri.Domain.pdb
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.AssemblyInfoInputs.cache
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.AssemblyInfo.cs
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.csproj.CoreCompileInputs.cache
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\refint\Kajsmentkeri.Domain.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.pdb
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\ref\Kajsmentkeri.Domain.dll
+C:\Redwik\IT\Kajsmentkeri\Kajsmentkeri.Domain\obj\Debug\net8.0\Kajsmentkeri.Domain.csproj.AssemblyReference.cache
