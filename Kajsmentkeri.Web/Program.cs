@@ -10,46 +10,45 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging();
+
+// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+builder.Services.AddDefaultIdentity<AppUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 6;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+})
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddRazorPages();
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+
+builder.Services.AddScoped<IPredictionScoringService, PredictionScoringService>();
+builder.Services.AddScoped<IPredictionService, PredictionService>();
+builder.Services.AddScoped<IMatchService, MatchService>();
+builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddScoped<IChampionshipService, ChampionshipService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+var app = builder.Build();
+
 try
 {
-    builder.Services.AddLogging();
-
-    // Add services to the container.
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString));
-    builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseSqlServer(connectionString));
-
-    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-    builder.Services.AddDefaultIdentity<AppUser>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = false;
-
-        options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireNonAlphanumeric = false;
-        options.Password.RequireUppercase = true;
-        options.Password.RequireLowercase = true;
-    })
-    .AddEntityFrameworkStores<ApplicationDbContext>();
-
-    builder.Services.AddHttpContextAccessor();
-
-    builder.Services.AddRazorPages();
-    builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
-
-    builder.Services.AddScoped<IPredictionScoringService, PredictionScoringService>();
-    builder.Services.AddScoped<IPredictionService, PredictionService>();
-    builder.Services.AddScoped<IMatchService, MatchService>();
-    builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
-    builder.Services.AddScoped<IChampionshipService, ChampionshipService>();
-    builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-    var app = builder.Build();
-
-
     app.UseMigrationsEndPoint();
     app.UseDeveloperExceptionPage();
 
