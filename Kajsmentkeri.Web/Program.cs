@@ -10,76 +10,88 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddDefaultIdentity<AppUser>(options =>
+try
 {
-    options.SignIn.RequireConfirmedAccount = false;
+    builder.Services.AddLogging();
 
-    options.Password.RequireDigit = true;
-    options.Password.RequiredLength = 6;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireLowercase = true;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>();
+    // Add services to the container.
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString));
 
-builder.Services.AddHttpContextAccessor();
+    builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddRazorPages();
-builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+    builder.Services.AddDefaultIdentity<AppUser>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
 
-builder.Services.AddScoped<IPredictionScoringService, PredictionScoringService>();
-builder.Services.AddScoped<IPredictionService, PredictionService>();
-builder.Services.AddScoped<IMatchService, MatchService>();
-builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
-builder.Services.AddScoped<IChampionshipService, ChampionshipService>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
-var app = builder.Build();
+    builder.Services.AddHttpContextAccessor();
 
-app.UseMigrationsEndPoint();
-app.UseDeveloperExceptionPage();
+    builder.Services.AddRazorPages();
+    builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    /*app.UseMigrationsEndPoint();
-    app.UseDeveloperExceptionPage();*/
+    builder.Services.AddScoped<IPredictionScoringService, PredictionScoringService>();
+    builder.Services.AddScoped<IPredictionService, PredictionService>();
+    builder.Services.AddScoped<IMatchService, MatchService>();
+    builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+    builder.Services.AddScoped<IChampionshipService, ChampionshipService>();
+    builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+    var app = builder.Build();
+
+
+    app.UseMigrationsEndPoint();
+    app.UseDeveloperExceptionPage();
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        /*app.UseMigrationsEndPoint();
+        app.UseDeveloperExceptionPage();*/
+    }
+    else
+    {
+        //app.UseExceptionHandler("/Error");
+        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        app.UseHsts();
+    }
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+
+        var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        identityDb.Database.Migrate();
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseStaticFiles();
+
+    app.UseRouting();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+    app.MapRazorPages();
+
+    app.Run();
 }
-else
+catch (Exception ex)
 {
-    //app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    var logger = builder.Build().Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "Startup migration failed: {Message}", ex.Message);
+    throw; // Rethrow to fail fast
 }
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-
-    var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    identityDb.Database.Migrate();
-}
-
-app.UseHttpsRedirection();
-
-app.UseStaticFiles();
-
-app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-app.MapRazorPages();
-
-app.Run();
