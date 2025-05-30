@@ -47,50 +47,50 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 var app = builder.Build();
 
+app.UseMigrationsEndPoint();
+app.UseDeveloperExceptionPage();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    /*app.UseMigrationsEndPoint();
+    app.UseDeveloperExceptionPage();*/
+}
+else
+{
+    //app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    identityDb.Database.Migrate();
+}
+
+app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+app.MapRazorPages();
+
 try
 {
-    app.UseMigrationsEndPoint();
-    app.UseDeveloperExceptionPage();
-
-    // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
-    {
-        /*app.UseMigrationsEndPoint();
-        app.UseDeveloperExceptionPage();*/
-    }
-    else
-    {
-        //app.UseExceptionHandler("/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
-    }
-
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
-
-        var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        identityDb.Database.Migrate();
-    }
-
-    app.UseHttpsRedirection();
-
-    app.UseStaticFiles();
-
-    app.UseRouting();
-
-    app.UseAuthentication();
-    app.UseAuthorization();
-
-    app.MapControllers();
-    app.MapRazorPages();
-
     app.Run();
 }
 catch (Exception ex)
 {
-    var logger = builder.Build().Services.GetRequiredService<ILogger<Program>>();
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogError(ex, "Startup migration failed: {Message}", ex.Message);
     throw; // Rethrow to fail fast
 }
