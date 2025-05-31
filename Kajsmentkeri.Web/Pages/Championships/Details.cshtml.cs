@@ -2,7 +2,6 @@ using Kajsmentkeri.Application.DTOs;
 using Kajsmentkeri.Application.Interfaces;
 using Kajsmentkeri.Application.Models;
 using Kajsmentkeri.Domain;
-using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,17 +11,23 @@ namespace Kajsmentkeri.Web.Pages.Championships;
 
 public class DetailsModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly IChampionshipService _championshipService;
+    private readonly IMatchService _matchService;
+    private readonly IPredictionService _predictionService;
     private readonly UserManager<AppUser> _userManager;
     private readonly IPredictionScoringService _scoringService;
     private readonly ILeaderboardService _leaderboardService;
+    private readonly ILogger<DetailsModel> _logger;
 
-    public DetailsModel(AppDbContext db, UserManager<AppUser> userManager, IPredictionScoringService scoringService, ILeaderboardService leaderboardService)
+    public DetailsModel(UserManager<AppUser> userManager, IPredictionScoringService scoringService, ILeaderboardService leaderboardService, IChampionshipService championshipService, IMatchService matchService, IPredictionService predictionService, ILogger<DetailsModel> logger)
     {
-        _db = db;
         _userManager = userManager;
         _scoringService = scoringService;
         _leaderboardService = leaderboardService;
+        _championshipService = championshipService;
+        _matchService = matchService;
+        _predictionService = predictionService;
+        _logger = logger;
     }
 
     public Championship? Championship { get; set; }
@@ -52,9 +57,13 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
-        Championship = await _db.Championships.FindAsync(id);
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) start: {DateTime.Now}");
+
+        Championship = await _championshipService.GetByIdAsync(id);
         if (Championship == null)
             return NotFound();
+
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) Championship loaded: {DateTime.Now}");
 
         var currentUser = await _userManager.GetUserAsync(User);
         IsAdmin = currentUser?.IsAdmin == true;
@@ -62,18 +71,21 @@ public class DetailsModel : PageModel
 
         Leaderboard = await _leaderboardService.GetLeaderboardAsync(id);
 
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) Leaderboard loaded: {DateTime.Now}");
+
         // Get matches
-        Matches = await _db.Matches
-            .Where(m => m.ChampionshipId == id)
-            .OrderBy(m => m.StartTimeUtc)
-            .ToListAsync();
+        Matches = await _matchService.GetMatchesByChampionshipAsync(id);
+
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) Matches loaded: {DateTime.Now}");
 
         // Get all predictions
-        var predictions = await _db.Predictions
-            .Where(p => p.Match.ChampionshipId == id)
-            .ToListAsync();
+        var predictions = await _predictionService.GetPredictionsForChampionshipAsync(id);
+
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) Predictions loaded: {DateTime.Now}");
 
         var users = await _userManager.Users.ToListAsync();
+
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) Users loaded: {DateTime.Now}");
 
         // Sort users: logged-in first, then others alphabetically
         Users = users
@@ -94,16 +106,20 @@ public class DetailsModel : PageModel
 
         Graph = await _leaderboardService.GetLeaderboardProgressAsync(id);
 
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.Now}");
+
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(Guid id)
     {
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) start: {DateTime.Now}");
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
             return Unauthorized();
 
-        var match = await _db.Matches.FindAsync(MatchId);
+        var match = await _matchService.GetMatchByIdAsync(MatchId);
         if (match == null)
             return BadRequest("Match not found.");
 
@@ -115,46 +131,26 @@ public class DetailsModel : PageModel
             return await OnGetAsync(id); // redisplay with error
         }
 
-        var existing = await _db.Predictions
-            .FirstOrDefaultAsync(p => p.MatchId == MatchId && p.UserId == user.Id);
-
-        if (existing == null)
-        {
-            // Create new prediction
-            var prediction = new Prediction
-            {
-                Id = Guid.NewGuid(),
-                MatchId = MatchId,
-                UserId = user.Id,
-                PredictedHome = home,
-                PredictedAway = away
-            };
-            _db.Predictions.Add(prediction);
-        }
-        else
-        {
-            // Update existing prediction
-            existing.PredictedHome = home;
-            existing.PredictedAway = away;
-        }
-
-        await _db.SaveChangesAsync();
+        await _predictionService.SubmitPredictionAsync(MatchId, home, away);
 
         if (match.AwayScore != null)
         {
             await _scoringService.RecalculateForMatchAsync(match.Id);
         }
 
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {DateTime.Now}");
         return RedirectToPage(new { id });
     }
 
     public async Task<IActionResult> OnPostUpdateResultAsync(Guid id)
     {
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.Now}");
+
         var user = await _userManager.GetUserAsync(User);
         if (user == null || !user.IsAdmin)
             return Forbid();
 
-        var match = await _db.Matches.FindAsync(MatchId);
+        var match = await _matchService.GetMatchByIdAsync(MatchId);
         if (match == null || match.StartTimeUtc > DateTime.UtcNow)
             return BadRequest("Cannot update result before match starts.");
 
@@ -165,11 +161,10 @@ public class DetailsModel : PageModel
             return await OnGetAsync(id); // Redisplay page with errors
         }
 
-        match.HomeScore = home;
-        match.AwayScore = away;
-
-        await _db.SaveChangesAsync();
+        await _matchService.UpdateMatchResultAsync(MatchId, home, away);
         await _scoringService.RecalculateForMatchAsync(MatchId);
+
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.Now}");
         return RedirectToPage(new { id });
     }
 }

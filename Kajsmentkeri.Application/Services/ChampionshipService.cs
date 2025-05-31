@@ -21,6 +21,7 @@ public class ChampionshipService : IChampionshipService
         return await _db.Championships
             .Include(c => c.ScoringRules)
             .OrderByDescending(c => c.Year)
+            .ThenByDescending(c => c.CreatedAt)
             .ToListAsync();
     }
 
@@ -67,6 +68,14 @@ public class ChampionshipService : IChampionshipService
 
         championship.ScoringRules = scoringRules;
 
+        _db.Championships.Add(championship);
+        await _db.SaveChangesAsync();
+
+        return championship;
+    }
+
+    public async Task<Championship> CreateChampionshipAsync(Championship championship)
+    {
         _db.Championships.Add(championship);
         await _db.SaveChangesAsync();
 

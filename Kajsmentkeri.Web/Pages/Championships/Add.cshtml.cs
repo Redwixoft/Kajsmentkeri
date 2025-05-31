@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Kajsmentkeri.Application.Interfaces;
 using Kajsmentkeri.Domain;
 using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -11,13 +12,13 @@ namespace Kajsmentkeri.Web.Pages.Championships;
 [Authorize]
 public class AddModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly IChampionshipService _championshipService;
     private readonly UserManager<AppUser> _userManager;
 
-    public AddModel(AppDbContext db, UserManager<AppUser> userManager)
+    public AddModel(UserManager<AppUser> userManager, IChampionshipService championshipService)
     {
-        _db = db;
         _userManager = userManager;
+        _championshipService = championshipService;
     }
 
     [BindProperty]
@@ -85,8 +86,7 @@ public class AddModel : PageModel
             }
         };
 
-        _db.Championships.Add(championship);
-        await _db.SaveChangesAsync();
+        await _championshipService.CreateChampionshipAsync(championship);
 
         return RedirectToPage("/Championships/List");
     }

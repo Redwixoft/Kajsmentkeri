@@ -8,12 +8,10 @@ namespace Kajsmentkeri.Application.Services;
 public class MatchService : IMatchService
 {
     private readonly AppDbContext _db;
-    private readonly IPredictionScoringService _scoringService;
 
-    public MatchService(AppDbContext db, IPredictionScoringService scoringService)
+    public MatchService(AppDbContext db)
     {
         _db = db;
-        _scoringService = scoringService;
     }
 
     public async Task CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime)
@@ -31,6 +29,19 @@ public class MatchService : IMatchService
         await _db.SaveChangesAsync();
     }
 
+    public Task<Match?> GetMatchByIdAsync(Guid matchId)
+    {
+        return _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+    }
+
+    public async Task<List<Match>> GetMatchesByChampionshipAsync(Guid championshipId)
+    {
+        return await _db.Matches
+            .Where(m => m.ChampionshipId == championshipId)
+            .OrderBy(m => m.StartTimeUtc)
+            .ToListAsync();
+    }
+
     public async Task UpdateMatchResultAsync(Guid matchId, int homeScore, int awayScore)
     {
         var match = await _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
@@ -40,8 +51,5 @@ public class MatchService : IMatchService
         match.AwayScore = awayScore;
 
         await _db.SaveChangesAsync();
-
-        // Now that the result is known, recalculate all predictions
-        await _scoringService.RecalculateForMatchAsync(matchId);
     }
 }

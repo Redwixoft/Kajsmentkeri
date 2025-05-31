@@ -1,20 +1,22 @@
 using Kajsmentkeri.Domain;
-using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Kajsmentkeri.Application.Interfaces;
 
 namespace Kajsmentkeri.Web.Pages.Championships;
 
 public class ListModel : PageModel
 {
-    private readonly AppDbContext _db;
     private readonly UserManager<AppUser> _userManager;
+    private readonly IChampionshipService _championshipService;
+    private readonly ILogger<ListModel> _logger;
 
-    public ListModel(AppDbContext db, UserManager<AppUser> userManager)
+    public ListModel(UserManager<AppUser> userManager, IChampionshipService championshipService, ILogger<ListModel> logger)
     {
-        _db = db;
         _userManager = userManager;
+        _championshipService = championshipService;
+        _logger = logger;
     }
 
     public List<ChampionshipViewModel> Championships { get; set; } = new();
@@ -22,9 +24,11 @@ public class ListModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var championships = await _db.Championships
-            .OrderByDescending(c => c.CreatedAt)
-            .ToListAsync();
+        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) start: {DateTime.Now}");
+
+        var championships = await _championshipService.GetAllAsync();
+
+        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) championship loaded: {DateTime.Now}");
 
         // Fetch all users once
         var users = await _userManager.Users.ToListAsync();
@@ -42,6 +46,8 @@ public class ListModel : PageModel
 
         var currentUser = await _userManager.GetUserAsync(User);
         IsAdmin = currentUser?.IsAdmin == true;
+
+        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.Now}");
     }
 
 

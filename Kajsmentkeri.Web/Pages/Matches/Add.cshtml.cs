@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Kajsmentkeri.Application.Interfaces;
 using Kajsmentkeri.Domain;
 using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -11,13 +12,13 @@ namespace Kajsmentkeri.Web.Pages.Matches;
 [Authorize]
 public class AddModel : PageModel
 {
-    private readonly AppDbContext _db;
+    private readonly IMatchService _matchService;
     private readonly UserManager<AppUser> _userManager;
 
-    public AddModel(AppDbContext db, UserManager<AppUser> userManager)
+    public AddModel(UserManager<AppUser> userManager, IMatchService matchService)
     {
-        _db = db;
         _userManager = userManager;
+        _matchService = matchService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -62,8 +63,7 @@ public class AddModel : PageModel
             StartTimeUtc = Input.StartTime.ToUniversalTime()
         };
 
-        _db.Matches.Add(match);
-        await _db.SaveChangesAsync();
+        await _matchService.CreateMatchAsync(ChampionshipId, Input.HomeTeam, Input.AwayTeam, Input.StartTime);
 
         return RedirectToPage("/Championships/Details", new { id = ChampionshipId });
     }
