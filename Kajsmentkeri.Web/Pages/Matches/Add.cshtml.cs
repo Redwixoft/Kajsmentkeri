@@ -54,13 +54,15 @@ public class AddModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
+        var startTime = new DateTime(Input.StartTime.Year, Input.StartTime.Month, Input.StartTime.Day, Input.StartTime.Hour, Input.StartTime.Minute, 0, DateTimeKind.Utc);
+
         var match = new Match
         {
             Id = Guid.NewGuid(),
             ChampionshipId = ChampionshipId,
             HomeTeam = Input.HomeTeam,
             AwayTeam = Input.AwayTeam,
-            StartTimeUtc = Input.StartTime.ToUniversalTime()
+            StartTimeUtc = startTime
         };
 
         await _matchService.CreateMatchAsync(ChampionshipId, Input.HomeTeam, Input.AwayTeam, Input.StartTime);
