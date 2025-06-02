@@ -167,4 +167,16 @@ public class DetailsModel : PageModel
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.Now}");
         return RedirectToPage(new { id });
     }
+
+    public async Task<IActionResult> OnPostDeleteMatchAsync(Guid matchId, Guid id)
+    {
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostDeleteMatchAsync)} (Championship - Delete Match POST) start: {DateTime.Now}");
+
+        await _predictionService.RemovePredictionsForMatchAsync(matchId);
+        await _matchService.RemoveMatchAsync(matchId);
+
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostDeleteMatchAsync)} (Championship - Delete Match POST) start: {DateTime.Now}");
+
+        return RedirectToPage(new { id });
+    }
 }

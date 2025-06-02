@@ -52,4 +52,14 @@ public class MatchService : IMatchService
 
         await _db.SaveChangesAsync();
     }
+
+    public async Task RemoveMatchAsync(Guid matchId)
+    {
+        var match = await _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+
+        if (match == null) throw new InvalidOperationException("Match not found");
+        _db.Matches.Remove(match);
+
+        await _db.SaveChangesAsync();
+    }
 }

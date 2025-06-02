@@ -96,4 +96,20 @@ public class PredictionService : IPredictionService
             .Where(p => p.Match.ChampionshipId == championshipId)
             .ToListAsync();
     }
+
+    public async Task RemovePredictionsForMatchAsync(Guid matchId)
+    {
+        _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} start: {DateTime.Now}");
+
+        var predictions = await _db.Predictions
+            .Where(p => p.MatchId == matchId)
+            .ToListAsync();
+        if (predictions.Count > 0)
+        {
+            _db.Predictions.RemoveRange(predictions);
+            await _db.SaveChangesAsync();
+        }
+
+        _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} end: {DateTime.Now}");
+    }
 }
