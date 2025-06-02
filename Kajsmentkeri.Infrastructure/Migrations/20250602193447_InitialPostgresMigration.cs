@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Kajsmentkeri.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialAppSchema : Migration
+    public partial class InitialPostgresMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,11 +15,12 @@ namespace Kajsmentkeri.Infrastructure.Migrations
                 name: "Championships",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Year = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedById = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Year = table.Column<int>(type: "integer", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    CreatedById = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -30,12 +31,13 @@ namespace Kajsmentkeri.Infrastructure.Migrations
                 name: "ChampionshipScoringRules",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChampionshipId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PointsForCorrectWinner = table.Column<int>(type: "int", nullable: false),
-                    PointsForExactScore = table.Column<int>(type: "int", nullable: false),
-                    PointsForOnlyCorrectWinner = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChampionshipId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PointsForCorrectWinner = table.Column<int>(type: "integer", nullable: false),
+                    PointsForExactScore = table.Column<int>(type: "integer", nullable: false),
+                    PointsForOnlyCorrectWinner = table.Column<int>(type: "integer", nullable: false),
+                    RarityPointsBonus = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -52,13 +54,13 @@ namespace Kajsmentkeri.Infrastructure.Migrations
                 name: "Matches",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChampionshipId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    HomeTeam = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AwayTeam = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    HomeScore = table.Column<int>(type: "int", nullable: true),
-                    AwayScore = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChampionshipId = table.Column<Guid>(type: "uuid", nullable: false),
+                    HomeTeam = table.Column<string>(type: "text", nullable: false),
+                    AwayTeam = table.Column<string>(type: "text", nullable: false),
+                    StartTimeUtc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    HomeScore = table.Column<int>(type: "integer", nullable: true),
+                    AwayScore = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -75,16 +77,17 @@ namespace Kajsmentkeri.Infrastructure.Migrations
                 name: "Predictions",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MatchId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PredictedHome = table.Column<int>(type: "int", nullable: false),
-                    PredictedAway = table.Column<int>(type: "int", nullable: false),
-                    Points = table.Column<int>(type: "int", nullable: false),
-                    GotWinner = table.Column<bool>(type: "bit", nullable: false),
-                    GotExactScore = table.Column<bool>(type: "bit", nullable: false),
-                    OneGoalMiss = table.Column<bool>(type: "bit", nullable: false),
-                    IsOnlyCorrect = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    MatchId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PredictedHome = table.Column<int>(type: "integer", nullable: false),
+                    PredictedAway = table.Column<int>(type: "integer", nullable: false),
+                    Points = table.Column<int>(type: "integer", nullable: false),
+                    GotWinner = table.Column<bool>(type: "boolean", nullable: false),
+                    GotExactScore = table.Column<bool>(type: "boolean", nullable: false),
+                    OneGoalMiss = table.Column<bool>(type: "boolean", nullable: false),
+                    IsOnlyCorrect = table.Column<bool>(type: "boolean", nullable: false),
+                    RarityPart = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {

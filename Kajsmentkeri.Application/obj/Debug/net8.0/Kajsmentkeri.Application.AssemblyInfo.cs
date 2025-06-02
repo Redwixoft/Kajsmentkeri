@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Kajsmentkeri.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+031709c9d1ba973a42a862afa44b17f5e9a016b4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a21c2969bf0e4333bb33d912a8379d653da76d43")]
 [assembly: System.Reflection.AssemblyProductAttribute("Kajsmentkeri.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Kajsmentkeri.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
