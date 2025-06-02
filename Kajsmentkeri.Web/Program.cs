@@ -63,14 +63,14 @@ else
     app.UseHsts();
 }
 
-using (var scope = app.Services.CreateScope())
+/*using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
     var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     identityDb.Database.Migrate();
-}
+}*/
 
 app.UseHttpsRedirection();
 
