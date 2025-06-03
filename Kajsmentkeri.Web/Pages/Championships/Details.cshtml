@@ -101,7 +101,7 @@
                         </button>
                     }
                 </td>
-                <td>@match.StartTimeUtc</td>
+                <td>@GetStartTimeString(match.StartTimeUtc)</td>
 
                 <!-- RESULT -->
                 <th>
@@ -245,10 +245,9 @@
         return predictionLockTime <= DateTime.UtcNow;
     }
 
-    public string GetStartTimeInOutTimezone(DateTime utcDateTime)
+    public string GetStartTimeString(DateTime utcDateTime)
     {
-        var bratislavaTz = TimeZoneInfo.FindSystemTimeZoneById("Central Europe Standard Time");
-        return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, bratislavaTz).ToString("dd.MM.yyyy HH:mm");
+        return utcDateTime.Day + "." + utcDateTime.Month + "." + utcDateTime.Year + " " + utcDateTime.Hour.ToString("00") + ":" + utcDateTime.Minute.ToString("00");
     }
 }
 

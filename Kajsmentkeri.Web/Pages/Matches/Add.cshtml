@@ -24,7 +24,7 @@
     <div class="mb-3">
         <label asp-for="Input.StartTime" class="form-label"></label>
         @{
-            var nowString = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+            var nowString = DateTime.UtcNow.ToString("MM/dd/yyyy", System.Globalization.CultureInfo.InvariantCulture) + " 04:00 PM";
         }
         <input asp-for="Input.StartTime" type="datetime-local" class="form-control" value="@nowString" />
         <span asp-validation-for="Input.StartTime" class="text-danger"></span>

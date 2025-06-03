@@ -16,7 +16,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Kajsmentkeri.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1257c642c70236896977bab5c045e7c05ab31560")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1775f42f2960d543062a6d387da216190e2fa401")]
 [assembly: System.Reflection.AssemblyProductAttribute("Kajsmentkeri.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Kajsmentkeri.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
