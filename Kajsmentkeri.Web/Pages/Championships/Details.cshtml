@@ -12,6 +12,16 @@
 
 @if (Model.IsAdmin)
 {
+    <hr />
+    @foreach (var log in Model.Logs)
+    {
+        <p>@log</p>
+    }
+    <hr />
+}
+
+@if (Model.IsAdmin)
+{
     <a class="btn btn-primary mb-3" asp-page="/Matches/Add" asp-route-championshipId="@Model.Championship!.Id">
         ➕ Add Match
     </a>

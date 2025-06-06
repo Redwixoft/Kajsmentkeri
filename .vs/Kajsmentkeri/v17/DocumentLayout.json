@@ -3,8 +3,16 @@
   "WorkspaceRootPath": "C:\\Redwik\\IT\\Kajsmentkeri\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\details.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\championships\\details.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\championships\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\services\\championshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|solutionrelative:kajsmentkeri.application\\services\\championshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\matches\\add.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
@@ -13,14 +21,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\matches\\add.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\matches\\add.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\championships\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\details.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\championships\\details.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{13C2EA59-D6C4-4A88-BD18-AC6BB1ECB646}|Kajsmentkeri.Domain\\Kajsmentkeri.Domain.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.domain\\match.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -37,10 +37,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\list.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\championships\\list.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\services\\championshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|solutionrelative:kajsmentkeri.application\\services\\championshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\interfaces\\ichampionshipservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -162,17 +158,17 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 1,
               "Title": "Details.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml",
               "RelativeToolTip": "Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml",
-              "ViewState": "AgIAAEoAAAAAAAAAAAAAAFsAAABPAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAMAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-05-24T17:46:28.64Z",
               "IsPinned": true,
@@ -180,29 +176,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 0,
               "Title": "Details.cshtml.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
               "RelativeToolTip": "Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
-              "ViewState": "AgIAAFgAAAAAAAAAAAAAAEwAAAAMAAAAAAAAAA==",
+              "ViewState": "AgIAADkAAAAAAAAAAAAhwEQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-27T12:04:10.746Z",
               "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\appsettings.json",
-              "RelativeDocumentMoniker": "Kajsmentkeri.Web\\appsettings.json",
-              "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\appsettings.json",
-              "RelativeToolTip": "Kajsmentkeri.Web\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAACsAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-06-03T08:06:49.616Z",
               "EditorCaption": ""
             },
             {
@@ -211,20 +194,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "Add.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Matches\\Add.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Matches\\Add.cshtml",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Matches\\Add.cshtml",
               "RelativeToolTip": "Kajsmentkeri.Web\\Pages\\Matches\\Add.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAWAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAA7AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
               "WhenOpened": "2025-05-24T17:48:43.128Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 4,
               "Title": "Add.cshtml.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Matches\\Add.cshtml.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Matches\\Add.cshtml.cs",
@@ -250,13 +233,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 2,
               "Title": "ChampionshipService.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Services\\ChampionshipService.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Services\\ChampionshipService.cs",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Services\\ChampionshipService.cs",
               "RelativeToolTip": "Kajsmentkeri.Application\\Services\\ChampionshipService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAIBJwCsAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACsAAAAkAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-31T10:43:21.173Z",
               "EditorCaption": ""
@@ -289,7 +272,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 32,
+              "DocumentIndex": 31,
               "Title": "site.css",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\wwwroot\\css\\site.css",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\wwwroot\\css\\site.css",
@@ -315,7 +298,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 9,
               "Title": "IChampionshipService.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Interfaces\\IChampionshipService.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Interfaces\\IChampionshipService.cs",
@@ -328,7 +311,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 14,
               "Title": "LeaderboardEntryDto.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\DTOs\\LeaderboardEntryDto.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\DTOs\\LeaderboardEntryDto.cs",
@@ -341,7 +324,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 10,
               "Title": "launchSettings.json",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Properties\\launchSettings.json",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Properties\\launchSettings.json",
@@ -354,7 +337,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 11,
               "Title": "PredictionScoringService.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Services\\PredictionScoringService.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Services\\PredictionScoringService.cs",
@@ -367,7 +350,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 12,
               "Title": "ChampionshipScoringRules.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Domain\\ChampionshipScoringRules.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Domain\\ChampionshipScoringRules.cs",
@@ -380,7 +363,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 13,
               "Title": "Championship.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Domain\\Championship.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Domain\\Championship.cs",
@@ -393,7 +376,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 26,
+              "DocumentIndex": 25,
               "Title": "ChangePassword.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Manage\\ChangePassword.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Manage\\ChangePassword.cshtml",
@@ -406,7 +389,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 18,
               "Title": "Register.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Register.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Register.cshtml",
@@ -419,7 +402,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 19,
               "Title": "Login.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Login.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Login.cshtml",
@@ -432,7 +415,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 15,
               "Title": "ILeaderboardService.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Interfaces\\ILeaderboardService.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Interfaces\\ILeaderboardService.cs",
@@ -445,7 +428,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 16,
               "Title": "_LoginPartial.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Shared\\_LoginPartial.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Shared\\_LoginPartial.cshtml",
@@ -458,7 +441,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 25,
+              "DocumentIndex": 24,
               "Title": "ManageNavPages.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Manage\\ManageNavPages.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Manage\\ManageNavPages.cs",
@@ -471,7 +454,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 24,
+              "DocumentIndex": 23,
               "Title": "_ManageNav.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Manage\\_ManageNav.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\Manage\\_ManageNav.cshtml",
@@ -484,7 +467,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 17,
               "Title": "LineSeriesDto.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\DTOs\\LineSeriesDto.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\DTOs\\LineSeriesDto.cs",
@@ -497,7 +480,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 20,
               "Title": "_ViewStart.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\_ViewStart.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\_ViewStart.cshtml",
@@ -510,7 +493,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 21,
               "Title": "_ViewImports.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\_ViewImports.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\_ViewImports.cshtml",
@@ -523,7 +506,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 23,
+              "DocumentIndex": 22,
               "Title": "RevalidatingIdentityAuthenticationStateProvider.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\RevalidatingIdentityAuthenticationStateProvider.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\RevalidatingIdentityAuthenticationStateProvider.cs",
@@ -536,7 +519,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 28,
+              "DocumentIndex": 27,
               "Title": "_Layout.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Shared\\_Layout.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Shared\\_Layout.cshtml",
@@ -549,7 +532,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 30,
+              "DocumentIndex": 29,
               "Title": "Index.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Index.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Index.cshtml",
@@ -562,7 +545,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 31,
+              "DocumentIndex": 30,
               "Title": "Add.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Championships\\Add.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Championships\\Add.cshtml",
@@ -575,7 +558,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 27,
+              "DocumentIndex": 26,
               "Title": "LogOut.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\LogOut.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Account\\LogOut.cshtml",
@@ -588,7 +571,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 29,
+              "DocumentIndex": 28,
               "Title": "Index.cshtml.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Index.cshtml.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Index.cshtml.cs",
@@ -601,7 +584,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 33,
+              "DocumentIndex": 32,
               "Title": "_ViewStart.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\_ViewStart.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\_ViewStart.cshtml",
@@ -614,7 +597,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 36,
+              "DocumentIndex": 35,
               "Title": "ApplicationDbContext.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Data\\ApplicationDbContext.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Data\\ApplicationDbContext.cs",
@@ -627,7 +610,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 34,
+              "DocumentIndex": 33,
               "Title": "_LoginPartial.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Shared\\_LoginPartial.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Areas\\Identity\\Pages\\Shared\\_LoginPartial.cshtml",
@@ -640,7 +623,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 35,
+              "DocumentIndex": 34,
               "Title": "Error.cshtml",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Error.cshtml",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Error.cshtml",
@@ -653,7 +636,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 37,
+              "DocumentIndex": 36,
               "Title": "IPredictionScoringService.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Interfaces\\IPredictionScoringService.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Interfaces\\IPredictionScoringService.cs",
