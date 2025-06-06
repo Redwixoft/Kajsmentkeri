@@ -128,6 +128,8 @@ public class DetailsModel : PageModel
         Logs.Add(Environment.NewLine + $"Graph loaded, elapsed: {stopwatch.ElapsedMilliseconds}");
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.Now}");
 
+        stopwatch.Stop();
+        stopwatch.Restart();
         Logs.Add(Environment.NewLine + $"OnGetAsync end at {DateTime.Now}, total elapsed: {stopwatch.ElapsedMilliseconds}");
         return Page();
     }
@@ -163,6 +165,8 @@ public class DetailsModel : PageModel
         }
 
         logs.Add(Environment.NewLine + $"Prediction POST end at {DateTime.Now}, total elapsed: {stopwatch.ElapsedMilliseconds}");
+        stopwatch.Stop();
+        stopwatch.Restart();
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {DateTime.Now}");
         return RedirectToPage(new { id, logs });
     }
@@ -193,6 +197,8 @@ public class DetailsModel : PageModel
         await _scoringService.RecalculateForMatchAsync(MatchId);
 
         logs.Add(Environment.NewLine + $"Result POST end at {DateTime.Now}, total elapsed: {stopwatch.ElapsedMilliseconds}");
+        stopwatch.Stop();
+        stopwatch.Restart();
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.Now}");
         return RedirectToPage(new { id, logs });
     }
