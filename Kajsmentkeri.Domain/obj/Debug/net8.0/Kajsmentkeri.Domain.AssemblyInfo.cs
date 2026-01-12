@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Kajsmentkeri.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fdc9a9b88cd3f74afd843e259b8c65456e6fdcad")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2d98b363f9d11ef44d7c35c2be545b75097060be")]
 [assembly: System.Reflection.AssemblyProductAttribute("Kajsmentkeri.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Kajsmentkeri.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
