@@ -7,18 +7,19 @@ namespace Kajsmentkeri.Application.Services;
 
 public class ChampionshipService : IChampionshipService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly ICurrentUserService _currentUser;
 
-    public ChampionshipService(AppDbContext db, ICurrentUserService currentUser)
+    public ChampionshipService(ICurrentUserService currentUser, IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        _db = db;
         _currentUser = currentUser;
+        _dbContextFactory = dbContextFactory;
     }
 
     public async Task<List<Championship>> GetAllAsync()
     {
-        return await _db.Championships
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.Championships
             .Include(c => c.ScoringRules)
             .OrderByDescending(c => c.Year)
             .ThenByDescending(c => c.CreatedAt)
@@ -27,7 +28,8 @@ public class ChampionshipService : IChampionshipService
 
     public async Task<Championship> GetByIdAsync(Guid id)
     {
-        var championship = await _db.Championships
+        using var context = _dbContextFactory.CreateDbContext();
+        var championship = await context.Championships
             .Include(c => c.ScoringRules)
             .FirstOrDefaultAsync(c => c.Id == id);
 
@@ -36,7 +38,8 @@ public class ChampionshipService : IChampionshipService
 
     public async Task<Championship?> GetLatestAsync()
     {
-        return await _db.Championships
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.Championships
             .OrderByDescending(c => c.CreatedAt)
             .FirstOrDefaultAsync();
     }
@@ -68,16 +71,19 @@ public class ChampionshipService : IChampionshipService
 
         championship.ScoringRules = scoringRules;
 
-        _db.Championships.Add(championship);
-        await _db.SaveChangesAsync();
+
+        using var context = _dbContextFactory.CreateDbContext();
+        context.Championships.Add(championship);
+        await context.SaveChangesAsync();
 
         return championship;
     }
 
     public async Task<Championship> CreateChampionshipAsync(Championship championship)
     {
-        _db.Championships.Add(championship);
-        await _db.SaveChangesAsync();
+        using var context = _dbContextFactory.CreateDbContext();
+        context.Championships.Add(championship);
+        await context.SaveChangesAsync();
 
         return championship;
     }

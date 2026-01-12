@@ -8,30 +8,31 @@ namespace Kajsmentkeri.Application.Services;
 
 public class PredictionService : IPredictionService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly ICurrentUserService _currentUser;
     private readonly ILeaderboardService _leaderboardService;
     private readonly ILogger<PredictionService> _logger;
 
-    public PredictionService(AppDbContext db, ICurrentUserService currentUser, ILeaderboardService leaderboardService, ILogger<PredictionService> logger)
+    public PredictionService(ICurrentUserService currentUser, ILeaderboardService leaderboardService, ILogger<PredictionService> logger, IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        _db = db;
         _currentUser = currentUser;
         _leaderboardService = leaderboardService;
         _logger = logger;
+        _dbContextFactory = dbContextFactory;
     }
 
     public async Task SubmitPredictionAsync(Guid matchId, int predictedHome, int predictedAway)
     {
+        using var context = _dbContextFactory.CreateDbContext();
         _logger.LogInformation($"{nameof(SubmitPredictionAsync)} start: {DateTime.Now}");
 
         if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
             throw new UnauthorizedAccessException("User must be logged in.");
 
-        var match = await _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null) throw new InvalidOperationException("Match not found");
 
-        var prediction = await _db.Predictions
+        var prediction = await context.Predictions
             .FirstOrDefaultAsync(p => p.MatchId == matchId && p.UserId == _currentUser.UserId);
 
         if (prediction == null)
@@ -42,29 +43,30 @@ public class PredictionService : IPredictionService
                 MatchId = matchId,
                 UserId = _currentUser.UserId.Value
             };
-            _db.Predictions.Add(prediction);
+            context.Predictions.Add(prediction);
         }
 
         prediction.PredictedHome = predictedHome;
         prediction.PredictedAway = predictedAway;
 
-        await _db.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         _logger.LogInformation($"{nameof(SubmitPredictionAsync)} end: {DateTime.Now}");
     }
 
     public async Task<DateTime> GetPredictionLockTimeAsync(Guid championshipId, Guid matchId, Guid userId)
     {
+        using var context = _dbContextFactory.CreateDbContext();
         _logger.LogInformation($"{nameof(GetPredictionLockTimeAsync)} start: {DateTime.Now}");
 
-        var match = await _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null)
             throw new Exception("Match not found");
 
         var matchStart = match.StartTimeUtc;
 
         // If it's in the first matches in the championship
-        var firstMatches = _db.Matches
+        var firstMatches = context.Matches
             .Where(m => m.ChampionshipId == championshipId)
             .OrderBy(m => m.StartTimeUtc)
             .Take(2);
@@ -92,22 +94,24 @@ public class PredictionService : IPredictionService
 
     public Task<List<Prediction>> GetPredictionsForChampionshipAsync(Guid championshipId)
     {
-        return _db.Predictions
+        using var context = _dbContextFactory.CreateDbContext();
+        return context.Predictions
             .Where(p => p.Match.ChampionshipId == championshipId)
             .ToListAsync();
     }
 
     public async Task RemovePredictionsForMatchAsync(Guid matchId)
     {
+        using var context = _dbContextFactory.CreateDbContext();
         _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} start: {DateTime.Now}");
 
-        var predictions = await _db.Predictions
+        var predictions = await context.Predictions
             .Where(p => p.MatchId == matchId)
             .ToListAsync();
         if (predictions.Count > 0)
         {
-            _db.Predictions.RemoveRange(predictions);
-            await _db.SaveChangesAsync();
+            context.Predictions.RemoveRange(predictions);
+            await context.SaveChangesAsync();
         }
 
         _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} end: {DateTime.Now}");

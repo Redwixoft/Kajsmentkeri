@@ -7,16 +7,17 @@ namespace Kajsmentkeri.Application.Services;
 
 public class PredictionScoringService : IPredictionScoringService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-    public PredictionScoringService(AppDbContext db)
+    public PredictionScoringService(IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        _db = db;
+        _dbContextFactory = dbContextFactory;
     }
 
     public async Task RecalculateForMatchAsync(Guid matchId)
     {
-        var match = await _db.Matches
+        using var context = _dbContextFactory.CreateDbContext();
+        var match = await context.Matches
             .Include(m => m.Championship)
                 .ThenInclude(c => c.ScoringRules)
             .Include(m => m.Predictions)
@@ -65,7 +66,7 @@ public class PredictionScoringService : IPredictionScoringService
             prediction.RarityPart = rarityPart;
         }
 
-        await _db.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     private static string GetWinner(int home, int away)

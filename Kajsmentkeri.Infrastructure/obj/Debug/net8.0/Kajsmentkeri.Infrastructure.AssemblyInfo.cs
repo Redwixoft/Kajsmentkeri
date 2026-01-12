@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Kajsmentkeri.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a21c2969bf0e4333bb33d912a8379d653da76d43")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fdc9a9b88cd3f74afd843e259b8c65456e6fdcad")]
 [assembly: System.Reflection.AssemblyProductAttribute("Kajsmentkeri.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Kajsmentkeri.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

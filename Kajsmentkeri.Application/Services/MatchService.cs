@@ -7,11 +7,11 @@ namespace Kajsmentkeri.Application.Services;
 
 public class MatchService : IMatchService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-    public MatchService(AppDbContext db)
+    public MatchService(IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        _db = db;
+        _dbContextFactory = dbContextFactory;
     }
 
     public async Task CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime)
@@ -25,18 +25,21 @@ public class MatchService : IMatchService
             StartTimeUtc = startTime.ToUniversalTime()
         };
 
-        _db.Matches.Add(match);
-        await _db.SaveChangesAsync();
+        using var context = _dbContextFactory.CreateDbContext();
+        context.Matches.Add(match);
+        await context.SaveChangesAsync();
     }
 
     public Task<Match?> GetMatchByIdAsync(Guid matchId)
     {
-        return _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        using var context = _dbContextFactory.CreateDbContext();
+        return context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
     }
 
     public async Task<List<Match>> GetMatchesByChampionshipAsync(Guid championshipId)
     {
-        return await _db.Matches
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.Matches
             .Where(m => m.ChampionshipId == championshipId)
             .OrderBy(m => m.StartTimeUtc)
             .ToListAsync();
@@ -44,22 +47,24 @@ public class MatchService : IMatchService
 
     public async Task UpdateMatchResultAsync(Guid matchId, int homeScore, int awayScore)
     {
-        var match = await _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        using var context = _dbContextFactory.CreateDbContext();
+        var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null) throw new InvalidOperationException("Match not found");
 
         match.HomeScore = homeScore;
         match.AwayScore = awayScore;
 
-        await _db.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 
     public async Task RemoveMatchAsync(Guid matchId)
     {
-        var match = await _db.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        using var context = _dbContextFactory.CreateDbContext();
+        var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
 
         if (match == null) throw new InvalidOperationException("Match not found");
-        _db.Matches.Remove(match);
+        context.Matches.Remove(match);
 
-        await _db.SaveChangesAsync();
+        await context.SaveChangesAsync();
     }
 }

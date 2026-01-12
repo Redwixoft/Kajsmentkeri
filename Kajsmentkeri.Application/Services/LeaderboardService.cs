@@ -10,18 +10,19 @@ namespace Kajsmentkeri.Application.Services;
 
 public class LeaderboardService : ILeaderboardService
 {
-    private readonly AppDbContext _db;
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly UserManager<AppUser> _userManager;
 
-    public LeaderboardService(AppDbContext db, UserManager<AppUser> userManager)
+    public LeaderboardService(UserManager<AppUser> userManager, IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        _db = db;
         _userManager = userManager;
+        _dbContextFactory = dbContextFactory;
     }
 
     public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(Guid championshipId)
     {
-        var grouped = await _db.Predictions
+        using var context = _dbContextFactory.CreateDbContext();
+        var grouped = await context.Predictions
             .Where(p => p.Match.ChampionshipId == championshipId)
             .GroupBy(p => p.UserId)
             .Select(g => new
@@ -65,12 +66,13 @@ public class LeaderboardService : ILeaderboardService
 
     public async Task<LineGraphViewModel> GetLeaderboardProgressAsync(Guid championshipId)
     {
-        var matches = await _db.Matches
+        using var context = _dbContextFactory.CreateDbContext();
+        var matches = await context.Matches
             .Where(m => m.ChampionshipId == championshipId && m.HomeScore.HasValue && m.AwayScore.HasValue)
             .OrderBy(m => m.StartTimeUtc)
             .ToListAsync();
 
-        var predictions = await _db.Predictions
+        var predictions = await context.Predictions
             .Where(p => matches.Select(m => m.Id).Contains(p.MatchId))
             .ToListAsync();
 
