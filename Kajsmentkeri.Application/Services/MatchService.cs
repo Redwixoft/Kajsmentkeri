@@ -30,10 +30,10 @@ public class MatchService : IMatchService
         await context.SaveChangesAsync();
     }
 
-    public Task<Match?> GetMatchByIdAsync(Guid matchId)
+    public async Task<Match?> GetMatchByIdAsync(Guid matchId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        return context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        return await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
     }
 
     public async Task<List<Match>> GetMatchesByChampionshipAsync(Guid championshipId)

@@ -5,17 +5,18 @@ using Kajsmentkeri.Domain;
 using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Kajsmentkeri.Application.Services;
 
 public class LeaderboardService : ILeaderboardService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
-    private readonly UserManager<AppUser> _userManager;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public LeaderboardService(UserManager<AppUser> userManager, IDbContextFactory<AppDbContext> dbContextFactory)
+    public LeaderboardService(IServiceScopeFactory scopeFactory, IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        _userManager = userManager;
+        _scopeFactory = scopeFactory;
         _dbContextFactory = dbContextFactory;
     }
 
@@ -39,7 +40,11 @@ public class LeaderboardService : ILeaderboardService
 
         // Load all relevant users
         var userIds = grouped.Select(g => g.UserId).ToList();
-        var users = await _userManager.Users
+
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        
+        var users = await userManager.Users
             .Where(u => userIds.Contains(u.Id))
             .ToDictionaryAsync(u => u.Id, u => u.UserName);
 
@@ -76,7 +81,9 @@ public class LeaderboardService : ILeaderboardService
             .Where(p => matches.Select(m => m.Id).Contains(p.MatchId))
             .ToListAsync();
 
-        var users = await _userManager.Users.ToListAsync();
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var users = await userManager.Users.ToListAsync();
 
         var graph = new LineGraphViewModel
         {

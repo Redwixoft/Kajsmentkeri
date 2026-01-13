@@ -92,10 +92,10 @@ public class PredictionService : IPredictionService
         return matchStart;
     }
 
-    public Task<List<Prediction>> GetPredictionsForChampionshipAsync(Guid championshipId)
+    public async Task<List<Prediction>> GetPredictionsForChampionshipAsync(Guid championshipId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        return context.Predictions
+        return await context.Predictions
             .Where(p => p.Match.ChampionshipId == championshipId)
             .ToListAsync();
     }
