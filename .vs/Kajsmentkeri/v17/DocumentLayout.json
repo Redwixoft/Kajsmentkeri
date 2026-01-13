@@ -7,20 +7,20 @@
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\services\\predictionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|solutionrelative:kajsmentkeri.application\\services\\predictionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\interfaces\\ipredictionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|solutionrelative:kajsmentkeri.application\\interfaces\\ipredictionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\dockerfile||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.web\\pages\\championships\\details.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{D6EE2279-D2FB-465E-95B0-01C458FB5D91}|Kajsmentkeri.Web\\Kajsmentkeri.Web.csproj|solutionrelative:kajsmentkeri.web\\pages\\championships\\details.cshtml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\services\\predictionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|solutionrelative:kajsmentkeri.application\\services\\predictionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{7DEEA949-2CF7-40AA-B348-096C8CFF0457}|Kajsmentkeri.Application\\Kajsmentkeri.Application.csproj|c:\\redwik\\it\\kajsmentkeri\\kajsmentkeri.application\\services\\matchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -187,7 +187,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Details.cshtml.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Pages\\Championships\\Details.cshtml.cs",
@@ -201,14 +201,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "Dockerfile",
-              "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Dockerfile",
-              "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Dockerfile",
-              "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Dockerfile",
-              "RelativeToolTip": "Kajsmentkeri.Web\\Dockerfile",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-01-12T13:05:51.12Z",
+              "Title": "IPredictionService.cs",
+              "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Interfaces\\IPredictionService.cs",
+              "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Interfaces\\IPredictionService.cs",
+              "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Interfaces\\IPredictionService.cs",
+              "RelativeToolTip": "Kajsmentkeri.Application\\Interfaces\\IPredictionService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAA9AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-12T14:06:22.6Z",
               "EditorCaption": ""
             },
             {
@@ -217,15 +217,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 1,
               "Title": "PredictionService.cs",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Services\\PredictionService.cs",
               "RelativeDocumentMoniker": "Kajsmentkeri.Application\\Services\\PredictionService.cs",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Application\\Services\\PredictionService.cs",
               "RelativeToolTip": "Kajsmentkeri.Application\\Services\\PredictionService.cs",
-              "ViewState": "AgIAAFMAAAAAAAAAAAAgwFUAAAAuAAAAAAAAAA==",
+              "ViewState": "AgIAAD8AAAAAAAAAAAAYwF4AAAAiAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-06T09:38:07.997Z"
+              "WhenOpened": "2025-06-06T09:38:07.997Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -259,14 +260,14 @@
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\Program.cs",
               "ToolTip": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\Program.cs",
               "RelativeToolTip": "Kajsmentkeri.Web\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAyAAAAAAAAAA==",
+              "ViewState": "AgIAAAEAAAAAAAAAAAAYwA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-05-28T08:50:51.686Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Redwik\\IT\\Kajsmentkeri\\Kajsmentkeri.Web\\appsettings.json",
               "RelativeDocumentMoniker": "Kajsmentkeri.Web\\appsettings.json",
