@@ -8,4 +8,5 @@ public interface IPredictionService
     Task<DateTime> GetPredictionLockTimeAsync(Guid championshipId, Guid matchId, Guid userId);
     Task<List<Prediction>> GetPredictionsForChampionshipAsync(Guid championshipId);
     Task RemovePredictionsForMatchAsync(Guid matchId);
+    Task RemovePredictionsForUserAsync(Guid userId);
 }

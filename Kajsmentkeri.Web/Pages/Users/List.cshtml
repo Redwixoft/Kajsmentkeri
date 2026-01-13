@@ -1,0 +1,79 @@
+@page
+@model Kajsmentkeri.Web.Pages.Users.ListModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<h1>Users</h1>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            @if (Model.IsCurrentUserAdmin)
+            {
+                <th>Admin</th>
+                <th>Actions</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model.Users)
+        {
+            <tr>
+                <td>@user.UserName</td>
+                <td>@user.Email</td>
+                @if (Model.IsCurrentUserAdmin)
+                {
+                    <td>@(user.IsAdmin ? "Yes" : "No")</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@user.Id" data-name="@user.UserName">
+                            Delete
+                        </button>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Delete">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete user <strong id="deleteTargetName"></strong>?</p>
+                    <p class="text-danger"><strong>Warning:</strong> This will permanently delete the user account and ALL their predictions.</p>
+                    <input type="hidden" name="id" id="deleteTargetId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-id');
+            var name = button.getAttribute('data-name');
+            
+            var nameInput = deleteModal.querySelector('#deleteTargetName');
+            var idInput = deleteModal.querySelector('#deleteTargetId');
+
+            nameInput.textContent = name;
+            idInput.value = id;
+        });
+    </script>
+}

@@ -116,4 +116,22 @@ public class PredictionService : IPredictionService
 
         _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} end: {DateTime.Now}");
     }
+
+    public async Task RemovePredictionsForUserAsync(Guid userId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        _logger.LogInformation($"{nameof(RemovePredictionsForUserAsync)} start: {DateTime.Now}");
+
+        var predictions = await context.Predictions
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+
+        if (predictions.Any())
+        {
+            context.Predictions.RemoveRange(predictions);
+            await context.SaveChangesAsync();
+        }
+
+        _logger.LogInformation($"{nameof(RemovePredictionsForUserAsync)} end: {DateTime.Now}");
+    }
 }
