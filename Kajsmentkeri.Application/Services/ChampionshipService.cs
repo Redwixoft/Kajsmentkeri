@@ -87,4 +87,43 @@ public class ChampionshipService : IChampionshipService
 
         return championship;
     }
+
+    public async Task DeleteChampionshipAsync(Guid id)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var championship = await context.Championships
+            .Include(c => c.Matches)
+                .ThenInclude(m => m.Predictions)
+            .Include(c => c.ScoringRules)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (championship == null)
+        {
+            return;
+        }
+
+        // 1. Delete Predictions
+        var predictions = championship.Matches.SelectMany(m => m.Predictions).ToList();
+        if (predictions.Any())
+        {
+            context.Predictions.RemoveRange(predictions);
+        }
+
+        // 2. Delete Matches
+        if (championship.Matches.Any())
+        {
+            context.Matches.RemoveRange(championship.Matches);
+        }
+
+        // 3. Delete Scoring Rules
+        if (championship.ScoringRules != null)
+        {
+            context.ChampionshipScoringRules.Remove(championship.ScoringRules);
+        }
+
+        // 4. Delete Championship
+        context.Championships.Remove(championship);
+
+        await context.SaveChangesAsync();
+    }
 }

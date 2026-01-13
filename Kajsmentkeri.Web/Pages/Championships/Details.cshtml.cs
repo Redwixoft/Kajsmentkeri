@@ -18,10 +18,9 @@ public class DetailsModel : PageModel
     private readonly UserManager<AppUser> _userManager;
     private readonly IPredictionScoringService _scoringService;
     private readonly ILeaderboardService _leaderboardService;
-    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<DetailsModel> _logger;
 
-    public DetailsModel(UserManager<AppUser> userManager, IPredictionScoringService scoringService, ILeaderboardService leaderboardService, IChampionshipService championshipService, IMatchService matchService, IPredictionService predictionService, ILogger<DetailsModel> logger, ICurrentUserService currentUserService)
+    public DetailsModel(UserManager<AppUser> userManager, IPredictionScoringService scoringService, ILeaderboardService leaderboardService, IChampionshipService championshipService, IMatchService matchService, IPredictionService predictionService, ILogger<DetailsModel> logger)
     {
         _userManager = userManager;
         _scoringService = scoringService;
@@ -30,7 +29,6 @@ public class DetailsModel : PageModel
         _matchService = matchService;
         _predictionService = predictionService;
         _logger = logger;
-        _currentUserService = currentUserService;
     }
 
     public Championship? Championship { get; set; }
@@ -82,8 +80,9 @@ public class DetailsModel : PageModel
         if (Championship == null)
             return NotFound();
 
-        IsAdmin = _currentUserService.IsAdmin;
-        CurrentUserId = _currentUserService.UserId;
+        var currentUser = await _userManager.GetUserAsync(User);
+        IsAdmin = currentUser?.IsAdmin == true;
+        CurrentUserId = currentUser?.Id;
 
         Leaderboard = await leaderboardTask;
         Matches = await matchesTask;

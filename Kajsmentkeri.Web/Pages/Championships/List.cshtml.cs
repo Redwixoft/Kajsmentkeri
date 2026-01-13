@@ -1,4 +1,5 @@
 using Kajsmentkeri.Domain;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -57,5 +58,18 @@ public class ListModel : PageModel
         public string Name { get; set; } = string.Empty;
         public int Year { get; set; }
         public string CreatedByUserName { get; set; } = string.Empty;
+    }
+
+
+    public async Task<IActionResult> OnPostDeleteAsync(Guid id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser?.IsAdmin != true)
+        {
+            return Forbid();
+        }
+
+        await _championshipService.DeleteChampionshipAsync(id);
+        return RedirectToPage();
     }
 }
