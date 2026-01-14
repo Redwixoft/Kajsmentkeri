@@ -164,36 +164,28 @@
                         @{
                             var isOwnColumn = user.UserId == Model.CurrentUserId;                            
                             var cellId = $"edit-{match.Id}-{user.UserId}";
+                            var canEdit = isOwnColumn && !isPredictionLocked;
                         }
 
-                        @if (hasPrediction)
+                        @if (hasPrediction || canEdit)
                         {
-                            <div id="@cellId-display">
+                            <div id="@cellId-display" style="@(hasPrediction ? "" : "display:none")">
                                 <span>@prediction</span>
-                                @if (isOwnColumn && !isPredictionLocked)
+                                @if (canEdit)
                                 {
                                     <button type="button" class="btn btn-warning btn-sm ms-1" onclick="showEdit('@cellId')">
                                         ✏️
                                     </button>
                                 }
                             </div>
-
-                            @if (isOwnColumn && !isPredictionLocked)
-                            {
-                                <form id="@cellId-form" method="post" class="d-none" style="display: flex; gap: 0.25rem;">
-                                    <input type="hidden" name="id" value="@Model.Championship!.Id" />
-                                    <input type="hidden" name="MatchId" value="@match.Id" />
-                                    <input name="PredictionInput" class="form-control form-control-sm" style="width: 60px;" value="@prediction" />
-                                    <button type="submit" class="btn btn-sm btn-success">✔</button>
-                                </form>
-                            }
                         }
-                        else if (isOwnColumn && !isPredictionLocked)
+
+                        @if (canEdit)
                         {
-                            <form method="post" style="display: flex; gap: 0.25rem;">
+                            <form id="@cellId-form" method="post" class="ajax-prediction-form @(hasPrediction ? "d-none" : "")" data-display-id="@cellId-display" style="display: flex; gap: 0.25rem;">
                                 <input type="hidden" name="id" value="@Model.Championship!.Id" />
                                 <input type="hidden" name="MatchId" value="@match.Id" />
-                                <input name="PredictionInput" class="form-control form-control-sm" style="width: 60px;" placeholder="0:0" />
+                                <input name="PredictionInput" class="form-control form-control-sm" style="width: 60px;" value="@prediction" placeholder="0:0" />
                                 <button type="submit" class="btn btn-sm btn-success">✔</button>
                             </form>
                         }
@@ -281,10 +273,11 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            // Existing validation code kept, expanded for AJAX
             document.querySelectorAll("form").forEach(form => {
-                form.addEventListener("submit", function (e) {
+                form.addEventListener("submit", async function (e) {
                     const input = form.querySelector("input[name='PredictionInput'], input[name='ResultInput']");
-                        if (!input) return;
+                    if (!input) return;
 
                     const value = input.value.trim();
                     const regex = /^\d+:\d+$/;
@@ -293,6 +286,82 @@
                         e.preventDefault();
                         alert("Invalid format. Please use format like 2:1 you fucking moron!");
                         input.focus();
+                        return;
+                    }
+
+                    // AJAX handling for prediction forms
+                    if (form.classList.contains('ajax-prediction-form')) {
+                        e.preventDefault();
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        const originalBtnText = submitBtn.textContent;
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = "⏳";
+
+                        const formData = new FormData(form);
+                        // MVC/Razor Pages requires AntiForgeryToken
+                        // Usually handled automatically by form tag helper, but need to be sure it's in FormData
+                        
+                        try {
+                            const response = await fetch('?handler=SubmitPredictionAjax', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            const result = await response.json();
+
+                            if (result.success) {
+                                const displayId = form.getAttribute('data-display-id');
+                                const displayEl = document.getElementById(displayId);
+                                
+                                if (displayEl) {
+                                    // Update displayed text
+                                    const textSpan = displayEl.querySelector('span');
+                                    if (textSpan) textSpan.textContent = value;
+
+                                    // Toggle visibility
+                                    form.classList.add('d-none');
+                                    displayEl.style.display = 'block';
+                                    
+                                    // Optional: Feedback flash
+                                    // Could add a temporary green border or something
+                                } else {
+                                    // Fallback if display element missing (e.g. first prediction)
+                                    // For first prediction, the display element might be inside the 'if (hasPrediction)' block which wasn't rendered.
+                                    // However, simpler to reload or just alert success if UI structure is rigid.
+                                    // BUT, the HTML structure has separate blocks for 'hasPrediction' vs 'else'.
+                                    // If we are in the 'else' block, there is no display element yet.
+                                    // We need to refresh to get the full UI state (edit button etc) OR manually construct it.
+                                    // For "Update database, but leave page as is", just showing it is saved is enough?
+                                    // The user request said: "omit this [reload], just update the database, but leave the page as it is."
+                                    // If I enter a prediction where there was none, and I want to edit it again, I can't unless I reload.
+                                    // So for the "first prediction" case, maybe we reload? Or we just hide the form and show a static text.
+                                    
+                                    // Let's reload if it was a new prediction to ensure consistent state (edit buttons etc), 
+                                    // OR just accept that they have to reload to edit again.
+                                    // User said: "leave the page as it is". So I will try to update UI in place.
+                                    
+                                    // Ideally we would swap the 'form' with the 'display div'. 
+                                    // But the DOM hierarchy differs.
+                                    // Let's just create a fake display text and hide the form?
+                                    // Actually, if it's the first time, 'displayEl' is null because it's not rendered.
+                                    // So we reload for the first time? Or show "Saved" and clear input?
+                                    // Let's reload only if we can't find displayEl (new prediction case).
+                                    location.reload(); 
+                                }
+                            } else {
+                                alert("Error saving: " + result.message);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            alert("An error occurred while saving.");
+                        } finally {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = originalBtnText;
+                        }
                     }
                 });
             });

@@ -149,6 +149,41 @@ public class DetailsModel : PageModel
         return RedirectToPage(new { id, logs });
     }
 
+    public async Task<IActionResult> OnPostSubmitPredictionAjaxAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return new JsonResult(new { success = false, message = "User not logged in" }) { StatusCode = 401 };
+
+        var match = await _matchService.GetMatchByIdAsync(MatchId);
+        if (match == null)
+            return new JsonResult(new { success = false, message = "Match not found" }) { StatusCode = 404 };
+
+        // Parse input like "3:1"
+        var parts = PredictionInput.Split(':');
+        if (parts.Length != 2 || !int.TryParse(parts[0], out var home) || !int.TryParse(parts[1], out var away))
+        {
+            return new JsonResult(new { success = false, message = "Invalid format. Use X:Y" });
+        }
+
+        try 
+        {
+            await _predictionService.SubmitPredictionAsync(MatchId, home, away);
+            
+            if (match.AwayScore != null)
+            {
+                await _scoringService.RecalculateForMatchAsync(match.Id);
+            }
+
+            return new JsonResult(new { success = true, message = "Saved" });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving prediction");
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
+    }
+
     public async Task<IActionResult> OnPostUpdateResultAsync(Guid id)
     {
         var stopwatch = new Stopwatch();
