@@ -40,7 +40,8 @@ public class ChampionshipService : IChampionshipService
     {
         using var context = _dbContextFactory.CreateDbContext();
         return await context.Championships
-            .OrderByDescending(c => c.CreatedAt)
+            .OrderByDescending(c => c.Year)
+            .ThenByDescending(c => c.CreatedAt)
             .FirstOrDefaultAsync();
     }
 
