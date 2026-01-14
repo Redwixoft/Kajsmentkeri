@@ -1,3 +1,4 @@
+using Kajsmentkeri.Application.DTOs;
 using Kajsmentkeri.Application.Interfaces;
 using Kajsmentkeri.Domain;
 using Microsoft.AspNetCore.Authorization;
@@ -13,19 +14,24 @@ public class ListModel : PageModel
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly IPredictionService _predictionService;
+    private readonly ILeaderboardService _leaderboardService;
 
-    public ListModel(UserManager<AppUser> userManager, IPredictionService predictionService)
+    public ListModel(UserManager<AppUser> userManager, IPredictionService predictionService, ILeaderboardService leaderboardService)
     {
         _userManager = userManager;
         _predictionService = predictionService;
+        _leaderboardService = leaderboardService;
     }
 
     public List<AppUser> Users { get; set; } = new();
+    public Dictionary<Guid, LeaderboardEntryDto> UserStats { get; set; } = new();
     public bool IsCurrentUserAdmin { get; set; }
 
     public async Task OnGetAsync()
     {
         Users = await _userManager.Users.ToListAsync();
+        var stats = await _leaderboardService.GetGlobalLeaderboardAsync();
+        UserStats = stats.ToDictionary(s => s.UserId, s => s);
         
         var user = await _userManager.GetUserAsync(User);
         IsCurrentUserAdmin = user?.IsAdmin == true;

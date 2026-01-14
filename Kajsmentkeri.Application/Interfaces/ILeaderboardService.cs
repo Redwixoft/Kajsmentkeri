@@ -6,5 +6,6 @@ namespace Kajsmentkeri.Application.Interfaces;
 public interface ILeaderboardService
 {
     Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(Guid championshipId);
+    Task<List<LeaderboardEntryDto>> GetGlobalLeaderboardAsync();
     Task<LineGraphViewModel> GetLeaderboardProgressAsync(Guid championshipId);
 }

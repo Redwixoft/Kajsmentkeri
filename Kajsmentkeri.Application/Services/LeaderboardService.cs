@@ -69,6 +69,54 @@ public class LeaderboardService : ILeaderboardService
         return leaderboard;
     }
 
+    public async Task<List<LeaderboardEntryDto>> GetGlobalLeaderboardAsync()
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var grouped = await context.Predictions
+            .GroupBy(p => p.UserId)
+            .Select(g => new
+            {
+                UserId = g.Key,
+                TotalPoints = g.Sum(p => p.Points),
+                CorrectWinners = g.Count(p => p.GotWinner),
+                OneGoalMisses = g.Count(p => p.OneGoalMiss),
+                OnlyCorrect = g.Count(p => p.IsOnlyCorrect),
+                ExactScores = g.Count(p => p.GotExactScore),
+                RarityPoints = g.Sum(p => p.RarityPart)
+            })
+            .ToListAsync();
+
+        // Load all relevant users
+        var userIds = grouped.Select(g => g.UserId).ToList();
+
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        
+        var users = await userManager.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.UserName);
+
+        // Merge results
+        var leaderboard = grouped.Select(g => new LeaderboardEntryDto
+            {
+                UserId = g.UserId,
+                UserName = users.TryGetValue(g.UserId, out var name) ? name ?? "???" : "Unknown",
+                TotalPoints = g.TotalPoints,
+                CorrectWinners = g.CorrectWinners,
+                OneGoalMisses = g.OneGoalMisses,
+                OnlyCorrect = g.OnlyCorrect,
+                ExactScores = g.ExactScores,
+                SpecialLeaderboardPoints = g.RarityPoints
+            })
+            .OrderByDescending(x => x.TotalPoints)
+            .ThenByDescending(x => x.CorrectWinners)
+            .ThenByDescending(x => x.OneGoalMisses)
+            .ThenByDescending(x => x.OnlyCorrect)
+            .ToList();
+
+        return leaderboard;
+    }
+
     public async Task<LineGraphViewModel> GetLeaderboardProgressAsync(Guid championshipId)
     {
         using var context = _dbContextFactory.CreateDbContext();

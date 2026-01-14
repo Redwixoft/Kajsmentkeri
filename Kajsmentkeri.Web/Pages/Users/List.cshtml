@@ -11,6 +11,11 @@
         <tr>
             <th>Username</th>
             <th>Email</th>
+            <th>Total Points</th>
+            <th>Winners</th>
+            <th>One-Goal Misses</th>
+            <th>Luckers</th>
+            <th>Only Ones</th>
             @if (Model.IsCurrentUserAdmin)
             {
                 <th>Admin</th>
@@ -21,9 +26,15 @@
     <tbody>
         @foreach (var user in Model.Users)
         {
+            var hasStats = Model.UserStats.TryGetValue(user.Id, out var stats);
             <tr>
                 <td>@user.UserName</td>
                 <td>@user.Email</td>
+                <td>@(hasStats ? stats.TotalPoints : 0)</td>
+                <td>@(hasStats ? stats.CorrectWinners : 0)</td>
+                <td>@(hasStats ? stats.OneGoalMisses : 0)</td>
+                <td>@(hasStats ? stats.ExactScores : 0)</td>
+                <td>@(hasStats ? stats.OnlyCorrect : 0)</td>
                 @if (Model.IsCurrentUserAdmin)
                 {
                     <td>@(user.IsAdmin ? "Yes" : "No")</td>
