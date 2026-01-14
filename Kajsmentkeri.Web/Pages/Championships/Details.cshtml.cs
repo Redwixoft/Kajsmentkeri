@@ -58,7 +58,6 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
-
         var championshipTask = _championshipService.GetByIdAsync(id);
         var leaderboardTask = _leaderboardService.GetLeaderboardAsync(id);
         var matchesTask = _matchService.GetMatchesByChampionshipAsync(id);

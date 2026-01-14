@@ -9,16 +9,48 @@
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Total Points</th>
-            <th>Winners</th>
-            <th>One-Goal Misses</th>
-            <th>Luckers</th>
-            <th>Only Ones</th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.NameSort" class="text-decoration-none text-dark">
+                    Username @(Model.CurrentSort == "" || Model.CurrentSort == "name_desc" ? (Model.CurrentSort == "name_desc" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.EmailSort" class="text-decoration-none text-dark">
+                    Email @(Model.CurrentSort == "email" || Model.CurrentSort == "email_desc" ? (Model.CurrentSort == "email_desc" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.PointsSort" class="text-decoration-none text-dark">
+                    Total Points @(Model.CurrentSort == "points" || Model.CurrentSort == "points_asc" ? (Model.CurrentSort == "points" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.WinnersSort" class="text-decoration-none text-dark">
+                    Winners @(Model.CurrentSort == "winners" || Model.CurrentSort == "winners_asc" ? (Model.CurrentSort == "winners" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.MissesSort" class="text-decoration-none text-dark">
+                    One-Goal Misses @(Model.CurrentSort == "misses" || Model.CurrentSort == "misses_asc" ? (Model.CurrentSort == "misses" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.LuckersSort" class="text-decoration-none text-dark">
+                    Luckers @(Model.CurrentSort == "luckers" || Model.CurrentSort == "luckers_asc" ? (Model.CurrentSort == "luckers" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.OnlyOnesSort" class="text-decoration-none text-dark">
+                    Only Ones @(Model.CurrentSort == "onlyones" || Model.CurrentSort == "onlyones_asc" ? (Model.CurrentSort == "onlyones" ? "↓" : "↑") : "")
+                </a>
+            </th>
             @if (Model.IsCurrentUserAdmin)
             {
-                <th>Admin</th>
+                <th>
+                    <a asp-page="./List" asp-route-sortOrder="@Model.AdminSort" class="text-decoration-none text-dark">
+                        Admin @(Model.CurrentSort == "admin" || Model.CurrentSort == "admin_desc" ? (Model.CurrentSort == "admin_desc" ? "↓" : "↑") : "")
+                    </a>
+                </th>
                 <th>Actions</th>
             }
         </tr>
