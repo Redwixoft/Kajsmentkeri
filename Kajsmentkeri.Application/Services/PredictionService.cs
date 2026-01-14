@@ -2,7 +2,6 @@
 using Kajsmentkeri.Domain;
 using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Kajsmentkeri.Application.Services;
 
@@ -11,20 +10,18 @@ public class PredictionService : IPredictionService
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly ICurrentUserService _currentUser;
     private readonly ILeaderboardService _leaderboardService;
-    private readonly ILogger<PredictionService> _logger;
 
-    public PredictionService(ICurrentUserService currentUser, ILeaderboardService leaderboardService, ILogger<PredictionService> logger, IDbContextFactory<AppDbContext> dbContextFactory)
+    public PredictionService(ICurrentUserService currentUser, ILeaderboardService leaderboardService, IDbContextFactory<AppDbContext> dbContextFactory)
     {
         _currentUser = currentUser;
         _leaderboardService = leaderboardService;
-        _logger = logger;
         _dbContextFactory = dbContextFactory;
     }
 
     public async Task SubmitPredictionAsync(Guid matchId, int predictedHome, int predictedAway)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        _logger.LogInformation($"{nameof(SubmitPredictionAsync)} start: {DateTime.Now}");
+
 
         if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
             throw new UnauthorizedAccessException("User must be logged in.");
@@ -51,13 +48,13 @@ public class PredictionService : IPredictionService
 
         await context.SaveChangesAsync();
 
-        _logger.LogInformation($"{nameof(SubmitPredictionAsync)} end: {DateTime.Now}");
+
     }
 
     public async Task<DateTime> GetPredictionLockTimeAsync(Guid championshipId, Guid matchId, Guid userId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        _logger.LogInformation($"{nameof(GetPredictionLockTimeAsync)} start: {DateTime.Now}");
+
 
         var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null)
@@ -88,7 +85,7 @@ public class PredictionService : IPredictionService
         if (userId == last)
             return matchStart.AddMinutes(5);
 
-        _logger.LogInformation($"{nameof(GetPredictionLockTimeAsync)} end: {DateTime.Now}");
+
         return matchStart;
     }
 
@@ -103,7 +100,7 @@ public class PredictionService : IPredictionService
     public async Task RemovePredictionsForMatchAsync(Guid matchId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} start: {DateTime.Now}");
+
 
         var predictions = await context.Predictions
             .Where(p => p.MatchId == matchId)
@@ -114,13 +111,13 @@ public class PredictionService : IPredictionService
             await context.SaveChangesAsync();
         }
 
-        _logger.LogInformation($"{nameof(RemovePredictionsForMatchAsync)} end: {DateTime.Now}");
+
     }
 
     public async Task RemovePredictionsForUserAsync(Guid userId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        _logger.LogInformation($"{nameof(RemovePredictionsForUserAsync)} start: {DateTime.Now}");
+
 
         var predictions = await context.Predictions
             .Where(p => p.UserId == userId)
@@ -132,6 +129,6 @@ public class PredictionService : IPredictionService
             await context.SaveChangesAsync();
         }
 
-        _logger.LogInformation($"{nameof(RemovePredictionsForUserAsync)} end: {DateTime.Now}");
+
     }
 }

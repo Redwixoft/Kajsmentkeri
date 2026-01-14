@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+
 
 namespace Kajsmentkeri.Web.Pages.Championships;
 
@@ -41,8 +41,6 @@ public class DetailsModel : PageModel
     public List<LeaderboardEntryDto> Leaderboard { get; set; } = new();
     public LineGraphViewModel Graph { get; set; } = new();
 
-    public List<string> Logs { get; set; } = new List<string>();
-
     [BindProperty]
     public Guid MatchId { get; set; }
 
@@ -58,23 +56,14 @@ public class DetailsModel : PageModel
         public string UserName { get; set; } = string.Empty;
     }
 
-    public async Task<IActionResult> OnGetAsync(Guid id, List<string>? logs = null)
+    public async Task<IActionResult> OnGetAsync(Guid id)
     {
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-        if (logs != null)
-        {
-            Logs.AddRange(logs);
-        }
-        Logs.Add($"OnGetAsync start, total elapsed: {stopwatch.ElapsedMilliseconds}");
 
         var championshipTask = _championshipService.GetByIdAsync(id);
         var leaderboardTask = _leaderboardService.GetLeaderboardAsync(id);
         var matchesTask = _matchService.GetMatchesByChampionshipAsync(id);
         var predictionsTask = _predictionService.GetPredictionsForChampionshipAsync(id);
         var leaderboardProgressTask = _leaderboardService.GetLeaderboardProgressAsync(id);
-
-       // await Task.WhenAll(championshipTask, leaderboardTask, matchesTask, predictionsTask, leaderboardProgressTask);
 
         Championship = await championshipTask;
         if (Championship == null)
@@ -108,17 +97,11 @@ public class DetailsModel : PageModel
 
         Graph = await leaderboardProgressTask; 
 
-        stopwatch.Stop();
-        Logs.Add($"OnGetAsync end, total elapsed: {stopwatch.ElapsedMilliseconds}");
-        stopwatch.Restart();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(Guid id)
     {
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-        
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
             return Unauthorized();
@@ -142,11 +125,8 @@ public class DetailsModel : PageModel
             await _scoringService.RecalculateForMatchAsync(match.Id);
         }
 
-        var logs = new List<string>() { $"Prediction POST end at {DateTime.Now}, total elapsed: {stopwatch.ElapsedMilliseconds}" };
-        stopwatch.Stop();
-        stopwatch.Restart();
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {DateTime.Now}");
-        return RedirectToPage(new { id, logs });
+        return RedirectToPage(new { id });
     }
 
     public async Task<IActionResult> OnPostSubmitPredictionAjaxAsync()
@@ -186,9 +166,6 @@ public class DetailsModel : PageModel
 
     public async Task<IActionResult> OnPostUpdateResultAsync(Guid id)
     {
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-
         var user = await _userManager.GetUserAsync(User);
         if (user == null || !user.IsAdmin)
             return Forbid();
@@ -207,11 +184,8 @@ public class DetailsModel : PageModel
         await _matchService.UpdateMatchResultAsync(MatchId, home, away);
         await _scoringService.RecalculateForMatchAsync(MatchId);
 
-        var logs = new List<string>() { $"Result POST end at {DateTime.Now}, total elapsed: {stopwatch.ElapsedMilliseconds}" };
-        stopwatch.Stop();
-        stopwatch.Restart();
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.Now}");
-        return RedirectToPage(new { id, logs });
+        return RedirectToPage(new { id });
     }
 
     public async Task<IActionResult> OnPostDeleteMatchAsync(Guid matchId, Guid id)

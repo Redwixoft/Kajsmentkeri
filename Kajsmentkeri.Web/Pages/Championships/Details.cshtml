@@ -13,11 +13,6 @@
 @if (Model.IsAdmin)
 {
     <hr />
-    @foreach (var log in Model.Logs)
-    {
-        <p>@log</p>
-    }
-    <hr />
 }
 
 @if (Model.IsAdmin)
@@ -56,6 +51,12 @@
                         3 => "bg-warning bg-opacity-50 text-dark", // bronze
                         _ => ""
                     };
+
+                    var totalFinishedMatches = Model.Matches.Count(m => m.HomeScore.HasValue && m.AwayScore.HasValue);
+                    var winnersPercentage = totalFinishedMatches > 0 
+                        ? (double)entry.CorrectWinners / totalFinishedMatches * 100 
+                        : 0;
+
                     <tr>
                         <td>@($"{(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : rank.ToString())}")</td>
                         <td class="@nameCellClass">
@@ -70,7 +71,7 @@
                             }
                         </td>
                         <th>@entry.TotalPoints</th>
-                        <td>@entry.CorrectWinners</td>
+                        <td title="@entry.CorrectWinners/@totalFinishedMatches (@winnersPercentage.ToString("0")% success)">@entry.CorrectWinners</td>
                         <td>@entry.OneGoalMisses</td>
                         <td>@entry.ExactScores</td>
                         <td>@entry.OnlyCorrect</td>
