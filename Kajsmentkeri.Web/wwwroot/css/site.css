@@ -84,3 +84,8 @@ a,
     width: auto;
     object-fit: contain;
 }
+
+.header-logo {
+    height: 32px;
+    width: auto;
+}

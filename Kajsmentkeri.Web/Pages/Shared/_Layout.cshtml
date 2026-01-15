@@ -27,12 +27,16 @@
               asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
         <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     </environment>
+    <link rel="icon" type="image/png" href="~/kajsmetkeri-logo.png" />
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" href="~/">Kajšmentkeri Tipovačka</a>
+                <a class="navbar-brand d-flex align-items-center" href="~/">
+                    <img src="~/kajsmetkeri-logo.png" alt="Logo" class="header-logo me-2" asp-append-version="true" />
+                    <span>Kajšmentkeri Tipovačka</span>
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
