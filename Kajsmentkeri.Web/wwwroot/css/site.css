@@ -72,3 +72,12 @@ a, .btn-link {
     text-align: center;
     vertical-align: middle;
 }
+
+.team-flag {
+    height: 20px;
+    width: auto;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+}
+

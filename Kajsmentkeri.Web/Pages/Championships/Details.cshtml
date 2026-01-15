@@ -104,12 +104,18 @@
             var matchStarted = match.StartTimeUtc <= DateTime.UtcNow;            
             <tr>
                 <td>
-                    @match.HomeTeam - @match.AwayTeam
+                    <div class="d-flex align-items-center justify-content-center">
+                        <img src="/images/flags/@(match.HomeTeam).png" class="team-flag me-2" alt="" onerror="this.style.display='none'" />
+                        <span>@match.HomeTeam - @match.AwayTeam</span>
+                        <img src="/images/flags/@(match.AwayTeam).png" class="team-flag ms-2" alt="" onerror="this.style.display='none'" />
+                    </div>
                     @if (Model.IsAdmin)
                     {
-                        <button class="btn btn-sm btn-danger" onclick="confirmDelete('@match.Id', '@match.HomeTeam - @match.AwayTeam')">
-                            ❌
-                        </button>
+                        <div class="mt-1">
+                            <button class="btn btn-sm btn-danger" onclick="confirmDelete('@match.Id', '@match.HomeTeam - @match.AwayTeam')">
+                                ❌
+                            </button>
+                        </div>
                     }
                 </td>
                 <td>@GetStartTimeString(match.StartTimeUtc)</td>
