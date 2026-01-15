@@ -187,11 +187,5 @@ public class DetailsModel : PageModel
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostDeleteMatchAsync(Guid matchId, Guid id)
-    {
-        await _predictionService.RemovePredictionsForMatchAsync(matchId);
-        await _matchService.RemoveMatchAsync(matchId);
 
-        return RedirectToPage(new { id });
-    }
 }
