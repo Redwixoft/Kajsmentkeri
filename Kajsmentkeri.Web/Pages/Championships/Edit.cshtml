@@ -6,8 +6,8 @@
 
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-sm border-0">
+        <div class="col-md-10">
+            <div class="card shadow-sm border-0 mb-4">
                 <div class="card-header bg-primary text-white py-3">
                     <h2 class="h4 mb-0">Edit Championship</h2>
                 </div>
@@ -79,7 +79,7 @@
                                 <div class="form-text">If > 0, rarity points will be shown in leaderboard.</div>
                             </div>
 
-                            <div class="col-12 mt-4 pt-3 d-flex gap-2">
+                            <div class="col-12 mt-4 pt-3 d-flex gap-2 border-top">
                                 <button type="submit" class="btn btn-primary px-4">
                                     <i class="bi bi-check-lg me-1"></i> Save Changes
                                 </button>
@@ -89,10 +89,120 @@
                     </form>
                 </div>
             </div>
+
+            <!-- Matches Section -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                    <h2 class="h5 mb-0">Matches</h2>
+                    <a class="btn btn-sm btn-success" asp-page="/Matches/Add" asp-route-championshipId="@Model.Id">
+                        ➕ Add Match
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Teams</th>
+                                <th>Start Time</th>
+                                <th>Result</th>
+                                <th class="text-center">Predictions</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var match in Model.Matches)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-bold">@match.Teams</td>
+                                    <td>@match.StartTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <span class="badge @(match.Result == "-" ? "bg-secondary" : "bg-info text-dark")">@match.Result</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @(match.PredictionCount > 0 ? "bg-warning text-dark" : "bg-light text-muted")">
+                                            @match.PredictionCount
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a asp-page="/Matches/Edit" asp-route-id="@match.Id" class="btn btn-outline-warning btn-sm me-1">
+                                            ✏️
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                data-bs-toggle="modal" data-bs-target="#deleteMatchModal" 
+                                                data-match-id="@match.Id" data-match-teams="@match.Teams" 
+                                                data-pred-count="@match.PredictionCount">
+                                            🗑️
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Matches.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No matches added to this championship yet.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Match Delete Confirmation Modal -->
+<div class="modal fade" id="deleteMatchModal" tabindex="-1" aria-labelledby="deleteMatchModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="DeleteMatch">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteMatchModalLabel">Confirm Match Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the match <strong id="deleteMatchTeams"></strong>?</p>
+                    
+                    <div id="predictionWarning" class="alert alert-warning d-none">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning!</strong> There are already <span id="matchPredCount"></span> predictions for this match. 
+                        Deleting the match will permanently remove all associated predictions.
+                    </div>
+                    
+                    <input type="hidden" name="matchId" id="deleteMatchId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete Match</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        var deleteMatchModal = document.getElementById('deleteMatchModal');
+        deleteMatchModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var matchId = button.getAttribute('data-match-id');
+            var teams = button.getAttribute('data-match-teams');
+            var predCount = parseInt(button.getAttribute('data-pred-count'));
+            
+            var idInput = deleteMatchModal.querySelector('#deleteMatchId');
+            var teamsSpan = deleteMatchModal.querySelector('#deleteMatchTeams');
+            var warningDiv = deleteMatchModal.querySelector('#predictionWarning');
+            var countSpan = deleteMatchModal.querySelector('#matchPredCount');
+
+            idInput.value = matchId;
+            teamsSpan.textContent = teams;
+            
+            if (predCount > 0) {
+                warningDiv.classList.remove('d-none');
+                countSpan.textContent = predCount;
+            } else {
+                warningDiv.classList.add('d-none');
+            }
+        });
+    </script>
 }

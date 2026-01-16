@@ -12,18 +12,21 @@ namespace Kajsmentkeri.Web.Pages.Championships;
 public class EditModel : PageModel
 {
     private readonly IChampionshipService _championshipService;
+    private readonly IMatchService _matchService;
     private readonly UserManager<AppUser> _userManager;
 
-    public EditModel(UserManager<AppUser> userManager, IChampionshipService championshipService)
+    public EditModel(UserManager<AppUser> userManager, IChampionshipService championshipService, IMatchService matchService)
     {
         _userManager = userManager;
         _championshipService = championshipService;
+        _matchService = matchService;
     }
 
     [BindProperty]
     public InputModel Input { get; set; } = new();
 
     public Guid Id { get; set; }
+    public List<MatchViewModel> Matches { get; set; } = new();
 
     public class InputModel
     {
@@ -53,13 +56,25 @@ public class EditModel : PageModel
         public int RarityPointsBonus { get; set; } = 0;
     }
 
+    public class MatchViewModel
+    {
+        public Guid Id { get; set; }
+        public string Teams { get; set; } = string.Empty;
+        public DateTime StartTimeUtc { get; set; }
+        public string? Result { get; set; }
+        public int PredictionCount { get; set; }
+    }
+
     public async Task<IActionResult> OnGetAsync(Guid id)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user?.IsAdmin != true)
             return Forbid();
 
-        var championship = await _championshipService.GetByIdAsync(id);
+        var championshipTask = _championshipService.GetByIdAsync(id);
+        var matchesTask = _matchService.GetMatchesByChampionshipAsync(id);
+
+        var championship = await championshipTask;
         if (championship == null)
             return NotFound();
 
@@ -75,13 +90,26 @@ public class EditModel : PageModel
             RarityPointsBonus = championship.ScoringRules?.RarityPointsBonus ?? 0
         };
 
+        var matches = await matchesTask;
+        Matches = matches.Select(m => new MatchViewModel
+        {
+            Id = m.Id,
+            Teams = $"{m.HomeTeam} - {m.AwayTeam}",
+            StartTimeUtc = m.StartTimeUtc,
+            Result = m.HomeScore.HasValue && m.AwayScore.HasValue ? $"{m.HomeScore}:{m.AwayScore}" : "-",
+            PredictionCount = m.Predictions.Count // This assumes Matches included Predictions. MatchService.GetMatchesByChampionshipAsync doesn't yet.
+        }).ToList();
+
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync(Guid id)
     {
         if (!ModelState.IsValid)
-            return Page();
+        {
+            // Reload matches if validation fails
+            return await OnGetAsync(id);
+        }
 
         var user = await _userManager.GetUserAsync(User);
         if (user?.IsAdmin != true)
@@ -108,5 +136,15 @@ public class EditModel : PageModel
         await _championshipService.UpdateChampionshipAsync(championship);
 
         return RedirectToPage("/Championships/List");
+    }
+
+    public async Task<IActionResult> OnPostDeleteMatchAsync(Guid id, Guid matchId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user?.IsAdmin != true)
+            return Forbid();
+
+        await _matchService.RemoveMatchAsync(matchId);
+        return RedirectToPage(new { id });
     }
 }

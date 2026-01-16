@@ -1,0 +1,51 @@
+@page "{id:guid}"
+@model Kajsmentkeri.Web.Pages.Matches.EditModel
+@{
+    ViewData["Title"] = "Edit Match";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h4 mb-0">Edit Match</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        <input type="hidden" asp-for="MatchId" />
+                        
+                        <div class="mb-3">
+                            <label asp-for="Input.HomeTeam" class="form-label fw-bold"></label>
+                            <input asp-for="Input.HomeTeam" class="form-control" placeholder="Home Team Name" />
+                            <span asp-validation-for="Input.HomeTeam" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.AwayTeam" class="form-label fw-bold"></label>
+                            <input asp-for="Input.AwayTeam" class="form-control" placeholder="Away Team Name" />
+                            <span asp-validation-for="Input.AwayTeam" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Input.StartTime" class="form-label fw-bold">Start Time (Local)</label>
+                            <input asp-for="Input.StartTime" class="form-control" type="datetime-local" />
+                            <span asp-validation-for="Input.StartTime" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-lg me-1"></i> Save Changes
+                            </button>
+                            <a asp-page="/Championships/Edit" asp-route-id="@Model.ChampionshipId" class="btn btn-outline-secondary px-4">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

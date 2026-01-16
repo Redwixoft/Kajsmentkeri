@@ -40,6 +40,7 @@ public class MatchService : IMatchService
     {
         using var context = _dbContextFactory.CreateDbContext();
         return await context.Matches
+            .Include(m => m.Predictions)
             .Where(m => m.ChampionshipId == championshipId)
             .OrderBy(m => m.StartTimeUtc)
             .ToListAsync();
@@ -57,12 +58,33 @@ public class MatchService : IMatchService
         await context.SaveChangesAsync();
     }
 
-    public async Task RemoveMatchAsync(Guid matchId)
+    public async Task UpdateMatchAsync(Guid matchId, string homeTeam, string awayTeam, DateTime startTime)
     {
         using var context = _dbContextFactory.CreateDbContext();
         var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        if (match == null) throw new InvalidOperationException("Match not found");
+
+        match.HomeTeam = homeTeam;
+        match.AwayTeam = awayTeam;
+        match.StartTimeUtc = startTime.ToUniversalTime();
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task RemoveMatchAsync(Guid matchId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var match = await context.Matches
+            .Include(m => m.Predictions)
+            .FirstOrDefaultAsync(m => m.Id == matchId);
 
         if (match == null) throw new InvalidOperationException("Match not found");
+        
+        if (match.Predictions.Any())
+        {
+            context.Predictions.RemoveRange(match.Predictions);
+        }
+        
         context.Matches.Remove(match);
 
         await context.SaveChangesAsync();

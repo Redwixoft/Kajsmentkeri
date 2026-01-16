@@ -47,14 +47,11 @@ public class PredictionService : IPredictionService
         prediction.PredictedAway = predictedAway;
 
         await context.SaveChangesAsync();
-
-
     }
 
     public async Task<DateTime> GetPredictionLockTimeAsync(Guid championshipId, Guid matchId, Guid userId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-
 
         var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null)
