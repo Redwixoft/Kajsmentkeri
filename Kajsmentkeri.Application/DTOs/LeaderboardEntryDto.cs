@@ -11,5 +11,5 @@ public class LeaderboardEntryDto
     public int OnlyCorrect { get; set; }
     public int ExactScores { get; set; }
 
-    public decimal SpecialLeaderboardPoints { get; set; }
+    public decimal RarityPoints { get; set; }
 }

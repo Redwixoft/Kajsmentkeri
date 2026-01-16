@@ -1,0 +1,98 @@
+@page "{id:guid}"
+@model Kajsmentkeri.Web.Pages.Championships.EditModel
+@{
+    ViewData["Title"] = "Edit Championship";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h4 mb-0">Edit Championship</h2>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        <div class="row g-3">
+                            <!-- Basic Information Section -->
+                            <div class="col-12 border-bottom pb-2 mb-2">
+                                <h5 class="text-secondary">Basic Information</h5>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label asp-for="Input.Name" class="form-label fw-bold"></label>
+                                <input asp-for="Input.Name" class="form-control" placeholder="Enter championship name" />
+                                <span asp-validation-for="Input.Name" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label asp-for="Input.Year" class="form-label fw-bold"></label>
+                                <input asp-for="Input.Year" class="form-control" type="number" />
+                                <span asp-validation-for="Input.Year" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Input.Description" class="form-label fw-bold"></label>
+                                <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Optional description"></textarea>
+                                <span asp-validation-for="Input.Description" class="text-danger small"></span>
+                            </div>
+
+                            <!-- Scoring Rules Section -->
+                            <div class="col-12 border-bottom pb-2 mt-4 mb-2">
+                                <h5 class="text-secondary">Scoring Rules</h5>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label asp-for="Input.PointsForCorrectWinner" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-trophy"></i></span>
+                                    <input asp-for="Input.PointsForCorrectWinner" class="form-control" type="number" />
+                                </div>
+                                <span asp-validation-for="Input.PointsForCorrectWinner" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label asp-for="Input.PointsForExactScore" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-bullseye"></i></span>
+                                    <input asp-for="Input.PointsForExactScore" class="form-control" type="number" />
+                                </div>
+                                <span asp-validation-for="Input.PointsForExactScore" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label asp-for="Input.PointsForOnlyCorrectWinner" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-star"></i></span>
+                                    <input asp-for="Input.PointsForOnlyCorrectWinner" class="form-control" type="number" />
+                                </div>
+                                <span asp-validation-for="Input.PointsForOnlyCorrectWinner" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label asp-for="Input.RarityPointsBonus" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-gem"></i></span>
+                                    <input asp-for="Input.RarityPointsBonus" class="form-control" type="number" />
+                                </div>
+                                <span asp-validation-for="Input.RarityPointsBonus" class="text-danger small"></span>
+                                <div class="form-text">If > 0, rarity points will be shown in leaderboard.</div>
+                            </div>
+
+                            <div class="col-12 mt-4 pt-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-check-lg me-1"></i> Save Changes
+                                </button>
+                                <a asp-page="/Championships/List" class="btn btn-outline-secondary px-4">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

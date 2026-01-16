@@ -39,6 +39,9 @@
                     </a>
                     @if (Model.IsAdmin)
                     {
+                        <a asp-page="/Championships/Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning ms-1">
+                            Edit
+                        </a>
                         <button type="button" class="btn btn-sm btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.Id" data-name="@item.Name">
                             Delete
                         </button>

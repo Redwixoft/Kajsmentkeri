@@ -9,5 +9,6 @@ public interface IChampionshipService
     Task<Championship> CreateChampionshipAsync(Championship championship);
     Task<Championship> CreateChampionshipAsync(string name, int year, string? description);
     Task<Championship?> GetLatestAsync();
+    Task UpdateChampionshipAsync(Championship championship);
     Task DeleteChampionshipAsync(Guid id);
 }

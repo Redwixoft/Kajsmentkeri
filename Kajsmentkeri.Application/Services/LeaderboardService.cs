@@ -58,7 +58,7 @@ public class LeaderboardService : ILeaderboardService
                 OneGoalMisses = g.OneGoalMisses,
                 OnlyCorrect = g.OnlyCorrect,
                 ExactScores = g.ExactScores,
-                SpecialLeaderboardPoints = g.RarityPoints
+                RarityPoints = g.RarityPoints
             })
             .OrderByDescending(x => x.TotalPoints)
             .ThenByDescending(x => x.CorrectWinners)
@@ -106,7 +106,7 @@ public class LeaderboardService : ILeaderboardService
                 OneGoalMisses = g.OneGoalMisses,
                 OnlyCorrect = g.OnlyCorrect,
                 ExactScores = g.ExactScores,
-                SpecialLeaderboardPoints = g.RarityPoints
+                RarityPoints = g.RarityPoints
             })
             .OrderByDescending(x => x.TotalPoints)
             .ThenByDescending(x => x.CorrectWinners)

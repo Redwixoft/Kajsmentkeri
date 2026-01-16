@@ -36,6 +36,10 @@
                     <th>One-goal misses</th>
                     <th>Luckers</th>
                     <th>Only ones</th>                    
+                    @if (Model.Championship?.ScoringRules?.RarityPointsBonus > 0)
+                    {
+                        <th>Rarity points</th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -75,6 +79,10 @@
                         <td>@entry.OneGoalMisses</td>
                         <td>@entry.ExactScores</td>
                         <td>@entry.OnlyCorrect</td>
+                        @if (Model.Championship?.ScoringRules?.RarityPointsBonus > 0)
+                        {
+                            <td>@entry.RarityPoints</td>
+                        }
                     </tr>
                 }
             </tbody>

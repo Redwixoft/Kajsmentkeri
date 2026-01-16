@@ -89,6 +89,30 @@ public class ChampionshipService : IChampionshipService
         return championship;
     }
 
+    public async Task UpdateChampionshipAsync(Championship championship)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var existing = await context.Championships
+            .Include(c => c.ScoringRules)
+            .FirstOrDefaultAsync(c => c.Id == championship.Id);
+
+        if (existing == null) throw new InvalidOperationException("Championship not found");
+
+        existing.Name = championship.Name;
+        existing.Year = championship.Year;
+        existing.Description = championship.Description;
+
+        if (existing.ScoringRules != null && championship.ScoringRules != null)
+        {
+            existing.ScoringRules.PointsForCorrectWinner = championship.ScoringRules.PointsForCorrectWinner;
+            existing.ScoringRules.PointsForExactScore = championship.ScoringRules.PointsForExactScore;
+            existing.ScoringRules.PointsForOnlyCorrectWinner = championship.ScoringRules.PointsForOnlyCorrectWinner;
+            existing.ScoringRules.RarityPointsBonus = championship.ScoringRules.RarityPointsBonus;
+        }
+
+        await context.SaveChangesAsync();
+    }
+
     public async Task DeleteChampionshipAsync(Guid id)
     {
         using var context = _dbContextFactory.CreateDbContext();
