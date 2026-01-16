@@ -22,7 +22,9 @@ public class MatchService : IMatchService
             ChampionshipId = championshipId,
             HomeTeam = homeTeam,
             AwayTeam = awayTeam,
-            StartTimeUtc = startTime.ToUniversalTime()
+            StartTimeUtc = startTime.Kind == DateTimeKind.Unspecified 
+                ? DateTime.SpecifyKind(startTime, DateTimeKind.Utc) 
+                : startTime.ToUniversalTime()
         };
 
         using var context = _dbContextFactory.CreateDbContext();
@@ -66,7 +68,9 @@ public class MatchService : IMatchService
 
         match.HomeTeam = homeTeam;
         match.AwayTeam = awayTeam;
-        match.StartTimeUtc = startTime.ToUniversalTime();
+        match.StartTimeUtc = startTime.Kind == DateTimeKind.Unspecified 
+            ? DateTime.SpecifyKind(startTime, DateTimeKind.Utc) 
+            : startTime.ToUniversalTime();
 
         await context.SaveChangesAsync();
     }

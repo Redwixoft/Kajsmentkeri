@@ -109,7 +109,7 @@
         @foreach (var match in Model.Matches)
         {
             var hasResult = match.HomeScore != null && match.AwayScore != null;
-            var matchStarted = match.StartTimeUtc <= DateTime.UtcNow;            
+            var matchStarted = match.StartTimeUtc <= DateTime.Now;            
             <tr>
                 <td>
                     <div class="d-flex align-items-center justify-content-center">
@@ -230,7 +230,7 @@
     public async Task<bool> IsPredictionLocked(Guid championshipId, Guid matchId, Guid userId)
     {
         var predictionLockTime = await PredictionService.GetPredictionLockTimeAsync(championshipId, matchId, userId);
-        return predictionLockTime <= DateTime.UtcNow;
+        return predictionLockTime <= DateTime.Now;
     }
 
     public string GetStartTimeString(DateTime utcDateTime)

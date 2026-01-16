@@ -56,7 +56,7 @@ public class EditModel : PageModel
         {
             HomeTeam = match.HomeTeam,
             AwayTeam = match.AwayTeam,
-            StartTime = match.StartTimeUtc.ToLocalTime()
+            StartTime = match.StartTimeUtc
         };
 
         return Page();

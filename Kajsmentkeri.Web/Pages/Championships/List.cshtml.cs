@@ -25,11 +25,11 @@ public class ListModel : PageModel
 
     public async Task OnGetAsync()
     {
-        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) start: {DateTime.Now}");
+        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) start: {DateTime.UtcNow}");
 
         var championships = await _championshipService.GetAllAsync();
 
-        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) championship loaded: {DateTime.Now}");
+        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) championship loaded: {DateTime.UtcNow}");
 
         // Fetch all users once
         var users = await _userManager.Users.ToListAsync();
@@ -48,7 +48,7 @@ public class ListModel : PageModel
         var currentUser = await _userManager.GetUserAsync(User);
         IsAdmin = currentUser?.IsAdmin == true;
 
-        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.Now}");
+        _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.UtcNow}");
     }
 
 

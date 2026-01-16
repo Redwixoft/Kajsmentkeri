@@ -22,9 +22,9 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="Input.StartTime" class="form-label"></label>
+        <label asp-for="Input.StartTime" class="form-label">Start Time</label>
         @{
-            var nowString = DateTime.UtcNow.ToString("MM/dd/yyyy", System.Globalization.CultureInfo.InvariantCulture) + " 04:00 PM";
+            var nowString = DateTime.Now.ToString("yyyy-MM-ddTHH:mm");
         }
         <input asp-for="Input.StartTime" type="datetime-local" class="form-control" value="@nowString" />
         <span asp-validation-for="Input.StartTime" class="text-danger"></span>

@@ -124,7 +124,7 @@ public class DetailsModel : PageModel
             await _scoringService.RecalculateForMatchAsync(match.Id);
         }
 
-        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {DateTime.Now}");
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {DateTime.UtcNow}");
         return RedirectToPage(new { id });
     }
 
@@ -170,7 +170,7 @@ public class DetailsModel : PageModel
             return Forbid();
 
         var match = await _matchService.GetMatchByIdAsync(MatchId);
-        if (match == null || match.StartTimeUtc > DateTime.UtcNow)
+        if (match == null || match.StartTimeUtc > DateTime.Now)
             return BadRequest("Cannot update result before match starts.");
 
         var parts = ResultInput.Split(':');
@@ -183,7 +183,7 @@ public class DetailsModel : PageModel
         await _matchService.UpdateMatchResultAsync(MatchId, home, away);
         await _scoringService.RecalculateForMatchAsync(MatchId);
 
-        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.Now}");
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.UtcNow}");
         return RedirectToPage(new { id });
     }
 
