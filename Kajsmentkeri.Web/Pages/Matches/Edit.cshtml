@@ -1,7 +1,7 @@
 @page "{matchId:guid}"
 @model Kajsmentkeri.Web.Pages.Matches.EditModel
 @{
-    ViewData["Title"] = "Edit Match";
+    ViewData["Title"] = $"Edit Match: {Model.Input.HomeTeam} vs {Model.Input.AwayTeam}";
 }
 
 <div class="container py-4">

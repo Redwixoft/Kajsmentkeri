@@ -4,7 +4,7 @@
 @inject Kajsmentkeri.Application.Interfaces.IPredictionService PredictionService
 @model Kajsmentkeri.Web.Pages.Championships.DetailsModel
 @{
-    ViewData["Title"] = "Championship Details";
+    ViewData["Title"] = $"{Model.Championship?.Name} ({Model.Championship?.Year})";
 }
 
 <h2>@Model.Championship?.Name (@Model.Championship?.Year)</h2>
