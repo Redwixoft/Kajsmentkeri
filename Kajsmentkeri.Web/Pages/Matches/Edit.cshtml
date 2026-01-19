@@ -1,4 +1,4 @@
-@page "{id:guid}"
+@page "{matchId:guid}"
 @model Kajsmentkeri.Web.Pages.Matches.EditModel
 @{
     ViewData["Title"] = "Edit Match";
@@ -6,10 +6,11 @@
 
 <div class="container py-4">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0">
+        <!-- Match Details Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
                 <div class="card-header bg-primary text-white py-3">
-                    <h2 class="h4 mb-0">Edit Match</h2>
+                    <h2 class="h4 mb-0">Edit Match Details</h2>
                 </div>
                 <div class="card-body p-4">
                     <form method="post">
@@ -17,13 +18,13 @@
                         
                         <div class="mb-3">
                             <label asp-for="Input.HomeTeam" class="form-label fw-bold"></label>
-                            <input asp-for="Input.HomeTeam" class="form-control" placeholder="Home Team Name" />
+                            <input asp-for="Input.HomeTeam" class="form-control" />
                             <span asp-validation-for="Input.HomeTeam" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Input.AwayTeam" class="form-label fw-bold"></label>
-                            <input asp-for="Input.AwayTeam" class="form-control" placeholder="Away Team Name" />
+                            <input asp-for="Input.AwayTeam" class="form-control" />
                             <span asp-validation-for="Input.AwayTeam" class="text-danger small"></span>
                         </div>
 
@@ -35,11 +36,101 @@
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary px-4">
-                                <i class="bi bi-check-lg me-1"></i> Save Changes
+                                <i class="bi bi-check-lg me-1"></i> Save Details
                             </button>
                             <a asp-page="/Championships/Edit" asp-route-id="@Model.ChampionshipId" class="btn btn-outline-secondary px-4">Cancel</a>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Prediction Section -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-success text-white py-3">
+                    <h2 class="h4 mb-0">Add User Prediction</h2>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small mb-3">Add a new prediction for a user who hasn't placed one yet.</p>
+                    <form method="post" asp-page-handler="AddPrediction">
+                        <input type="hidden" asp-for="MatchId" />
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select User</label>
+                            <select asp-for="NewPrediction.UserId" class="form-select" required>
+                                <option value="">-- Choose User --</option>
+                                @foreach (var user in Model.AvailableUsers)
+                                {
+                                    <option value="@user.Id">@user.UserName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-4">
+                            <div class="col">
+                                <label class="form-label fw-bold">Home Score</label>
+                                <input asp-for="NewPrediction.HomeScore" class="form-control text-center" type="number" min="0" />
+                            </div>
+                            <div class="col-auto d-flex align-items-end pb-2">
+                                <span class="fs-4">:</span>
+                            </div>
+                            <div class="col">
+                                <label class="form-label fw-bold">Away Score</label>
+                                <input asp-for="NewPrediction.AwayScore" class="form-control text-center" type="number" min="0" />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-plus-circle me-1"></i> Add Prediction
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Existing Predictions Section -->
+        <div class="col-md-10 mt-2">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white py-3">
+                    <h2 class="h5 mb-0">Manage Existing Predictions</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">User</th>
+                                    <th class="text-center" style="width: 250px;">Score Prediction</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pred in Model.MatchPredictions)
+                                {
+                                    <tr>
+                                        <td class="ps-4 fw-bold">@pred.UserName</td>
+                                        <td>
+                                            <form method="post" asp-page-handler="UpdatePrediction" id="form-@pred.UserId" class="d-flex align-items-center justify-content-center gap-2">
+                                                <input type="hidden" name="userId" value="@pred.UserId" />
+                                                <input type="number" name="homeScore" value="@pred.HomeScore" class="form-control form-control-sm text-center" style="width: 60px;" min="0" />
+                                                <span>:</span>
+                                                <input type="number" name="awayScore" value="@pred.AwayScore" class="form-control form-control-sm text-center" style="width: 60px;" min="0" />
+                                            </form>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <button type="submit" form="form-@pred.UserId" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-save me-1"></i> Update
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.MatchPredictions.Any())
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">No predictions found for this match.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

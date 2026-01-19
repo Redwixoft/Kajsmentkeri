@@ -112,9 +112,9 @@
             var matchStarted = match.StartTimeUtc <= DateTime.Now;            
             <tr>
                 <td>
-                    <div class="d-flex align-items-center justify-content-center">
+                    <div class="d-flex align-items-center justify-content-center" onclick="showAuditLogs('@match.Id', '@match.HomeTeam - @match.AwayTeam')" style="cursor: pointer;" title="Admin prediction change history">
                         <img src="/images/flags/@(match.HomeTeam).png" class="team-flag me-2" alt="" onerror="this.style.display='none'" />
-                        <span>@match.HomeTeam - @match.AwayTeam</span>
+                        <span class="text-primary text-decoration-none">@match.HomeTeam - @match.AwayTeam</span>
                         <img src="/images/flags/@(match.AwayTeam).png" class="team-flag ms-2" alt="" onerror="this.style.display='none'" />
                     </div>
                 </td>
@@ -307,31 +307,7 @@
                                     // Toggle visibility
                                     form.classList.add('d-none');
                                     displayEl.style.display = 'block';
-                                    
-                                    // Optional: Feedback flash
-                                    // Could add a temporary green border or something
                                 } else {
-                                    // Fallback if display element missing (e.g. first prediction)
-                                    // For first prediction, the display element might be inside the 'if (hasPrediction)' block which wasn't rendered.
-                                    // However, simpler to reload or just alert success if UI structure is rigid.
-                                    // BUT, the HTML structure has separate blocks for 'hasPrediction' vs 'else'.
-                                    // If we are in the 'else' block, there is no display element yet.
-                                    // We need to refresh to get the full UI state (edit button etc) OR manually construct it.
-                                    // For "Update database, but leave page as is", just showing it is saved is enough?
-                                    // The user request said: "omit this [reload], just update the database, but leave the page as it is."
-                                    // If I enter a prediction where there was none, and I want to edit it again, I can't unless I reload.
-                                    // So for the "first prediction" case, maybe we reload? Or we just hide the form and show a static text.
-                                    
-                                    // Let's reload if it was a new prediction to ensure consistent state (edit buttons etc), 
-                                    // OR just accept that they have to reload to edit again.
-                                    // User said: "leave the page as it is". So I will try to update UI in place.
-                                    
-                                    // Ideally we would swap the 'form' with the 'display div'. 
-                                    // But the DOM hierarchy differs.
-                                    // Let's just create a fake display text and hide the form?
-                                    // Actually, if it's the first time, 'displayEl' is null because it's not rendered.
-                                    // So we reload for the first time? Or show "Saved" and clear input?
-                                    // Let's reload only if we can't find displayEl (new prediction case).
                                     location.reload(); 
                                 }
                             } else {
@@ -383,5 +359,61 @@
                 }
             }
         });
+    </script>
+
+    <!-- Prediction Audit Log Modal -->
+    <div class="modal fade" id="auditLogModal" tabindex="-1" aria-labelledby="auditLogModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title" id="auditLogModalLabel">Match Revision History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 id="auditMatchName" class="mb-3"></h6>
+                    <div id="auditLogContent" class="list-group list-group-flush">
+                        <!-- Logs will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showAuditLogs(matchId, matchName) {
+            const modal = new bootstrap.Modal(document.getElementById('auditLogModal'));
+            const content = document.getElementById('auditLogContent');
+            const matchNameEl = document.getElementById('auditMatchName');
+
+            matchNameEl.textContent = matchName;
+            content.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading history...</p></div>';
+            
+            modal.show();
+
+            fetch(`?handler=AuditLogs&matchId=${matchId}`)
+                .then(response => response.json())
+                .then(logs => {
+                    if (logs.length === 0) {
+                        content.innerHTML = '<div class="text-center py-4 text-muted">No administrative changes recorded for this match.</div>';
+                        return;
+                    }
+
+                    content.innerHTML = logs.map(log => `
+                        <div class="list-group-item px-0 py-3">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <small class="text-muted fw-bold">${log.timestamp}</small>
+                            </div>
+                            <p class="mb-1 small">${log.message}</p>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error fetching audit logs:', error);
+                    content.innerHTML = '<div class="text-center py-4 text-danger">Failed to load history. Please try again.</div>';
+                });
+        }
     </script>
 }

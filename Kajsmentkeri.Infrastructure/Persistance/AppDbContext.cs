@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<ChampionshipScoringRules> ChampionshipScoringRules => Set<ChampionshipScoringRules>();
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Prediction> Predictions => Set<Prediction>();
+    public DbSet<PredictionAuditLog> PredictionAuditLogs => Set<PredictionAuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
