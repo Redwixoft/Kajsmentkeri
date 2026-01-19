@@ -106,10 +106,15 @@
         </tr>
     </thead>
     <tbody>
+        @{
+            var leaderName = Model.Leaderboard.FirstOrDefault()?.UserName ?? "???";
+            var trailingName = Model.Leaderboard.LastOrDefault()?.UserName ?? "???";
+        }
         @foreach (var match in Model.Matches)
         {
             var hasResult = match.HomeScore != null && match.AwayScore != null;
-            var matchStarted = match.StartTimeUtc <= DateTime.Now;            
+            var matchStarted = match.StartTimeUtc <= DateTime.Now;
+            var tooltip = GetMatchTooltip(match, leaderName, trailingName);
             <tr>
                 <td>
                     <div class="d-flex align-items-center justify-content-center" onclick="showAuditLogs('@match.Id', '@match.HomeTeam - @match.AwayTeam')" style="cursor: pointer;" title="Admin prediction change history">
@@ -118,7 +123,7 @@
                         <img src="/images/flags/@(match.AwayTeam).png" class="team-flag ms-2" alt="" onerror="this.style.display='none'" />
                     </div>
                 </td>
-                <td>@GetStartTimeString(match.StartTimeUtc)</td>
+                <td title="@tooltip">@GetStartTimeString(match.StartTimeUtc)</td>
 
                 <!-- RESULT -->
                 <th>
@@ -236,6 +241,49 @@
     public string GetStartTimeString(DateTime utcDateTime)
     {
         return utcDateTime.Day + "." + utcDateTime.Month + "." + utcDateTime.Year + " " + utcDateTime.Hour.ToString("00") + ":" + utcDateTime.Minute.ToString("00");
+    }
+
+    public string GetMatchTooltip(Match match, string leaderName, string trailingName)
+    {
+        var now = DateTime.Now;
+        var start = match.StartTimeUtc;
+        var tooltip = "";
+
+        if (start > now)
+        {
+            var diff = start.AddMinutes(1) - now;
+            var parts = new List<string>();
+            if (diff.Days > 1) parts.Add($"{diff.Days} days");
+            else if (diff.Days == 1) parts.Add("1 day");
+            
+            if (diff.Hours > 1) parts.Add($"{diff.Hours} hours");
+            else if (diff.Hours == 1) parts.Add("1 hour");
+
+            if (diff.Minutes > 1) parts.Add($"{diff.Minutes} minutes");
+            else if (diff.Minutes == 1) parts.Add("1 minute");
+
+            string timeStr = "";
+            if (parts.Count == 1) timeStr = parts[0];
+            else if (parts.Count == 2) timeStr = $"{parts[0]} and {parts[1]}";
+            else if (parts.Count >= 3) timeStr = $"{string.Join(", ", parts.Take(parts.Count - 1))} and {parts.Last()}";
+
+            if (!string.IsNullOrEmpty(timeStr))
+            {
+                tooltip = $"In {timeStr}";
+            }
+
+            if (diff.TotalMinutes < 10)
+            {
+                if (!string.IsNullOrEmpty(tooltip)) tooltip += ". ";
+                tooltip += $"Leader {leaderName} cannot add predictions";
+            }
+        }
+        else if (now <= start.AddMinutes(5))
+        {
+            tooltip = $"Last user {trailingName} still can add prediction";
+        }
+
+        return tooltip;
     }
 }
 
