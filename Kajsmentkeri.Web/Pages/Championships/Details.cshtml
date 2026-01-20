@@ -17,9 +17,14 @@
 
 @if (Model.IsAdmin)
 {
-    <a class="btn btn-primary mb-3" asp-page="/Matches/Add" asp-route-championshipId="@Model.Championship!.Id">
-        ➕ Add Match
-    </a>
+    <div class="mb-3 d-flex gap-2">
+        <a class="btn btn-primary" asp-page="/Matches/Add" asp-route-championshipId="@Model.Championship!.Id">
+            ➕ Add Match
+        </a>
+        <a class="btn btn-warning text-dark" asp-page="/Championships/Edit" asp-route-id="@Model.Championship!.Id">
+            ✏️ Edit Championship
+        </a>
+    </div>
     <hr />
 }
 
