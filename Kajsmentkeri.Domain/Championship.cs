@@ -6,6 +6,7 @@ public class Championship
     public string Name { get; set; } = string.Empty;
     public int Year { get; set; }
     public string? Description { get; set; }
+    public bool EnforceLeaderboardVisibilityRules { get; set; }
 
     public Guid CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }

@@ -177,9 +177,24 @@
                     var hasPrediction = Model.PredictionMap.TryGetValue(key, out var prediction);
                     var isPredictionLocked = await IsPredictionLocked(Model.Championship!.Id, match.Id, user.UserId);
                     var predictionCss = @GetPredictionCssClass(prediction, hasResult);
+                    
+                    var isOwnColumn = user.UserId == Model.CurrentUserId;
+                    
+                    var isVisible = true;
+                    if (Model.IsVisibilityRuleActive && !matchStarted && !isOwnColumn)
+                    {
+                        var myRank = Model.UserRanks.GetValueOrDefault(Model.CurrentUserId ?? Guid.Empty, int.MaxValue);
+                        var targetRank = Model.UserRanks.GetValueOrDefault(user.UserId, int.MaxValue);
+                        
+                        // Rule: See others only if they are below you (targetRank < myRank)
+                        if (myRank <= targetRank) 
+                        {
+                            isVisible = false;
+                        }
+                    }
+
                     <td class="prediction-cell @predictionCss">
                         @{
-                            var isOwnColumn = user.UserId == Model.CurrentUserId;                            
                             var cellId = $"edit-{match.Id}-{user.UserId}";
                             var canEdit = isOwnColumn && !isPredictionLocked;
                         }
@@ -187,7 +202,15 @@
                         @if (hasPrediction || canEdit)
                         {
                             <div id="@cellId-display" style="@(hasPrediction ? "" : "display:none")">
-                                <span>@prediction</span>
+                                @if (isVisible || canEdit)
+                                {
+                                    <span>@prediction</span>
+                                }
+                                else if (hasPrediction)
+                                {
+                                    <span title="Hidden until match starts">🔒</span>
+                                }
+                                
                                 @if (canEdit)
                                 {
                                     <button type="button" class="btn btn-warning btn-sm ms-1" onclick="showEdit('@cellId')">

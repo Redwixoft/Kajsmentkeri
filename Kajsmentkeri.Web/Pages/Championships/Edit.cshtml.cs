@@ -54,6 +54,9 @@ public class EditModel : PageModel
         [Display(Name = "Points for rarity")]
         [Range(0, 10)]
         public int RarityPointsBonus { get; set; } = 0;
+
+        [Display(Name = "Enforce leaderboard-based prediction visibility")]
+        public bool EnforceLeaderboardVisibilityRules { get; set; }
     }
 
     public class MatchViewModel
@@ -87,7 +90,8 @@ public class EditModel : PageModel
             PointsForCorrectWinner = championship.ScoringRules?.PointsForCorrectWinner ?? 3,
             PointsForExactScore = championship.ScoringRules?.PointsForExactScore ?? 2,
             PointsForOnlyCorrectWinner = championship.ScoringRules?.PointsForOnlyCorrectWinner ?? 2,
-            RarityPointsBonus = championship.ScoringRules?.RarityPointsBonus ?? 0
+            RarityPointsBonus = championship.ScoringRules?.RarityPointsBonus ?? 0,
+            EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules
         };
 
         var matches = await matchesTask;
@@ -122,6 +126,7 @@ public class EditModel : PageModel
         championship.Name = Input.Name;
         championship.Year = Input.Year;
         championship.Description = Input.Description;
+        championship.EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules;
 
         if (championship.ScoringRules == null)
         {

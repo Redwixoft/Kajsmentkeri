@@ -43,6 +43,12 @@
         <span asp-validation-for="Input.PointsForOnlyCorrectWinner" class="text-danger" value="2"></span>
     </div>
 
+    <div class="mb-3 form-check">
+        <input asp-for="Input.EnforceLeaderboardVisibilityRules" class="form-check-input" />
+        <label asp-for="Input.EnforceLeaderboardVisibilityRules" class="form-check-label"></label>
+        <span asp-validation-for="Input.EnforceLeaderboardVisibilityRules" class="text-danger"></span>
+    </div>
+
     <button type="submit" class="btn btn-primary">Create</button>
 </form>
 

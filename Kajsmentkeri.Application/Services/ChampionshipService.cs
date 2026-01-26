@@ -101,6 +101,7 @@ public class ChampionshipService : IChampionshipService
         existing.Name = championship.Name;
         existing.Year = championship.Year;
         existing.Description = championship.Description;
+        existing.EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules;
 
         if (existing.ScoringRules != null && championship.ScoringRules != null)
         {

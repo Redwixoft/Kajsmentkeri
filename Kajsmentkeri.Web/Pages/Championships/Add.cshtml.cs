@@ -50,6 +50,9 @@ public class AddModel : PageModel
         [Display(Name = "Points for rarity")]
         [Range(0, 10)]
         public int RarityPointsBonus { get; set; } = 0;
+
+        [Display(Name = "Enforce leaderboard-based prediction visibility")]
+        public bool EnforceLeaderboardVisibilityRules { get; set; }
     }
 
     public void OnGet()
@@ -72,6 +75,7 @@ public class AddModel : PageModel
             Name = Input.Name,
             Year = Input.Year,
             Description = Input.Description,
+            EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules,
             CreatedById = user.Id,
             CreatedAt = DateTime.UtcNow,
             ScoringRules = new ChampionshipScoringRules

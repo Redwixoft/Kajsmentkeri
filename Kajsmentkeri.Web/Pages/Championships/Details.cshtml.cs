@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-
 namespace Kajsmentkeri.Web.Pages.Championships;
 
 public class DetailsModel : PageModel
@@ -40,6 +39,8 @@ public class DetailsModel : PageModel
     public Dictionary<(Guid MatchId, Guid UserId), Prediction> PredictionMap { get; set; } = new();
     public List<LeaderboardEntryDto> Leaderboard { get; set; } = new();
     public LineGraphViewModel Graph { get; set; } = new();
+    public Dictionary<Guid, int> UserRanks { get; set; } = new();
+    public bool IsVisibilityRuleActive { get; set; }
 
     [BindProperty]
     public Guid MatchId { get; set; }
@@ -94,8 +95,16 @@ public class DetailsModel : PageModel
             p => p
         );
 
-        Graph = await leaderboardProgressTask; 
+        // Visibility Rule Logic
+        var finishedMatchesCount = Matches.Count(m => m.HomeScore.HasValue && m.AwayScore.HasValue);
+        IsVisibilityRuleActive = Championship.EnforceLeaderboardVisibilityRules && finishedMatchesCount >= 8;
 
+        for (int i = 0; i < Leaderboard.Count; i++)
+        {
+            UserRanks[Leaderboard[i].UserId] = i + 1;
+        }
+
+        Graph = await leaderboardProgressTask; 
         return Page();
     }
 
