@@ -181,15 +181,22 @@
                     var isOwnColumn = user.UserId == Model.CurrentUserId;
                     
                     var isVisible = true;
-                    if (Model.IsVisibilityRuleActive && !matchStarted && !isOwnColumn)
+                    if (!matchStarted && !isOwnColumn)
                     {
-                        var myRank = Model.UserRanks.GetValueOrDefault(Model.CurrentUserId ?? Guid.Empty, int.MaxValue);
-                        var targetRank = Model.UserRanks.GetValueOrDefault(user.UserId, int.MaxValue);
-                        
-                        // Rule: See others only if they are below you (targetRank < myRank)
-                        if (myRank <= targetRank) 
+                        if (Model.CurrentUserId == null)
                         {
                             isVisible = false;
+                        }
+                        else if (Model.IsVisibilityRuleActive)
+                        {
+                            var myRank = Model.UserRanks.GetValueOrDefault(Model.CurrentUserId.Value, int.MaxValue);
+                            var targetRank = Model.UserRanks.GetValueOrDefault(user.UserId, int.MaxValue);
+                            
+                            // Rule: See others only if they are below you (targetRank < myRank)
+                            if (myRank <= targetRank) 
+                            {
+                                isVisible = false;
+                            }
                         }
                     }
 
