@@ -11,4 +11,5 @@ public interface IChampionshipService
     Task<Championship?> GetLatestAsync();
     Task UpdateChampionshipAsync(Championship championship);
     Task DeleteChampionshipAsync(Guid id);
+    Task EndChampionshipAsync(Guid championshipId);
 }

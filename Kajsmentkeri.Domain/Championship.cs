@@ -7,6 +7,8 @@ public class Championship
     public int Year { get; set; }
     public string? Description { get; set; }
     public bool EnforceLeaderboardVisibilityRules { get; set; }
+    public bool SupportsChampionshipWinnerPrediction { get; set; }
+    public bool IsChampionshipEnded { get; set; }
 
     public Guid CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }

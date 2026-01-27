@@ -13,8 +13,27 @@
     {
         <span class="badge bg-warning text-dark align-middle fs-6">TEST</span>
     }
+    @if (Model.Championship?.IsChampionshipEnded == true)
+    {
+        <span class="badge bg-danger align-middle fs-6">ENDED</span>
+    }
 </h2>
 <p>@Model.Championship?.Description</p>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 @if (Model.IsAdmin)
 {
@@ -30,6 +49,12 @@
         <a class="btn btn-warning text-dark" asp-page="/Championships/Edit" asp-route-id="@Model.Championship!.Id">
             ✏️ Edit Championship
         </a>
+        @if (Model.Championship.SupportsChampionshipWinnerPrediction && !Model.Championship.IsChampionshipEnded && Model.Matches.All(m => m.HomeScore.HasValue && m.AwayScore.HasValue))
+        {
+            <button type="button" class="btn btn-danger ms-auto" data-bs-toggle="modal" data-bs-target="#endChampionshipModal">
+                🏁 End Championship
+            </button>
+        }
     </div>
     <hr />
 }
@@ -79,6 +104,16 @@
                             {
                                 <span>👉</span>
                             }
+                            
+                            @{
+                                var userWinnerPred = Model.AllWinnerPredictions.FirstOrDefault(p => p.UserId == entry.UserId);
+                            }
+                            
+                            @if (userWinnerPred != null)
+                            {
+                                <img src="/images/flags/@(userWinnerPred.TeamName).png" class="team-flag me-1" alt="@userWinnerPred.TeamName" title="Predicted winner: @userWinnerPred.TeamName" onerror="this.style.display='none'" />
+                            }
+
                             @entry.UserName
                             @if (Model.CurrentUserId == entry.UserId)
                             {
@@ -101,6 +136,89 @@
         </table>
     </div>
 </div>
+
+@if (Model.Championship!.SupportsChampionshipWinnerPrediction)
+{
+    <div class="card bg-light mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Championship Winner Prediction</h5>
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    @if (Model.MyWinnerPrediction != null)
+                    {
+                        <p class="mb-0">
+                            Your prediction: <strong>@Model.MyWinnerPrediction.TeamName</strong>
+                            @if (Model.Championship.IsChampionshipEnded)
+                            {
+                                <span class="ms-2 badge @(Model.MyWinnerPrediction.PointsAwarded > 0 ? "bg-success" : "bg-danger")">
+                                    @(Model.MyWinnerPrediction.PointsAwarded ?? 0) points
+                                </span>
+                            }
+                        </p>
+                    }
+                    else if (!Model.Championship.IsChampionshipEnded)
+                    {
+                        <p class="mb-0 text-muted italic">You haven't made a winner prediction yet.</p>
+                    }
+                </div>
+                <div class="col-md-6 text-md-end">
+                    @{
+                        var firstMatchStartTime = Model.Matches.FirstOrDefault()?.StartTimeUtc ?? DateTime.MaxValue;
+                        var canChangeWinnerPrediction = !Model.Championship.IsChampionshipEnded && firstMatchStartTime > DateTime.UtcNow;
+                    }
+
+                    @if (canChangeWinnerPrediction)
+                    {
+                        <form method="post" asp-page-handler="SubmitWinnerPrediction" class="d-flex gap-2 justify-content-md-end">
+                            <select asp-for="WinnerTeamName" class="form-select form-select-sm w-auto">
+                                <option value="">Select Team...</option>
+                                @foreach (var team in Model.AllTeams)
+                                {
+                                    <option value="@team" selected="@(Model.MyWinnerPrediction?.TeamName == team ? "selected" : null)">@team</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Save Prediction</button>
+                        </form>
+                    }
+                    else if (!Model.Championship.IsChampionshipEnded)
+                    {
+                        <span class="badge bg-secondary">Locked (Championship Started)</span>
+                    }
+                </div>
+            </div>
+            
+            @if (Model.Championship.IsChampionshipEnded)
+            {
+                <div class="mt-3">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#allWinnerPredictions">
+                        Show all user predictions
+                    </button>
+                    <div class="collapse mt-2" id="allWinnerPredictions">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Predicted Winner</th>
+                                    <th>Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pred in Model.AllWinnerPredictions.OrderByDescending(p => p.PointsAwarded))
+                                {
+                                    <tr>
+                                        <td>@Model.Users.FirstOrDefault(u => u.UserId == pred.UserId)?.UserName</td>
+                                        <td>@pred.TeamName</td>
+                                        <td><strong>@pred.PointsAwarded</strong></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
 
 <hr />
 
@@ -471,6 +589,40 @@
         </div>
     </div>
 
+    @if (Model.IsAdmin)
+    {
+        <!-- End Championship Confirmation Modal -->
+        <div class="modal fade" id="endChampionshipModal" tabindex="-1" aria-labelledby="endChampionshipModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" asp-page-handler="EndChampionship">
+                        <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="endChampionshipModalLabel">End Championship?</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Warning!</strong> This action is permanent.
+                            </div>
+                            <p>Ending the championship will:</p>
+                            <ul>
+                                <li>Automatically determine tournament winners based on the last two matches.</li>
+                                <li>Award points to users for their championship winner predictions.</li>
+                                <li>Lock the championship from further changes.</li>
+                            </ul>
+                            <p>Are you sure you want to end <strong>@Model.Championship!.Name</strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Yes, End Championship</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -495,6 +647,24 @@
                         </li>
                     </ul>
 
+                    @if (Model.Championship?.SupportsChampionshipWinnerPrediction == true)
+                    {
+                        <h6>Winner Prediction Scoring</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Gold Medal Winner
+                                <span class="badge bg-warning text-dark rounded-pill">@Model.Championship?.ScoringRules?.PointsForChampionshipWinner</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Silver Medal Winner
+                                <span class="badge bg-light text-dark border rounded-pill">@Model.Championship?.ScoringRules?.PointsForChampionshipRunnerUp</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Bronze Medal Winner
+                                <span class="badge bg-warning bg-opacity-50 text-dark rounded-pill">@Model.Championship?.ScoringRules?.PointsForChampionshipThirdPlace</span>
+                            </li>
+                        </ul>
+                    }
                     <h6>Rarity Points</h6>
                     <div class="alert alert-info py-2">
                         <small>ℹ️ Rarity points are a future experimental feature.</small>

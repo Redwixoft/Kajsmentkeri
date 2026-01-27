@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Match> Matches => Set<Match>();
     public DbSet<Prediction> Predictions => Set<Prediction>();
     public DbSet<PredictionAuditLog> PredictionAuditLogs => Set<PredictionAuditLog>();
+    public DbSet<ChampionshipWinnerPrediction> ChampionshipWinnerPredictions => Set<ChampionshipWinnerPrediction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,17 @@ public class AppDbContext : DbContext
         // So enforce one prediction per user per match
         modelBuilder.Entity<Prediction>()
             .HasIndex(p => new { p.UserId, p.MatchId })
+            .IsUnique();
+
+        // ChampionshipWinnerPrediction
+        modelBuilder.Entity<ChampionshipWinnerPrediction>()
+            .HasOne(p => p.Championship)
+            .WithMany()
+            .HasForeignKey(p => p.ChampionshipId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<ChampionshipWinnerPrediction>()
+            .HasIndex(p => new { p.UserId, p.ChampionshipId })
             .IsUnique();
     }
 }

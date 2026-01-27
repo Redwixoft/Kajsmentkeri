@@ -94,6 +94,32 @@
                                     <span asp-validation-for="Input.IsTest" class="text-danger small"></span>
                                 </div>
                             </div>
+                            
+                            <div class="col-12 border-top pt-3 mt-3">
+                                <div class="form-check">
+                                    <input asp-for="Input.SupportsChampionshipWinnerPrediction" class="form-check-input" />
+                                    <label asp-for="Input.SupportsChampionshipWinnerPrediction" class="form-check-label fw-bold"></label>
+                                    <span asp-validation-for="Input.SupportsChampionshipWinnerPrediction" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-sm-4">
+                                <label asp-for="Input.PointsForChampionshipWinner" class="form-label fw-bold"></label>
+                                <input asp-for="Input.PointsForChampionshipWinner" class="form-control" type="number" />
+                                <span asp-validation-for="Input.PointsForChampionshipWinner" class="text-danger small"></span>
+                            </div>
+                            
+                            <div class="col-sm-4">
+                                <label asp-for="Input.PointsForChampionshipRunnerUp" class="form-label fw-bold"></label>
+                                <input asp-for="Input.PointsForChampionshipRunnerUp" class="form-control" type="number" />
+                                <span asp-validation-for="Input.PointsForChampionshipRunnerUp" class="text-danger small"></span>
+                            </div>
+                            
+                            <div class="col-sm-4">
+                                <label asp-for="Input.PointsForChampionshipThirdPlace" class="form-label fw-bold"></label>
+                                <input asp-for="Input.PointsForChampionshipThirdPlace" class="form-control" type="number" />
+                                <span asp-validation-for="Input.PointsForChampionshipThirdPlace" class="text-danger small"></span>
+                            </div>
 
                             <div class="col-12 mt-4 pt-3 d-flex gap-2 border-top">
                                 <button type="submit" class="btn btn-primary px-4">

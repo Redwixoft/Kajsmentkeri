@@ -42,8 +42,16 @@ public class DetailsModel : PageModel
     public Dictionary<Guid, int> UserRanks { get; set; } = new();
     public bool IsVisibilityRuleActive { get; set; }
 
+    // Winner prediction props
+    public ChampionshipWinnerPrediction? MyWinnerPrediction { get; set; }
+    public List<string> AllTeams { get; set; } = new();
+    public List<ChampionshipWinnerPrediction> AllWinnerPredictions { get; set; } = new();
+
     [BindProperty]
     public Guid MatchId { get; set; }
+
+    [BindProperty]
+    public string WinnerTeamName { get; set; } = string.Empty;
 
     [BindProperty]
     public string PredictionInput { get; set; } = string.Empty;
@@ -105,6 +113,17 @@ public class DetailsModel : PageModel
         }
 
         Graph = await leaderboardProgressTask; 
+
+        if (Championship.SupportsChampionshipWinnerPrediction)
+        {
+            AllTeams = Matches.SelectMany(m => new[] { m.HomeTeam, m.AwayTeam }).Distinct().OrderBy(t => t).ToList();
+            AllWinnerPredictions = await _predictionService.GetWinnerPredictionsForChampionshipAsync(id);
+            if (CurrentUserId.HasValue)
+            {
+                MyWinnerPrediction = await _predictionService.GetWinnerPredictionAsync(id, CurrentUserId.Value);
+            }
+        }
+
         return Page();
     }
 
@@ -210,5 +229,41 @@ public class DetailsModel : PageModel
         }).ToList();
 
         return new JsonResult(formattedLogs);
+    }
+
+    public async Task<IActionResult> OnPostSubmitWinnerPredictionAsync(Guid id)
+    {
+        if (string.IsNullOrWhiteSpace(WinnerTeamName))
+            return RedirectToPage(new { id });
+
+        try
+        {
+            await _predictionService.SubmitWinnerPredictionAsync(id, WinnerTeamName);
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostEndChampionshipAsync(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user?.IsAdmin != true)
+            return Forbid();
+
+        try
+        {
+            await _championshipService.EndChampionshipAsync(id);
+            TempData["SuccessMessage"] = "Championship ended and winner points awarded!";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
     }
 }

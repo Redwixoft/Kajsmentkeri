@@ -13,6 +13,12 @@
         <span asp-validation-for="Input.Name" class="text-danger"></span>
     </div>
 
+    <div class="mb-3 form-check">
+        <input asp-for="Input.SupportsChampionshipWinnerPrediction" class="form-check-input" />
+        <label asp-for="Input.SupportsChampionshipWinnerPrediction" class="form-check-label"></label>
+        <span asp-validation-for="Input.SupportsChampionshipWinnerPrediction" class="text-danger"></span>
+    </div>
+
     <div class="mb-3">
         <label asp-for="Input.Year" class="form-label"></label>
         <input asp-for="Input.Year" class="form-control" />
@@ -53,6 +59,26 @@
         <input asp-for="Input.IsTest" class="form-check-input" />
         <label asp-for="Input.IsTest" class="form-check-label"></label>
         <span asp-validation-for="Input.IsTest" class="text-danger"></span>
+    </div>
+
+    <hr />
+    <h5>Winner Prediction Scoring</h5>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Input.PointsForChampionshipWinner" class="form-label"></label>
+            <input asp-for="Input.PointsForChampionshipWinner" class="form-control" />
+            <span asp-validation-for="Input.PointsForChampionshipWinner" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Input.PointsForChampionshipRunnerUp" class="form-label"></label>
+            <input asp-for="Input.PointsForChampionshipRunnerUp" class="form-control" />
+            <span asp-validation-for="Input.PointsForChampionshipRunnerUp" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Input.PointsForChampionshipThirdPlace" class="form-label"></label>
+            <input asp-for="Input.PointsForChampionshipThirdPlace" class="form-control" />
+            <span asp-validation-for="Input.PointsForChampionshipThirdPlace" class="text-danger"></span>
+        </div>
     </div>
 
     <button type="submit" class="btn btn-primary">Create</button>

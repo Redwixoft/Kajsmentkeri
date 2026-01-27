@@ -192,4 +192,58 @@ public class PredictionService : IPredictionService
             .OrderByDescending(l => l.TimestampUtc)
             .ToListAsync();
     }
+
+    public async Task SubmitWinnerPredictionAsync(Guid championshipId, string teamName)
+    {
+        if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
+            throw new UnauthorizedAccessException("User not logged in");
+
+        using var context = _dbContextFactory.CreateDbContext();
+        
+        var championship = await context.Championships.FindAsync(championshipId);
+        if (championship == null) throw new InvalidOperationException("Championship not found");
+        if (!championship.SupportsChampionshipWinnerPrediction) throw new InvalidOperationException("Winner prediction not supported for this championship");
+        if (championship.IsChampionshipEnded) throw new InvalidOperationException("Championship already ended");
+
+        // Check if any match started
+        var anyMatchStarted = await context.Matches.AnyAsync(m => m.ChampionshipId == championshipId && m.StartTimeUtc <= DateTime.UtcNow);
+        if (anyMatchStarted) throw new InvalidOperationException("Cannot change prediction after championship started");
+
+        var existing = await context.ChampionshipWinnerPredictions
+            .FirstOrDefaultAsync(p => p.ChampionshipId == championshipId && p.UserId == _currentUser.UserId.Value);
+
+        if (existing != null)
+        {
+            existing.TeamName = teamName;
+            existing.CreatedAt = DateTime.UtcNow; // Update timestamp
+        }
+        else
+        {
+            context.ChampionshipWinnerPredictions.Add(new ChampionshipWinnerPrediction
+            {
+                Id = Guid.NewGuid(),
+                ChampionshipId = championshipId,
+                UserId = _currentUser.UserId.Value,
+                TeamName = teamName,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<ChampionshipWinnerPrediction?> GetWinnerPredictionAsync(Guid championshipId, Guid userId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.ChampionshipWinnerPredictions
+            .FirstOrDefaultAsync(p => p.ChampionshipId == championshipId && p.UserId == userId);
+    }
+
+    public async Task<List<ChampionshipWinnerPrediction>> GetWinnerPredictionsForChampionshipAsync(Guid championshipId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.ChampionshipWinnerPredictions
+            .Where(p => p.ChampionshipId == championshipId)
+            .ToListAsync();
+    }
 }

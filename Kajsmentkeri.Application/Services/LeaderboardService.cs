@@ -38,6 +38,10 @@ public class LeaderboardService : ILeaderboardService
             })
             .ToListAsync();
 
+        var winnerPoints = await context.ChampionshipWinnerPredictions
+            .Where(p => p.ChampionshipId == championshipId && p.PointsAwarded.HasValue)
+            .ToDictionaryAsync(p => p.UserId, p => p.PointsAwarded!.Value);
+
         // Load all relevant users
         var userIds = grouped.Select(g => g.UserId).ToList();
 
@@ -53,7 +57,7 @@ public class LeaderboardService : ILeaderboardService
             {
                 UserId = g.UserId,
                 UserName = users.TryGetValue(g.UserId, out var name) ? name ?? "???" : "Unknown",
-                TotalPoints = g.TotalPoints,
+                TotalPoints = g.TotalPoints + winnerPoints.GetValueOrDefault(g.UserId, 0),
                 CorrectWinners = g.CorrectWinners,
                 OneGoalMisses = g.OneGoalMisses,
                 OnlyCorrect = g.OnlyCorrect,
@@ -87,6 +91,12 @@ public class LeaderboardService : ILeaderboardService
             })
             .ToListAsync();
 
+        var winnerPointsGlobal = await context.ChampionshipWinnerPredictions
+            .Where(p => !p.Championship.IsTest && p.PointsAwarded.HasValue)
+            .GroupBy(p => p.UserId)
+            .Select(g => new { UserId = g.Key, Points = g.Sum(p => p.PointsAwarded!.Value) })
+            .ToDictionaryAsync(p => p.UserId, p => p.Points);
+
         // Load all relevant users
         var userIds = grouped.Select(g => g.UserId).ToList();
 
@@ -102,7 +112,7 @@ public class LeaderboardService : ILeaderboardService
             {
                 UserId = g.UserId,
                 UserName = users.TryGetValue(g.UserId, out var name) ? name ?? "???" : "Unknown",
-                TotalPoints = g.TotalPoints,
+                TotalPoints = g.TotalPoints + winnerPointsGlobal.GetValueOrDefault(g.UserId, 0),
                 CorrectWinners = g.CorrectWinners,
                 OneGoalMisses = g.OneGoalMisses,
                 OnlyCorrect = g.OnlyCorrect,

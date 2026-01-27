@@ -11,4 +11,8 @@ public interface IPredictionService
     Task RemovePredictionsForMatchAsync(Guid matchId);
     Task RemovePredictionsForUserAsync(Guid userId);
     Task<List<PredictionAuditLog>> GetAuditLogsForMatchAsync(Guid matchId);
+    
+    Task SubmitWinnerPredictionAsync(Guid championshipId, string teamName);
+    Task<ChampionshipWinnerPrediction?> GetWinnerPredictionAsync(Guid championshipId, Guid userId);
+    Task<List<ChampionshipWinnerPrediction>> GetWinnerPredictionsForChampionshipAsync(Guid championshipId);
 }

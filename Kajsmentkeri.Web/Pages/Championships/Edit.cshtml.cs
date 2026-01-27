@@ -60,6 +60,21 @@ public class EditModel : PageModel
 
         [Display(Name = "Is Test Championship")]
         public bool IsTest { get; set; }
+
+        [Display(Name = "Supports Championship Winner Prediction")]
+        public bool SupportsChampionshipWinnerPrediction { get; set; }
+
+        [Display(Name = "Points for 1st place prediction")]
+        [Range(0, 10)]
+        public int PointsForChampionshipWinner { get; set; } = 3;
+
+        [Display(Name = "Points for 2nd place prediction")]
+        [Range(0, 10)]
+        public int PointsForChampionshipRunnerUp { get; set; } = 2;
+
+        [Display(Name = "Points for 3rd place prediction")]
+        [Range(0, 10)]
+        public int PointsForChampionshipThirdPlace { get; set; } = 1;
     }
 
     public class MatchViewModel
@@ -95,7 +110,11 @@ public class EditModel : PageModel
             PointsForOnlyCorrectWinner = championship.ScoringRules?.PointsForOnlyCorrectWinner ?? 2,
             RarityPointsBonus = championship.ScoringRules?.RarityPointsBonus ?? 0,
             EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules,
-            IsTest = championship.IsTest
+            IsTest = championship.IsTest,
+            SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction,
+            PointsForChampionshipWinner = championship.ScoringRules?.PointsForChampionshipWinner ?? 3,
+            PointsForChampionshipRunnerUp = championship.ScoringRules?.PointsForChampionshipRunnerUp ?? 2,
+            PointsForChampionshipThirdPlace = championship.ScoringRules?.PointsForChampionshipThirdPlace ?? 1
         };
 
         var matches = await matchesTask;
@@ -132,6 +151,7 @@ public class EditModel : PageModel
         championship.Description = Input.Description;
         championship.EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules;
         championship.IsTest = Input.IsTest;
+        championship.SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction;
 
         if (championship.ScoringRules == null)
         {
@@ -142,6 +162,9 @@ public class EditModel : PageModel
         championship.ScoringRules.PointsForExactScore = Input.PointsForExactScore;
         championship.ScoringRules.PointsForOnlyCorrectWinner = Input.PointsForOnlyCorrectWinner;
         championship.ScoringRules.RarityPointsBonus = Input.RarityPointsBonus;
+        championship.ScoringRules.PointsForChampionshipWinner = Input.PointsForChampionshipWinner;
+        championship.ScoringRules.PointsForChampionshipRunnerUp = Input.PointsForChampionshipRunnerUp;
+        championship.ScoringRules.PointsForChampionshipThirdPlace = Input.PointsForChampionshipThirdPlace;
 
         await _championshipService.UpdateChampionshipAsync(championship);
 

@@ -56,6 +56,21 @@ public class AddModel : PageModel
 
         [Display(Name = "Is Test Championship")]
         public bool IsTest { get; set; }
+
+        [Display(Name = "Supports Championship Winner Prediction")]
+        public bool SupportsChampionshipWinnerPrediction { get; set; }
+
+        [Display(Name = "Points for 1st place prediction")]
+        [Range(0, 10)]
+        public int PointsForChampionshipWinner { get; set; } = 3;
+
+        [Display(Name = "Points for 2nd place prediction")]
+        [Range(0, 10)]
+        public int PointsForChampionshipRunnerUp { get; set; } = 2;
+
+        [Display(Name = "Points for 3rd place prediction")]
+        [Range(0, 10)]
+        public int PointsForChampionshipThirdPlace { get; set; } = 1;
     }
 
     public void OnGet()
@@ -80,6 +95,7 @@ public class AddModel : PageModel
             Description = Input.Description,
             EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules,
             IsTest = Input.IsTest,
+            SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction,
             CreatedById = user.Id,
             CreatedAt = DateTime.UtcNow,
             ScoringRules = new ChampionshipScoringRules
@@ -90,6 +106,9 @@ public class AddModel : PageModel
                 PointsForExactScore = Input.PointsForExactScore,
                 PointsForOnlyCorrectWinner = Input.PointsForOnlyCorrectWinner,
                 RarityPointsBonus = Input.RarityPointsBonus,
+                PointsForChampionshipWinner = Input.PointsForChampionshipWinner,
+                PointsForChampionshipRunnerUp = Input.PointsForChampionshipRunnerUp,
+                PointsForChampionshipThirdPlace = Input.PointsForChampionshipThirdPlace,
                 CreatedAt = DateTime.UtcNow
             }
         };

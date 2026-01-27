@@ -104,6 +104,8 @@ public class ChampionshipService : IChampionshipService
         existing.Description = championship.Description;
         existing.EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules;
         existing.IsTest = championship.IsTest;
+        existing.SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction;
+        existing.IsChampionshipEnded = championship.IsChampionshipEnded;
 
         if (existing.ScoringRules != null && championship.ScoringRules != null)
         {
@@ -111,6 +113,9 @@ public class ChampionshipService : IChampionshipService
             existing.ScoringRules.PointsForExactScore = championship.ScoringRules.PointsForExactScore;
             existing.ScoringRules.PointsForOnlyCorrectWinner = championship.ScoringRules.PointsForOnlyCorrectWinner;
             existing.ScoringRules.RarityPointsBonus = championship.ScoringRules.RarityPointsBonus;
+            existing.ScoringRules.PointsForChampionshipWinner = championship.ScoringRules.PointsForChampionshipWinner;
+            existing.ScoringRules.PointsForChampionshipRunnerUp = championship.ScoringRules.PointsForChampionshipRunnerUp;
+            existing.ScoringRules.PointsForChampionshipThirdPlace = championship.ScoringRules.PointsForChampionshipThirdPlace;
         }
 
         await context.SaveChangesAsync();
@@ -148,10 +153,63 @@ public class ChampionshipService : IChampionshipService
         {
             context.ChampionshipScoringRules.Remove(championship.ScoringRules);
         }
+        
+        // 4. Delete Winner Predictions
+        var winnerPredictions = await context.ChampionshipWinnerPredictions.Where(p => p.ChampionshipId == id).ToListAsync();
+        if (winnerPredictions.Any())
+        {
+            context.ChampionshipWinnerPredictions.RemoveRange(winnerPredictions);
+        }
 
-        // 4. Delete Championship
+        // 5. Delete Championship
         context.Championships.Remove(championship);
 
+        await context.SaveChangesAsync();
+    }
+
+    public async Task EndChampionshipAsync(Guid championshipId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var championship = await context.Championships
+            .Include(c => c.ScoringRules)
+            .FirstOrDefaultAsync(c => c.Id == championshipId);
+
+        if (championship == null) throw new InvalidOperationException("Championship not found");
+        if (championship.IsChampionshipEnded) throw new InvalidOperationException("Championship already ended");
+        if (!championship.SupportsChampionshipWinnerPrediction) throw new InvalidOperationException("This championship does not support winner predictions");
+
+        var matches = await context.Matches
+            .Where(m => m.ChampionshipId == championshipId && m.HomeScore.HasValue && m.AwayScore.HasValue)
+            .OrderByDescending(m => m.StartTimeUtc)
+            .Take(2)
+            .ToListAsync();
+
+        if (matches.Count < 2) throw new InvalidOperationException("Not enough finished matches to determine winners (need at least 2: final and 3rd place game)");
+
+        var finalMatch = matches[0];
+        var bronzeMatch = matches[1];
+
+        string goldTeam = finalMatch.HomeScore > finalMatch.AwayScore ? finalMatch.HomeTeam : finalMatch.AwayTeam;
+        string silverTeam = finalMatch.HomeScore > finalMatch.AwayScore ? finalMatch.AwayTeam : finalMatch.HomeTeam;
+        string bronzeTeam = bronzeMatch.HomeScore > bronzeMatch.AwayScore ? bronzeMatch.HomeTeam : bronzeMatch.AwayTeam;
+
+        var predictions = await context.ChampionshipWinnerPredictions
+            .Where(p => p.ChampionshipId == championshipId)
+            .ToListAsync();
+
+        foreach (var pred in predictions)
+        {
+            if (pred.TeamName == goldTeam)
+                pred.PointsAwarded = championship.ScoringRules.PointsForChampionshipWinner;
+            else if (pred.TeamName == silverTeam)
+                pred.PointsAwarded = championship.ScoringRules.PointsForChampionshipRunnerUp;
+            else if (pred.TeamName == bronzeTeam)
+                pred.PointsAwarded = championship.ScoringRules.PointsForChampionshipThirdPlace;
+            else
+                pred.PointsAwarded = 0;
+        }
+
+        championship.IsChampionshipEnded = true;
         await context.SaveChangesAsync();
     }
 }
