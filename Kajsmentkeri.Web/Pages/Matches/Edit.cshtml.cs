@@ -18,12 +18,15 @@ public class EditModel : PageModel
     private readonly IPredictionScoringService _scoringService;
     private readonly UserManager<AppUser> _userManager;
 
-    public EditModel(UserManager<AppUser> userManager, IMatchService matchService, IPredictionService predictionService, IPredictionScoringService scoringService)
+    private readonly ITimeService _timeService;
+
+    public EditModel(UserManager<AppUser> userManager, IMatchService matchService, IPredictionService predictionService, IPredictionScoringService scoringService, ITimeService timeService)
     {
         _userManager = userManager;
         _matchService = matchService;
         _predictionService = predictionService;
         _scoringService = scoringService;
+        _timeService = timeService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -88,7 +91,7 @@ public class EditModel : PageModel
         
         Input.HomeTeam = match.HomeTeam;
         Input.AwayTeam = match.AwayTeam;
-        Input.StartTime = match.StartTimeUtc;
+        Input.StartTime = _timeService.ToBratislava(match.StartTimeUtc);
 
         await LoadPredictionsAsync();
 

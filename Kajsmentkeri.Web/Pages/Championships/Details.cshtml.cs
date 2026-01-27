@@ -19,7 +19,16 @@ public class DetailsModel : PageModel
     private readonly ILeaderboardService _leaderboardService;
     private readonly ILogger<DetailsModel> _logger;
 
-    public DetailsModel(UserManager<AppUser> userManager, IPredictionScoringService scoringService, ILeaderboardService leaderboardService, IChampionshipService championshipService, IMatchService matchService, IPredictionService predictionService, ILogger<DetailsModel> logger)
+    private readonly ITimeService _timeService;
+
+    public DetailsModel(UserManager<AppUser> userManager, 
+        IPredictionScoringService scoringService, 
+        ILeaderboardService leaderboardService, 
+        IChampionshipService championshipService, 
+        IMatchService matchService, 
+        IPredictionService predictionService, 
+        ILogger<DetailsModel> logger,
+        ITimeService timeService)
     {
         _userManager = userManager;
         _scoringService = scoringService;
@@ -28,6 +37,7 @@ public class DetailsModel : PageModel
         _matchService = matchService;
         _predictionService = predictionService;
         _logger = logger;
+        _timeService = timeService;
     }
 
     public Championship? Championship { get; set; }
@@ -152,7 +162,7 @@ public class DetailsModel : PageModel
             await _scoringService.RecalculateForMatchAsync(match.Id);
         }
 
-        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {DateTime.UtcNow}");
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostAsync)} (Championship - Predicton POST) end: {_timeService.UtcNow}");
         return RedirectToPage(new { id });
     }
 
@@ -198,7 +208,7 @@ public class DetailsModel : PageModel
             return Forbid();
 
         var match = await _matchService.GetMatchByIdAsync(MatchId);
-        if (match == null || match.StartTimeUtc > DateTime.Now)
+        if (match == null || match.StartTimeUtc > _timeService.UtcNow)
             return BadRequest("Cannot update result before match starts.");
 
         var parts = ResultInput.Split(':');
@@ -211,7 +221,7 @@ public class DetailsModel : PageModel
         await _matchService.UpdateMatchResultAsync(MatchId, home, away);
         await _scoringService.RecalculateForMatchAsync(MatchId);
 
-        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {DateTime.UtcNow}");
+        _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {_timeService.UtcNow}");
         return RedirectToPage(new { id });
     }
 
@@ -221,7 +231,7 @@ public class DetailsModel : PageModel
         var logs = await _predictionService.GetAuditLogsForMatchAsync(matchId);
         var formattedLogs = logs.Select(l => new
         {
-            timestamp = l.TimestampUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+            timestamp = _timeService.ToBratislava(l.TimestampUtc).ToString("yyyy-MM-dd HH:mm:ss"),
             message = $"Admin <b>{l.AdminName}</b> {(l.OldHomeScore == null ? "added" : "updated")} prediction for user <b>{l.TargetUserName}</b> " +
                       $"on match <b>{l.MatchSummary}</b>. " +
                       $"The prediction is now <b>{l.NewHomeScore}:{l.NewAwayScore}</b> " +

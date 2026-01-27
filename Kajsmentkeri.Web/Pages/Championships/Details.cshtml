@@ -2,6 +2,7 @@
 @using Kajsmentkeri.Domain
 @using System
 @inject Kajsmentkeri.Application.Interfaces.IPredictionService PredictionService
+@inject Kajsmentkeri.Application.Interfaces.ITimeService _timeService
 @model Kajsmentkeri.Web.Pages.Championships.DetailsModel
 @{
     ViewData["Title"] = $"{Model.Championship?.Name} ({Model.Championship?.Year})";
@@ -164,7 +165,7 @@
                 <div class="col-md-6 text-md-end">
                     @{
                         var firstMatchStartTime = Model.Matches.FirstOrDefault()?.StartTimeUtc ?? DateTime.MaxValue;
-                        var canChangeWinnerPrediction = !Model.Championship.IsChampionshipEnded && firstMatchStartTime > DateTime.UtcNow;
+                        var canChangeWinnerPrediction = !Model.Championship.IsChampionshipEnded && firstMatchStartTime > _timeService.UtcNow;
                     }
 
                     @if (canChangeWinnerPrediction)
@@ -242,7 +243,7 @@
         @foreach (var match in Model.Matches)
         {
             var hasResult = match.HomeScore != null && match.AwayScore != null;
-            var matchStarted = match.StartTimeUtc <= DateTime.Now;
+            var matchStarted = match.StartTimeUtc <= _timeService.UtcNow;
             var tooltip = GetMatchTooltip(match, leaderName, trailingName);
             <tr>
                 <td>
@@ -394,18 +395,19 @@
     public async Task<bool> IsPredictionLocked(Guid championshipId, Guid matchId, Guid userId)
     {
         var predictionLockTime = await PredictionService.GetPredictionLockTimeAsync(championshipId, matchId, userId);
-        return predictionLockTime <= DateTime.Now;
+        return predictionLockTime <= _timeService.UtcNow;
     }
 
     public string GetStartTimeString(DateTime utcDateTime)
     {
-        return utcDateTime.Day + "." + utcDateTime.Month + "." + utcDateTime.Year + " " + utcDateTime.Hour.ToString("00") + ":" + utcDateTime.Minute.ToString("00");
+        var BratislavaTime = _timeService.ToBratislava(utcDateTime);
+        return BratislavaTime.Day + "." + BratislavaTime.Month + "." + BratislavaTime.Year + " " + BratislavaTime.Hour.ToString("00") + ":" + BratislavaTime.Minute.ToString("00");
     }
 
     public string GetMatchTooltip(Match match, string leaderName, string trailingName)
     {
-        var now = DateTime.Now;
-        var start = match.StartTimeUtc;
+        var now = _timeService.NowBratislava;
+        var start = _timeService.ToBratislava(match.StartTimeUtc);
         var tooltip = "";
 
         if (start > now)

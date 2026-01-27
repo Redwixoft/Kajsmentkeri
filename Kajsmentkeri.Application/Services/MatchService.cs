@@ -8,10 +8,12 @@ namespace Kajsmentkeri.Application.Services;
 public class MatchService : IMatchService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly ITimeService _timeService;
 
-    public MatchService(IDbContextFactory<AppDbContext> dbContextFactory)
+    public MatchService(IDbContextFactory<AppDbContext> dbContextFactory, ITimeService timeService)
     {
         _dbContextFactory = dbContextFactory;
+        _timeService = timeService;
     }
 
     public async Task CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime)
@@ -22,9 +24,7 @@ public class MatchService : IMatchService
             ChampionshipId = championshipId,
             HomeTeam = homeTeam,
             AwayTeam = awayTeam,
-            StartTimeUtc = startTime.Kind == DateTimeKind.Unspecified 
-                ? DateTime.SpecifyKind(startTime, DateTimeKind.Utc) 
-                : startTime.ToUniversalTime()
+            StartTimeUtc = _timeService.ToUtc(startTime)
         };
 
         using var context = _dbContextFactory.CreateDbContext();
@@ -68,9 +68,7 @@ public class MatchService : IMatchService
 
         match.HomeTeam = homeTeam;
         match.AwayTeam = awayTeam;
-        match.StartTimeUtc = startTime.Kind == DateTimeKind.Unspecified 
-            ? DateTime.SpecifyKind(startTime, DateTimeKind.Utc) 
-            : startTime.ToUniversalTime();
+        match.StartTimeUtc = _timeService.ToUtc(startTime);
 
         await context.SaveChangesAsync();
     }

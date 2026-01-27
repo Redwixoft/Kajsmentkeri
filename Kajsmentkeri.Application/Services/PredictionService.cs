@@ -13,13 +13,15 @@ public class PredictionService : IPredictionService
     private readonly ICurrentUserService _currentUser;
     private readonly ILeaderboardService _leaderboardService;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ITimeService _timeService;
 
-    public PredictionService(ICurrentUserService currentUser, ILeaderboardService leaderboardService, IDbContextFactory<AppDbContext> dbContextFactory, IServiceScopeFactory scopeFactory)
+    public PredictionService(ICurrentUserService currentUser, ILeaderboardService leaderboardService, IDbContextFactory<AppDbContext> dbContextFactory, IServiceScopeFactory scopeFactory, ITimeService timeService)
     {
         _currentUser = currentUser;
         _leaderboardService = leaderboardService;
         _dbContextFactory = dbContextFactory;
         _scopeFactory = scopeFactory;
+        _timeService = timeService;
     }
 
     public async Task SubmitPredictionAsync(Guid matchId, int predictedHome, int predictedAway)
@@ -45,7 +47,7 @@ public class PredictionService : IPredictionService
         if (checkLock)
         {
             var lockTime = await GetPredictionLockTimeAsync(match.ChampionshipId, matchId, userId);
-            if (DateTime.UtcNow > lockTime)
+            if (_timeService.UtcNow > lockTime)
             {
                 throw new InvalidOperationException("Prediction for this match is already locked.");
             }
@@ -94,7 +96,7 @@ public class PredictionService : IPredictionService
                     OldAwayScore = oldAway,
                     NewHomeScore = predictedHome,
                     NewAwayScore = predictedAway,
-                    TimestampUtc = DateTime.UtcNow,
+                    TimestampUtc = _timeService.UtcNow,
                     MatchSummary = $"{match.HomeTeam} - {match.AwayTeam}"
                 };
                 context.PredictionAuditLogs.Add(log);

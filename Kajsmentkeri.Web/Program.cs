@@ -56,6 +56,7 @@ builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<IChampionshipService, ChampionshipService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ITimeService, TimeService>();
 
 var app = builder.Build();
 

@@ -14,12 +14,14 @@ public class EditModel : PageModel
     private readonly IChampionshipService _championshipService;
     private readonly IMatchService _matchService;
     private readonly UserManager<AppUser> _userManager;
+    private readonly ITimeService _timeService;
 
-    public EditModel(UserManager<AppUser> userManager, IChampionshipService championshipService, IMatchService matchService)
+    public EditModel(UserManager<AppUser> userManager, IChampionshipService championshipService, IMatchService matchService, ITimeService timeService)
     {
         _userManager = userManager;
         _championshipService = championshipService;
         _matchService = matchService;
+        _timeService = timeService;
     }
 
     [BindProperty]
@@ -81,7 +83,7 @@ public class EditModel : PageModel
     {
         public Guid Id { get; set; }
         public string Teams { get; set; } = string.Empty;
-        public DateTime StartTimeUtc { get; set; }
+        public DateTime StartTime { get; set; }
         public string? Result { get; set; }
         public int PredictionCount { get; set; }
     }
@@ -122,7 +124,7 @@ public class EditModel : PageModel
         {
             Id = m.Id,
             Teams = $"{m.HomeTeam} - {m.AwayTeam}",
-            StartTimeUtc = m.StartTimeUtc,
+            StartTime = _timeService.ToBratislava(m.StartTimeUtc),
             Result = m.HomeScore.HasValue && m.AwayScore.HasValue ? $"{m.HomeScore}:{m.AwayScore}" : "-",
             PredictionCount = m.Predictions.Count // This assumes Matches included Predictions. MatchService.GetMatchesByChampionshipAsync doesn't yet.
         }).ToList();

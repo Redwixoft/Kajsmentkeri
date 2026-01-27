@@ -15,10 +15,13 @@ public class AddModel : PageModel
     private readonly IMatchService _matchService;
     private readonly UserManager<AppUser> _userManager;
 
-    public AddModel(UserManager<AppUser> userManager, IMatchService matchService)
+    private readonly ITimeService _timeService;
+
+    public AddModel(UserManager<AppUser> userManager, IMatchService matchService, ITimeService timeService)
     {
         _userManager = userManager;
         _matchService = matchService;
+        _timeService = timeService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -53,17 +56,6 @@ public class AddModel : PageModel
 
         if (!ModelState.IsValid)
             return Page();
-
-        var startTime = new DateTime(Input.StartTime.Year, Input.StartTime.Month, Input.StartTime.Day, Input.StartTime.Hour, Input.StartTime.Minute, 0, DateTimeKind.Utc);
-
-        var match = new Match
-        {
-            Id = Guid.NewGuid(),
-            ChampionshipId = ChampionshipId,
-            HomeTeam = Input.HomeTeam,
-            AwayTeam = Input.AwayTeam,
-            StartTimeUtc = startTime
-        };
 
         await _matchService.CreateMatchAsync(ChampionshipId, Input.HomeTeam, Input.AwayTeam, Input.StartTime);
 
