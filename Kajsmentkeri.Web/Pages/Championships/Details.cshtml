@@ -7,7 +7,7 @@
     ViewData["Title"] = $"{Model.Championship?.Name} ({Model.Championship?.Year})";
 }
 
-<h2>
+<h2 style="cursor: pointer;" onclick="showRules()" title="Click to see championship rules">
     @Model.Championship?.Name (@Model.Championship?.Year)
     @if (Model.Championship?.IsTest == true)
     {
@@ -471,6 +471,64 @@
         </div>
     </div>
 
+    <div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="rulesModalLabel">Championship Rules & Info</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Scoring Points</h6>
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Correct Winner
+                            <span class="badge bg-primary rounded-pill">@Model.Championship?.ScoringRules?.PointsForCorrectWinner</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Exact Score
+                            <span class="badge bg-primary rounded-pill">@Model.Championship?.ScoringRules?.PointsForExactScore</span>
+                        </li>
+                         <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Only Correct Winner
+                            <span class="badge bg-primary rounded-pill">@Model.Championship?.ScoringRules?.PointsForOnlyCorrectWinner</span>
+                        </li>
+                    </ul>
+
+                    <h6>Rarity Points</h6>
+                    <div class="alert alert-info py-2">
+                        <small>ℹ️ Rarity points are a future experimental feature.</small>
+                    </div>
+                    
+                    <hr />
+                    
+                    <h6>Settings</h6>
+                    <p class="mb-1">
+                        <strong>Leaderboard-based visibility:</strong> 
+                        @if (Model.Championship?.EnforceLeaderboardVisibilityRules == true)
+                        {
+                            <span class="text-success fw-bold">ON</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">OFF</span>
+                        }
+                    </p>
+                    
+                    @if (Model.Championship?.IsTest == true)
+                    {
+                         <div class="alert alert-warning mt-3 mb-0">
+                            <strong>⚠️ This is a TEST championship.</strong>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function showAuditLogs(matchId, matchName) {
             const modal = new bootstrap.Modal(document.getElementById('auditLogModal'));
@@ -503,6 +561,11 @@
                     console.error('Error fetching audit logs:', error);
                     content.innerHTML = '<div class="text-center py-4 text-danger">Failed to load history. Please try again.</div>';
                 });
+        }
+
+        function showRules() {
+             var myModal = new bootstrap.Modal(document.getElementById('rulesModal'));
+             myModal.show();
         }
     </script>
 }
