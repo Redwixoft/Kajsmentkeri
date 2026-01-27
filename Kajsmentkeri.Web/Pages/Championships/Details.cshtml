@@ -137,7 +137,7 @@
     </div>
 </div>
 
-@if (Model.Championship!.SupportsChampionshipWinnerPrediction)
+@if (Model.Championship!.SupportsChampionshipWinnerPrediction && Model.CurrentUserId != null)
 {
     <div class="card bg-light mb-4">
         <div class="card-body">
