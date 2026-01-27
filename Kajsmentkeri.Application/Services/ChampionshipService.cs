@@ -45,7 +45,7 @@ public class ChampionshipService : IChampionshipService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<Championship> CreateChampionshipAsync(string name, int year, string? description)
+    public async Task<Championship> CreateChampionshipAsync(string name, int year, string? description, bool isTest = false)
     {
         if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
             throw new UnauthorizedAccessException("User must be logged in.");
@@ -56,7 +56,8 @@ public class ChampionshipService : IChampionshipService
             Name = name,
             Year = year,
             Description = description,
-            CreatedById = _currentUser.UserId.Value
+            CreatedById = _currentUser.UserId.Value,
+            IsTest = isTest
         };
 
         var scoringRules = new ChampionshipScoringRules
@@ -102,6 +103,7 @@ public class ChampionshipService : IChampionshipService
         existing.Year = championship.Year;
         existing.Description = championship.Description;
         existing.EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules;
+        existing.IsTest = championship.IsTest;
 
         if (existing.ScoringRules != null && championship.ScoringRules != null)
         {

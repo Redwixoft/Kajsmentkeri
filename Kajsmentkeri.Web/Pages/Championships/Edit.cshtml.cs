@@ -57,6 +57,9 @@ public class EditModel : PageModel
 
         [Display(Name = "Enforce leaderboard-based prediction visibility")]
         public bool EnforceLeaderboardVisibilityRules { get; set; }
+
+        [Display(Name = "Is Test Championship")]
+        public bool IsTest { get; set; }
     }
 
     public class MatchViewModel
@@ -91,7 +94,8 @@ public class EditModel : PageModel
             PointsForExactScore = championship.ScoringRules?.PointsForExactScore ?? 2,
             PointsForOnlyCorrectWinner = championship.ScoringRules?.PointsForOnlyCorrectWinner ?? 2,
             RarityPointsBonus = championship.ScoringRules?.RarityPointsBonus ?? 0,
-            EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules
+            EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules,
+            IsTest = championship.IsTest
         };
 
         var matches = await matchesTask;
@@ -127,6 +131,7 @@ public class EditModel : PageModel
         championship.Year = Input.Year;
         championship.Description = Input.Description;
         championship.EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules;
+        championship.IsTest = Input.IsTest;
 
         if (championship.ScoringRules == null)
         {

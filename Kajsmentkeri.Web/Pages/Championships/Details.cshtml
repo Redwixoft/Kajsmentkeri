@@ -7,7 +7,13 @@
     ViewData["Title"] = $"{Model.Championship?.Name} ({Model.Championship?.Year})";
 }
 
-<h2>@Model.Championship?.Name (@Model.Championship?.Year)</h2>
+<h2>
+    @Model.Championship?.Name (@Model.Championship?.Year)
+    @if (Model.Championship?.IsTest == true)
+    {
+        <span class="badge bg-warning text-dark align-middle fs-6">TEST</span>
+    }
+</h2>
 <p>@Model.Championship?.Description</p>
 
 @if (Model.IsAdmin)

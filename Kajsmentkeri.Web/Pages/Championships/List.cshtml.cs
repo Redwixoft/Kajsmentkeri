@@ -35,18 +35,24 @@ public class ListModel : PageModel
         var users = await _userManager.Users.ToListAsync();
         var userMap = users.ToDictionary(u => u.Id, u => u.UserName ?? "Unknown");
 
+        var currentUser = await _userManager.GetUserAsync(User);
+        IsAdmin = currentUser?.IsAdmin == true;
+
+        if (!IsAdmin)
+        {
+            championships = championships.Where(c => !c.IsTest).ToList();
+        }
+
         Championships = championships.Select(c => new ChampionshipViewModel
         {
             Id = c.Id,
             Name = c.Name,
             Year = c.Year,
+            IsTest = c.IsTest,
             CreatedByUserName = userMap.TryGetValue(c.CreatedById, out var username)
                 ? username
                 : "Unknown"
         }).ToList();
-
-        var currentUser = await _userManager.GetUserAsync(User);
-        IsAdmin = currentUser?.IsAdmin == true;
 
         _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.UtcNow}");
     }
@@ -57,6 +63,7 @@ public class ListModel : PageModel
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public int Year { get; set; }
+        public bool IsTest { get; set; }
         public string CreatedByUserName { get; set; } = string.Empty;
     }
 

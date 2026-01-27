@@ -73,6 +73,7 @@ public class LeaderboardService : ILeaderboardService
     {
         using var context = _dbContextFactory.CreateDbContext();
         var grouped = await context.Predictions
+            .Where(p => !p.Match.Championship.IsTest)
             .GroupBy(p => p.UserId)
             .Select(g => new
             {

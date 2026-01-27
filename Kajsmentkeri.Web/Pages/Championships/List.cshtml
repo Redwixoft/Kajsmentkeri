@@ -27,7 +27,13 @@
         @foreach (var item in Model.Championships)
         {
             <tr>
-                <td>@item.Name</td>
+                <td>
+                    @item.Name
+                    @if (item.IsTest)
+                    {
+                        <span class="badge bg-warning text-dark">TEST</span>
+                    }
+                </td>
                 <td>@item.Year</td>
                 @if (Model.IsAdmin)
                 {

@@ -53,6 +53,9 @@ public class AddModel : PageModel
 
         [Display(Name = "Enforce leaderboard-based prediction visibility")]
         public bool EnforceLeaderboardVisibilityRules { get; set; }
+
+        [Display(Name = "Is Test Championship")]
+        public bool IsTest { get; set; }
     }
 
     public void OnGet()
@@ -76,6 +79,7 @@ public class AddModel : PageModel
             Year = Input.Year,
             Description = Input.Description,
             EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules,
+            IsTest = Input.IsTest,
             CreatedById = user.Id,
             CreatedAt = DateTime.UtcNow,
             ScoringRules = new ChampionshipScoringRules
@@ -90,7 +94,10 @@ public class AddModel : PageModel
             }
         };
 
-        await _championshipService.CreateChampionshipAsync(championship);
+        await _championshipService.CreateChampionshipAsync(championship); // Note: Championship object has IsTest property which is set manually below? 
+        // Wait, CreateChampionshipAsync(string...) was updated, but CreateChampionshipAsync(Championship) just saves the object.
+        // So I need to set IsTest on the object.
+
 
         return RedirectToPage("/Championships/List");
     }
