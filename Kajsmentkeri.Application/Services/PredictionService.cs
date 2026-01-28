@@ -74,8 +74,8 @@ public class PredictionService : IPredictionService
         prediction.PredictedHome = predictedHome;
         prediction.PredictedAway = predictedAway;
 
-        // If it's an admin update (no lock check), log it
-        if (!checkLock && _currentUser.UserId != null && _currentUser.UserId != Guid.Empty)
+        // Log all changes (both user and admin)
+        if (_currentUser.UserId != null && _currentUser.UserId != Guid.Empty)
         {
             // Only log if something changed or it's new
             if (oldHome != predictedHome || oldAway != predictedAway)
@@ -89,7 +89,7 @@ public class PredictionService : IPredictionService
                     Id = Guid.NewGuid(),
                     MatchId = matchId,
                     AdminId = _currentUser.UserId.Value,
-                    AdminName = _currentUser.UserName ?? "Admin",
+                    AdminName = _currentUser.UserName ?? "User",
                     TargetUserId = userId,
                     TargetUserName = targetUser?.UserName ?? "User",
                     OldHomeScore = oldHome,
@@ -97,6 +97,7 @@ public class PredictionService : IPredictionService
                     NewHomeScore = predictedHome,
                     NewAwayScore = predictedAway,
                     TimestampUtc = _timeService.UtcNow,
+                    IsAdminUpdate = !checkLock, // Admin updates bypass lock check
                     MatchSummary = $"{match.HomeTeam} - {match.AwayTeam}"
                 };
                 context.PredictionAuditLogs.Add(log);

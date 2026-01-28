@@ -229,13 +229,24 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnGetAuditLogsAsync(Guid matchId)
     {
         var logs = await _predictionService.GetAuditLogsForMatchAsync(matchId);
-        var formattedLogs = logs.Select(l => new
+        var formattedLogs = logs.Select(l =>
         {
-            timestamp = _timeService.ToBratislava(l.TimestampUtc).ToString("yyyy-MM-dd HH:mm:ss"),
-            message = $"Admin <b>{l.AdminName}</b> {(l.OldHomeScore == null ? "added" : "updated")} prediction for user <b>{l.TargetUserName}</b> " +
-                      $"on match <b>{l.MatchSummary}</b>. " +
-                      $"The prediction is now <b>{l.NewHomeScore}:{l.NewAwayScore}</b> " +
-                      $"{(l.OldHomeScore == null ? "" : $"(was {l.OldHomeScore}:{l.OldAwayScore} before)")}."
+            var timestamp = _timeService.ToBratislava(l.TimestampUtc).ToString("yyyy-MM-dd HH:mm:ss");
+            string message;
+            if (l.IsAdminUpdate)
+            {
+                message = $"<span class='text-danger'>[ADMIN]</span> <b>{l.AdminName}</b> {(l.OldHomeScore == null ? "added" : "updated")} prediction for user <b>{l.TargetUserName}</b> " +
+                          $"on match <b>{l.MatchSummary}</b>. " +
+                          $"The prediction is now <b>{l.NewHomeScore}:{l.NewAwayScore}</b> " +
+                          $"{(l.OldHomeScore == null ? "" : $"(was {l.OldHomeScore}:{l.OldAwayScore} before)")}.";
+            }
+            else
+            {
+                message = $"<b>{l.AdminName}</b> {(l.OldHomeScore == null ? "added" : "updated")} their prediction " +
+                          $"on match <b>{l.MatchSummary}</b>. " +
+                          $"The prediction is now <b>{l.NewHomeScore}:{l.NewAwayScore}</b> " +
+                          $"{(l.OldHomeScore == null ? "" : $"(was {l.OldHomeScore}:{l.OldAwayScore} before)")}.";            }
+            return new { timestamp, message };
         }).ToList();
 
         return new JsonResult(formattedLogs);

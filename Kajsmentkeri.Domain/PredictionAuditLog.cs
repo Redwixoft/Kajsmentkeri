@@ -15,5 +15,6 @@ public class PredictionAuditLog
     public int NewHomeScore { get; set; }
     public int NewAwayScore { get; set; }
     public DateTime TimestampUtc { get; set; }
+    public bool IsAdminUpdate { get; set; }
     public string MatchSummary { get; set; } = string.Empty; // e.g. "Canada - France"
 }
