@@ -207,7 +207,16 @@
                                 @foreach (var pred in Model.AllWinnerPredictions.OrderByDescending(p => p.PointsAwarded))
                                 {
                                     <tr>
-                                        <td>@Model.Users.FirstOrDefault(u => u.UserId == pred.UserId)?.UserName</td>
+                                        <td>
+                                            @{
+                                                var userWinnerPredSummary = Model.AllWinnerPredictions.FirstOrDefault(p => p.UserId == pred.UserId);
+                                            }
+                                            @if (userWinnerPredSummary != null)
+                                            {
+                                                <img src="/images/flags/@(userWinnerPredSummary.TeamName).png" class="team-flag me-1" alt="@userWinnerPredSummary.TeamName" title="Predicted winner: @userWinnerPredSummary.TeamName" onerror="this.style.display='none'" />
+                                            }
+                                            @Model.Users.FirstOrDefault(u => u.UserId == pred.UserId)?.UserName
+                                        </td>
                                         <td>@pred.TeamName</td>
                                         <td><strong>@pred.PointsAwarded</strong></td>
                                     </tr>
@@ -231,7 +240,16 @@
             <th>Result</th>
             @foreach (var user in Model.Users)
             {
-                <th>@user.UserName</th>
+                <th>
+                    @{
+                        var userWinnerPredHeader = Model.AllWinnerPredictions.FirstOrDefault(p => p.UserId == user.UserId);
+                    }
+                    @if (userWinnerPredHeader != null)
+                    {
+                        <img src="/images/flags/@(userWinnerPredHeader.TeamName).png" class="team-flag me-1" alt="@userWinnerPredHeader.TeamName" title="Predicted winner: @userWinnerPredHeader.TeamName" onerror="this.style.display='none'" />
+                    }
+                    @user.UserName
+                </th>
             }
         </tr>
     </thead>
