@@ -60,6 +60,79 @@
     <hr />
 }
 
+    @if (Model.Championship.IsChampionshipEnded)
+    {
+        <div class="alert alert-info d-flex align-items-center mb-3">
+            <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+            <div>
+                <strong>Championship has ended!</strong> <span>Check out the official results below unless you are the winner, then check your bank account.</span>
+            </div>
+        </div>
+    }
+
+    @if (Model.Championship.IsChampionshipEnded && Model.Leaderboard.Any())
+    {
+        var winner = Model.Leaderboard.First();
+        var isMe = Model.CurrentUserId == winner.UserId;
+
+        <div class="card border-warning shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark py-3 d-flex align-items-center">
+                <span class="fs-3 me-2">🏆</span>
+                <h3 class="h4 mb-0 fw-bold">Championship Winner: @winner.UserName</h3>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                     <!-- Payment Info -->
+                    <div class="col-md-12">
+                        @if (!string.IsNullOrEmpty(Model.Championship.WinnerIban))
+                        {
+                            <div class="alert alert-success">
+                                <h6 class="alert-heading fw-bold"><i class="bi bi-credit-card me-2"></i>Payment Details</h6>
+                                <p class="mb-1"><strong>IBAN:</strong> <span class="font-monospace user-select-all">@Model.Championship.WinnerIban</span></p>
+                                @if(!string.IsNullOrEmpty(Model.Championship.WinnerNote))
+                                {
+                                    <p class="mb-0"><strong>Note:</strong> @Model.Championship.WinnerNote</p>
+                                }
+                            </div>
+                        }
+                        else if (isMe)
+                        {
+                             <div class="alert alert-warning">
+                                <h6 class="alert-heading"><i class="bi bi-exclamation-circle me-2"></i>Action Required</h6>
+                                <p class="mb-2">Congratulations! Please provide your IBAN so others can pay you.</p>
+                                <form method="post" asp-page-handler="SubmitWinnerPaymentInfo">
+                                    <div class="mb-2">
+                                        <label asp-for="WinnerIban" class="form-label visually-hidden">IBAN</label>
+                                        <input asp-for="WinnerIban" class="form-control form-control-sm" placeholder="Enter your IBAN" required />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label asp-for="WinnerNote" class="form-label visually-hidden">Note</label>
+                                        <input asp-for="WinnerNote" class="form-control form-control-sm" placeholder="Optional note (e.g. 'Revolut ok')" />
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-dark w-100">Save Payment Info</button>
+                                </form>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-light border text-center text-muted py-4">
+                                <i class="bi bi-hourglass-split fs-4 d-block mb-2"></i>
+                                <span>Waiting for the winner to provide payment details...</span>
+                            </div>
+                        }
+                        
+                        <div class="mt-3 text-center text-muted">
+                            <small>
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Payment Rules:</strong> Everyone owes the winner <strong>€5</strong>, except the last place player who owes <strong>€10</strong>. The runner-up owes nothing.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
 <div class="row">
     <div class="col-lg-12">
         <h5 class="mt-3">Leaderboard</h5>

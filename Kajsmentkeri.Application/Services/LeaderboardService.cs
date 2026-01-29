@@ -62,6 +62,7 @@ public class LeaderboardService : ILeaderboardService
                 OneGoalMisses = g.OneGoalMisses,
                 OnlyCorrect = g.OnlyCorrect,
                 ExactScores = g.ExactScores,
+                WinnerPredictionPoints = winnerPoints.GetValueOrDefault(g.UserId, 0),
                 RarityPoints = g.RarityPoints
             })
             .OrderByDescending(x => x.TotalPoints)
@@ -117,6 +118,7 @@ public class LeaderboardService : ILeaderboardService
                 OneGoalMisses = g.OneGoalMisses,
                 OnlyCorrect = g.OnlyCorrect,
                 ExactScores = g.ExactScores,
+                WinnerPredictionPoints = winnerPointsGlobal.GetValueOrDefault(g.UserId, 0),
                 RarityPoints = g.RarityPoints
             })
             .OrderByDescending(x => x.TotalPoints)

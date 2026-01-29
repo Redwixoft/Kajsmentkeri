@@ -9,6 +9,8 @@ public class Championship
     public bool EnforceLeaderboardVisibilityRules { get; set; }
     public bool SupportsChampionshipWinnerPrediction { get; set; }
     public bool IsChampionshipEnded { get; set; }
+    public string? WinnerIban { get; set; }
+    public string? WinnerNote { get; set; }
 
     public Guid CreatedById { get; set; }
     public DateTime CreatedAt { get; set; }

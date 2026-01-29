@@ -69,6 +69,12 @@ public class DetailsModel : PageModel
     [BindProperty]
     public string ResultInput { get; set; } = string.Empty;
 
+    [BindProperty]
+    public string WinnerIban { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string WinnerNote { get; set; } = string.Empty;
+
     public class UserColumn
     {
         public Guid UserId { get; set; }
@@ -279,6 +285,21 @@ public class DetailsModel : PageModel
         {
             await _championshipService.EndChampionshipAsync(id);
             TempData["SuccessMessage"] = "Championship ended and winner points awarded!";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostSubmitWinnerPaymentInfoAsync(Guid id)
+    {
+        try
+        {
+            await _championshipService.UpdateWinnerPaymentInfoAsync(id, WinnerIban, WinnerNote);
+            TempData["SuccessMessage"] = "Payment information updated successfully!";
         }
         catch (Exception ex)
         {

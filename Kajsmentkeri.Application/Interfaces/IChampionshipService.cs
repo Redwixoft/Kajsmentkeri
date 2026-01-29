@@ -12,4 +12,5 @@ public interface IChampionshipService
     Task UpdateChampionshipAsync(Championship championship);
     Task DeleteChampionshipAsync(Guid id);
     Task EndChampionshipAsync(Guid championshipId);
+    Task UpdateWinnerPaymentInfoAsync(Guid championshipId, string iban, string note);
 }

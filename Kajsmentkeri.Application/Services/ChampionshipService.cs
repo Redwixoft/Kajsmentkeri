@@ -212,4 +212,57 @@ public class ChampionshipService : IChampionshipService
         championship.IsChampionshipEnded = true;
         await context.SaveChangesAsync();
     }
+
+    public async Task UpdateWinnerPaymentInfoAsync(Guid championshipId, string iban, string note)
+    {
+        if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
+            throw new UnauthorizedAccessException("User must be logged in.");
+
+        using var context = _dbContextFactory.CreateDbContext();
+        
+        var championship = await context.Championships
+            .Include(c => c.ScoringRules)
+            .FirstOrDefaultAsync(c => c.Id == championshipId);
+            
+        if (championship == null)
+            throw new InvalidOperationException("Championship not found");
+            
+        if (!championship.IsChampionshipEnded)
+            throw new InvalidOperationException("Championship has not ended yet");
+
+        // Get leaderboard to determine winner
+        var leaderboard = await context.Predictions
+            .Where(p => p.Match.ChampionshipId == championshipId)
+            .GroupBy(p => p.UserId)
+            .Select(g => new { UserId = g.Key, TotalPoints = g.Sum(p => p.Points) })
+            .OrderByDescending(x => x.TotalPoints)
+            .ToListAsync();
+
+        // Add winner prediction points
+        var winnerPredictions = await context.ChampionshipWinnerPredictions
+            .Where(p => p.ChampionshipId == championshipId)
+            .ToListAsync();
+
+        var leaderboardWithWinnerPoints = leaderboard.Select(entry =>
+        {
+            var winnerPred = winnerPredictions.FirstOrDefault(p => p.UserId == entry.UserId);
+            return new
+            {
+                entry.UserId,
+                TotalPoints = entry.TotalPoints + (winnerPred?.PointsAwarded ?? 0)
+            };
+        }).OrderByDescending(x => x.TotalPoints).ToList();
+
+        if (leaderboardWithWinnerPoints.Count == 0)
+            throw new InvalidOperationException("No leaderboard data available");
+
+        var winnerId = leaderboardWithWinnerPoints.First().UserId;
+        
+        if (winnerId != _currentUser.UserId.Value)
+            throw new UnauthorizedAccessException("Only the championship winner can submit payment information");
+
+        championship.WinnerIban = iban;
+        championship.WinnerNote = note;
+        await context.SaveChangesAsync();
+    }
 }
