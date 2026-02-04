@@ -124,7 +124,7 @@
                         <div class="mt-3 text-center text-muted">
                             <small>
                                 <i class="bi bi-info-circle me-1"></i>
-                                <strong>Payment Rules:</strong> Everyone owes the winner <strong>€5</strong>, except the last place player who owes <strong>€10</strong>. The runner-up owes nothing.
+                                <strong>Payment Rules:</strong> Everyone owes the winner <strong>€10</strong>, except the last place player who owes <strong>€20</strong>. The runner-up owes nothing.
                             </small>
                         </div>
                     </div>
@@ -338,11 +338,22 @@
             var tooltip = GetMatchTooltip(match, leaderName, trailingName);
             <tr>
                 <td>
-                    <div class="d-flex align-items-center justify-content-center" onclick="showAuditLogs('@match.Id', '@match.HomeTeam - @match.AwayTeam')" style="cursor: pointer;" title="Admin prediction change history">
-                        <img src="/images/flags/@(match.HomeTeam).png" class="team-flag me-2" alt="" onerror="this.style.display='none'" />
-                        <span class="text-primary text-decoration-none">@match.HomeTeam - @match.AwayTeam</span>
-                        <img src="/images/flags/@(match.AwayTeam).png" class="team-flag ms-2" alt="" onerror="this.style.display='none'" />
-                    </div>
+                    @if (matchStarted)
+                    {
+                        <div class="d-flex align-items-center justify-content-center" onclick="showAuditLogs('@match.Id', '@match.HomeTeam - @match.AwayTeam')" style="cursor: pointer;" title="Prediction change history">
+                            <img src="/images/flags/@(match.HomeTeam).png" class="team-flag me-2" alt="" onerror="this.style.display='none'" />
+                            <span class="text-primary text-decoration-none">@match.HomeTeam - @match.AwayTeam</span>
+                            <img src="/images/flags/@(match.AwayTeam).png" class="team-flag ms-2" alt="" onerror="this.style.display='none'" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center">
+                            <img src="/images/flags/@(match.HomeTeam).png" class="team-flag me-2" alt="" onerror="this.style.display='none'" />
+                            <span class="text-dark text-decoration-none">@match.HomeTeam - @match.AwayTeam</span>
+                            <img src="/images/flags/@(match.AwayTeam).png" class="team-flag ms-2" alt="" onerror="this.style.display='none'" />
+                        </div>
+                    }
                 </td>
                 <td title="@tooltip">@GetStartTimeString(match.StartTimeUtc)</td>
 
@@ -762,6 +773,13 @@
                     <div class="alert alert-info py-2">
                         <small>ℹ️ Rarity points are a future experimental feature.</small>
                     </div>
+
+                    <hr />
+
+                    <h6>Payment Rules</h6>
+                    <p class="mb-3">
+                        Everyone owes the winner <strong>€10</strong>, except the last place player who owes <strong>€20</strong>. The runner-up owes nothing.
+                    </p>
                     
                     <hr />
                     
