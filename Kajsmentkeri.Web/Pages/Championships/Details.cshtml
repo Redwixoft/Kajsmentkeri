@@ -8,18 +8,46 @@
     ViewData["Title"] = $"{Model.Championship?.Name} ({Model.Championship?.Year})";
 }
 
-<h2 style="cursor: pointer;" onclick="showRules()" title="Click to see championship rules">
-    @Model.Championship?.Name (@Model.Championship?.Year)
-    @if (Model.Championship?.IsTest == true)
-    {
-        <span class="badge bg-warning text-dark align-middle fs-6">TEST</span>
-    }
-    @if (Model.Championship?.IsChampionshipEnded == true)
-    {
-        <span class="badge bg-danger align-middle fs-6">ENDED</span>
-    }
-</h2>
-<p>@Model.Championship?.Description</p>
+<div class="row mb-3">
+    <div class="col-lg-8 col-md-7">
+        <h2 style="cursor: pointer;" onclick="showRules()" title="Click to see championship rules">
+            @Model.Championship?.Name (@Model.Championship?.Year)
+            @if (Model.Championship?.IsTest == true)
+            {
+                <span class="badge bg-warning text-dark align-middle fs-6">TEST</span>
+            }
+            @if (Model.Championship?.IsChampionshipEnded == true)
+            {
+                <span class="badge bg-danger align-middle fs-6">ENDED</span>
+            }
+        </h2>
+        <p class="mb-0">@Model.Championship?.Description</p>
+    </div>
+    <div class="col-lg-4 col-md-5 mt-3 mt-md-0">
+        <div class="card bg-light border text-muted">
+            <div class="card-body p-2">
+                <h6 class="text-uppercase fw-bold mb-2" style="font-size: 0.7rem; letter-spacing: 0.05em;">Quick Rules</h6>
+                <div style="font-size: 0.75rem;">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Match (Winner/Exact/Only):</span>
+                        <span class="fw-bold text-dark">@Model.Championship?.ScoringRules?.PointsForCorrectWinner / @Model.Championship?.ScoringRules?.PointsForExactScore / @Model.Championship?.ScoringRules?.PointsForOnlyCorrectWinner pts</span>
+                    </div>
+                    @if (Model.Championship?.SupportsChampionshipWinnerPrediction == true)
+                    {
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Champ (1st/2nd/3rd):</span>
+                            <span class="fw-bold text-dark">@Model.Championship?.ScoringRules?.PointsForChampionshipWinner / @Model.Championship?.ScoringRules?.PointsForChampionshipRunnerUp / @Model.Championship?.ScoringRules?.PointsForChampionshipThirdPlace pts</span>
+                        </div>
+                    }
+                    <div class="border-top pt-1 mt-1">
+                        <span class="d-block">Everyone pays <strong>€10</strong> to winner.</span>
+                        <span class="d-block">Last place pays <strong>€20</strong>. Runner-up <strong>€0</strong>.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @if (TempData["SuccessMessage"] != null)
 {
