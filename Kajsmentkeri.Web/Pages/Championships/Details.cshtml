@@ -467,6 +467,10 @@
                                 @if (isVisible || canEdit)
                                 {
                                     <span>@prediction</span>
+                                    @if (prediction?.OneGoalMiss == true)
+                                    {
+                                        <span title="One-goal miss!" style="cursor: help;" class="ms-1">🎯</span>
+                                    }
                                 }
                                 else if (hasPrediction)
                                 {
@@ -512,14 +516,26 @@
         if (!hasResult || prediction is null)
             return "";
 
-        return prediction.Points switch
-        {
-            0 => "bg-danger text-white",
-            3 => "bg-success text-white",
-            5 => "bg-primary text-white",
-            7 => "bg-warning text-dark",
-            _ => ""
-        };
+        if (prediction.Points == 0)
+            return "bg-danger text-white";
+
+        var rules = Model.Championship?.ScoringRules;
+        if (rules == null) return "";
+
+        var win = rules.PointsForCorrectWinner;
+        var exact = win + rules.PointsForExactScore;
+        var only = exact + rules.PointsForOnlyCorrectWinner;
+
+        if (rules.PointsForOnlyCorrectWinner > 0 && prediction.Points == only)
+            return "bg-warning text-dark"; // Gold
+
+        if (prediction.Points == exact)
+            return "bg-primary text-white"; // Blue
+
+        if (prediction.Points == win)
+            return "bg-success text-white"; // Green
+
+        return "";
     }
 
     public async Task<bool> IsPredictionLocked(Guid championshipId, Guid matchId, Guid userId)

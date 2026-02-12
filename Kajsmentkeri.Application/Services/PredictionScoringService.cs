@@ -24,13 +24,74 @@ public class PredictionScoringService : IPredictionScoringService
             .FirstOrDefaultAsync(m => m.Id == matchId);
 
         if (match == null || match.HomeScore == null || match.AwayScore == null)
-            return; // No result entered yet
+            return;
 
+        CalculateMatchPredictions(match);
+        await context.SaveChangesAsync();
+    }
+
+    public async Task RecalculateForChampionshipAsync(Guid championshipId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var matches = await context.Matches
+            .Where(m => m.ChampionshipId == championshipId)
+            .Include(m => m.Championship)
+                .ThenInclude(c => c.ScoringRules)
+            .Include(m => m.Predictions)
+            .ToListAsync();
+
+        foreach (var match in matches)
+        {
+            if (match.HomeScore != null && match.AwayScore != null)
+            {
+                CalculateMatchPredictions(match);
+            }
+        }
+
+        // Also update championship winner points if they are already awarded
+        var ch = await context.Championships.Include(c => c.ScoringRules).FirstOrDefaultAsync(c => c.Id == championshipId);
+        if (ch != null && ch.IsChampionshipEnded)
+        {
+            var endMatches = await context.Matches
+                .Where(m => m.ChampionshipId == championshipId && m.HomeScore.HasValue && m.AwayScore.HasValue)
+                .OrderByDescending(m => m.StartTimeUtc)
+                .Take(2)
+                .ToListAsync();
+
+            if (endMatches.Count >= 2)
+            {
+                var finalMatch = endMatches[0];
+                var bronzeMatch = endMatches[1];
+
+                string goldTeam = finalMatch.HomeScore > finalMatch.AwayScore ? finalMatch.HomeTeam : finalMatch.AwayTeam;
+                string silverTeam = finalMatch.HomeScore > finalMatch.AwayScore ? finalMatch.AwayTeam : finalMatch.HomeTeam;
+                string bronzeTeam = bronzeMatch.HomeScore > bronzeMatch.AwayScore ? bronzeMatch.HomeTeam : bronzeMatch.AwayTeam;
+
+                var winnerPredictions = await context.ChampionshipWinnerPredictions.Where(p => p.ChampionshipId == championshipId).ToListAsync();
+                foreach (var pred in winnerPredictions)
+                {
+                    if (pred.TeamName == goldTeam)
+                        pred.PointsAwarded = ch.ScoringRules.PointsForChampionshipWinner;
+                    else if (pred.TeamName == silverTeam)
+                        pred.PointsAwarded = ch.ScoringRules.PointsForChampionshipRunnerUp;
+                    else if (pred.TeamName == bronzeTeam)
+                        pred.PointsAwarded = ch.ScoringRules.PointsForChampionshipThirdPlace;
+                    else
+                        pred.PointsAwarded = 0;
+                }
+            }
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private void CalculateMatchPredictions(Match match)
+    {
         var predictions = match.Predictions.ToList();
         var rules = match.Championship.ScoringRules;
 
         var correctWinnerIds = predictions
-            .Where(p => GetWinner(p.PredictedHome, p.PredictedAway) == GetWinner(match.HomeScore.Value, match.AwayScore.Value))
+            .Where(p => GetWinner(p.PredictedHome, p.PredictedAway) == GetWinner(match.HomeScore!.Value, match.AwayScore!.Value))
             .Select(p => p.UserId)
             .ToHashSet();
 
@@ -65,8 +126,6 @@ public class PredictionScoringService : IPredictionScoringService
             prediction.Points = points;
             prediction.RarityPart = rarityPart;
         }
-
-        await context.SaveChangesAsync();
     }
 
     private static string GetWinner(int home, int away)

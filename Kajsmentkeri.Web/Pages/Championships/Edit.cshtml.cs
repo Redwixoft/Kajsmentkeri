@@ -15,13 +15,19 @@ public class EditModel : PageModel
     private readonly IMatchService _matchService;
     private readonly UserManager<AppUser> _userManager;
     private readonly ITimeService _timeService;
+    private readonly IPredictionScoringService _scoringService;
 
-    public EditModel(UserManager<AppUser> userManager, IChampionshipService championshipService, IMatchService matchService, ITimeService timeService)
+    public EditModel(UserManager<AppUser> userManager, 
+        IChampionshipService championshipService, 
+        IMatchService matchService, 
+        ITimeService timeService,
+        IPredictionScoringService scoringService)
     {
         _userManager = userManager;
         _championshipService = championshipService;
         _matchService = matchService;
         _timeService = timeService;
+        _scoringService = scoringService;
     }
 
     [BindProperty]
@@ -169,6 +175,7 @@ public class EditModel : PageModel
         championship.ScoringRules.PointsForChampionshipThirdPlace = Input.PointsForChampionshipThirdPlace;
 
         await _championshipService.UpdateChampionshipAsync(championship);
+        await _scoringService.RecalculateForChampionshipAsync(id);
 
         return RedirectToPage("/Championships/List");
     }
