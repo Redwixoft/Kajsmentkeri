@@ -249,4 +249,9 @@ public class PredictionService : IPredictionService
             .Where(p => p.ChampionshipId == championshipId)
             .ToListAsync();
     }
+
+    public async Task CreateOrUpdatePredictionAsync(Guid matchId, Guid userId, int predictedHome, int predictedAway)
+    {
+        await SetPredictionInternalAsync(matchId, userId, predictedHome, predictedAway, checkLock: false);
+    }
 }

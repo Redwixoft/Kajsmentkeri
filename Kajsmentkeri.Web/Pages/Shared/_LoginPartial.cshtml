@@ -7,12 +7,19 @@
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
+    var user = await UserManager.GetUserAsync(User);
     <li class="nav-item">
         <a class="nav-link text-dark" asp-area="" asp-page="/Championships/List">Championships</a>
     </li>
     <li class="nav-item">
         <a class="nav-link text-dark" asp-area="" asp-page="/Users/List">Users</a>
     </li>
+    @if (user != null && user.IsAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-page="/Admin/ImportChampionship">Import</a>
+        </li>
+    }
     <li class="nav-item">
         <a id="manage" class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>
     </li>

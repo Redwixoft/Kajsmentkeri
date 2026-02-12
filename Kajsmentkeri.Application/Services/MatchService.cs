@@ -16,7 +16,7 @@ public class MatchService : IMatchService
         _timeService = timeService;
     }
 
-    public async Task CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime)
+    public async Task<Match> CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime)
     {
         var match = new Match
         {
@@ -24,12 +24,15 @@ public class MatchService : IMatchService
             ChampionshipId = championshipId,
             HomeTeam = homeTeam,
             AwayTeam = awayTeam,
-            StartTimeUtc = _timeService.ToUtc(startTime)
+            StartTimeUtc = startTime // Assuming TimeService handles UTC conversion or input is already UTC. Previous code used _timeService.ToUtc but it's cleaner to handle it before calling if possible, or just keep as is. Let's keep strict to previous impl but fix return.
+            // Actually, let's stick to _timeService.ToUtc(startTime) as before.
         };
+        match.StartTimeUtc = _timeService.ToUtc(startTime);
 
         using var context = _dbContextFactory.CreateDbContext();
         context.Matches.Add(match);
         await context.SaveChangesAsync();
+        return match;
     }
 
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)

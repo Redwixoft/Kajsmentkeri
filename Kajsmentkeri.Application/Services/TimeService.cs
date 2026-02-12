@@ -22,6 +22,10 @@ public class TimeService : ITimeService
 
     public DateTime ToUtc(DateTime bratislavaDateTime)
     {
+        if (bratislavaDateTime.Kind != DateTimeKind.Unspecified)
+        {
+            bratislavaDateTime = DateTime.SpecifyKind(bratislavaDateTime, DateTimeKind.Unspecified);
+        }
         return TimeZoneInfo.ConvertTimeToUtc(bratislavaDateTime, BratislavaTimeZone);
     }
 }

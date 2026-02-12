@@ -15,4 +15,5 @@ public interface IPredictionService
     Task SubmitWinnerPredictionAsync(Guid championshipId, string teamName);
     Task<ChampionshipWinnerPrediction?> GetWinnerPredictionAsync(Guid championshipId, Guid userId);
     Task<List<ChampionshipWinnerPrediction>> GetWinnerPredictionsForChampionshipAsync(Guid championshipId);
+    Task CreateOrUpdatePredictionAsync(Guid matchId, Guid userId, int predictedHome, int predictedAway);
 }

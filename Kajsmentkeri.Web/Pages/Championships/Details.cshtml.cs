@@ -102,8 +102,11 @@ public class DetailsModel : PageModel
         var predictions = await predictionsTask;
         var users = await _userManager.Users.ToListAsync();
 
+        var usersWithPredictions = predictions.Select(p => p.UserId).Distinct().ToHashSet();
+        
         // Sort users: logged-in first, then others alphabetically
         Users = users
+            .Where(u => u.Id == CurrentUserId || usersWithPredictions.Contains(u.Id))
             .OrderBy(u => u.Id == CurrentUserId ? 0 : 1)
             .ThenBy(u => u.UserName)
             .Select(u => new UserColumn

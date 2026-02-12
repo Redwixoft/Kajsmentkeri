@@ -1,0 +1,126 @@
+@page
+@model Kajsmentkeri.Web.Pages.Admin.ImportChampionshipModel
+@{
+    ViewData["Title"] = "Import Championship";
+}
+
+<h1>Import Championship</h1>
+
+@if (Model.Analysis == null)
+{
+    <form enctype="multipart/form-data" method="post">
+        <div class="form-group mb-3">
+            <label asp-for="Upload" class="control-label">Excel File</label>
+            <input asp-for="Upload" class="form-control" type="file" accept=".xlsx, .xls" />
+            <span asp-validation-for="Upload" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn btn-primary">Analyze</button>
+    </form>
+}
+else
+{
+    <form method="post" asp-page-handler="Import">
+        <input type="hidden" asp-for="Analysis.PredictionFileBase64" />
+        
+        <div class="card mb-4">
+            <div class="card-header">Championship Details</div>
+            <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ChampionshipName" class="control-label">Championship Name</label>
+                        <input asp-for="ChampionshipName" class="form-control" />
+                        <span asp-validation-for="ChampionshipName" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Year" class="control-label">Year</label>
+                        <input asp-for="Year" class="form-control" />
+                        <span asp-validation-for="Year" class="text-danger"></span>
+                    </div>
+                 </div>
+                 <div class="form-group mb-0">
+                    <label asp-for="Description" class="control-label">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                 </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h3>User Mapping</h3>
+                <p>Map Excel columns to System Users</p>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Excel Name</th>
+                            <th>System User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Analysis.UserMappings.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Analysis.UserMappings[i].ExcelName
+                                    <input type="hidden" name="UserMapInput[@i].Key" value="@Model.Analysis.UserMappings[i].ExcelName" />
+                                </td>
+                                <td>
+                                    <select name="UserMapInput[@i].Value" class="form-select">
+                                        <option value="">-- Ignore --</option>
+                                        @foreach (var user in Model.Users)
+                                        {
+                                            <!option value="@user.Id" @(Model.Analysis.UserMappings[i].MappedUserId == user.Id ? "selected" : "")>@user.UserName</!option>
+                                        }
+                                    </select>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h3>Team Mapping</h3>
+                <p>Map Country Codes to Full Names</p>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Full Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Analysis.TeamMappings.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Analysis.TeamMappings[i].Code
+                                    <input type="hidden" name="TeamMapInput[@i].Key" value="@Model.Analysis.TeamMappings[i].Code" />
+                                </td>
+                                <td>
+                                    <input name="TeamMapInput[@i].Value" class="form-control" value="@Model.Analysis.TeamMappings[i].MappedName" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <h4>Preview Matches (First 5)</h4>
+            <ul>
+                @foreach(var match in Model.Analysis.PreviewMatches.Take(5))
+                {
+                    <li>@match</li>
+                }
+            </ul>
+        </div>
+
+        <button type="submit" class="btn btn-success mt-3">Import Championship</button>
+        <a asp-page="./ImportChampionship" class="btn btn-secondary mt-3">Cancel</a>
+    </form>
+}
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
