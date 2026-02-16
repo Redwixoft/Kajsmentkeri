@@ -1,7 +1,6 @@
 ﻿@page "{id:guid}"
 @using Kajsmentkeri.Domain
 @using System
-@inject Kajsmentkeri.Application.Interfaces.IPredictionService PredictionService
 @inject Kajsmentkeri.Application.Interfaces.ITimeService _timeService
 @model Kajsmentkeri.Web.Pages.Championships.DetailsModel
 @{
@@ -430,8 +429,8 @@
                 {
                     var key = (match.Id, user.UserId);
                     var hasPrediction = Model.PredictionMap.TryGetValue(key, out var prediction);
-                    var isPredictionLocked = await IsPredictionLocked(Model.Championship!.Id, match.Id, user.UserId);
-                    var predictionCss = @GetPredictionCssClass(prediction, hasResult);
+                    var isPredictionLocked = Model.IsPredictionLockedSync(match.Id, user.UserId);
+                    var predictionCss = GetPredictionCssClass(prediction, hasResult);
                     
                     var isOwnColumn = user.UserId == Model.CurrentUserId;
                     
@@ -536,12 +535,6 @@
             return "bg-success text-white"; // Green
 
         return "";
-    }
-
-    public async Task<bool> IsPredictionLocked(Guid championshipId, Guid matchId, Guid userId)
-    {
-        var predictionLockTime = await PredictionService.GetPredictionLockTimeAsync(championshipId, matchId, userId);
-        return predictionLockTime <= _timeService.UtcNow;
     }
 
     public string GetStartTimeString(DateTime utcDateTime)

@@ -51,6 +51,9 @@ public class DetailsModel : PageModel
     public LineGraphViewModel Graph { get; set; } = new();
     public Dictionary<Guid, int> UserRanks { get; set; } = new();
     public bool IsVisibilityRuleActive { get; set; }
+    public HashSet<Guid> FirstMatchesIds { get; set; } = new();
+    public Guid? LeaderUserId { get; set; }
+    public Guid? TailUserId { get; set; }
 
     // Winner prediction props
     public ChampionshipWinnerPrediction? MyWinnerPrediction { get; set; }
@@ -143,7 +146,34 @@ public class DetailsModel : PageModel
             }
         }
 
+        // Pre-calculate data for lock logic to avoid N+1 queries in the view
+        FirstMatchesIds = Matches.OrderBy(m => m.StartTimeUtc).Take(8).Select(m => m.Id).ToHashSet();
+        if (Leaderboard.Count > 0)
+        {
+            LeaderUserId = Leaderboard.First().UserId;
+            TailUserId = Leaderboard.Last().UserId;
+        }
+
         return Page();
+    }
+
+    public bool IsPredictionLockedSync(Guid matchId, Guid userId)
+    {
+        var match = Matches.FirstOrDefault(m => m.Id == matchId);
+        if (match == null) return true;
+
+        var matchStart = match.StartTimeUtc;
+
+        if (FirstMatchesIds.Contains(matchId))
+            return matchStart <= _timeService.UtcNow;
+
+        if (userId == LeaderUserId)
+            return matchStart.AddMinutes(-10) <= _timeService.UtcNow;
+
+        if (userId == TailUserId)
+            return matchStart.AddMinutes(5) <= _timeService.UtcNow;
+
+        return matchStart <= _timeService.UtcNow;
     }
 
     public async Task<IActionResult> OnPostAsync(Guid id)

@@ -142,9 +142,13 @@ public class LeaderboardService : ILeaderboardService
             .Where(p => matches.Select(m => m.Id).Contains(p.MatchId))
             .ToListAsync();
 
+        var userIdsWithPredictions = predictions.Select(p => p.UserId).Distinct().ToList();
+
         using var scope = _scopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-        var users = await userManager.Users.ToListAsync();
+        var users = await userManager.Users
+            .Where(u => userIdsWithPredictions.Contains(u.Id))
+            .ToListAsync();
 
         var graph = new LineGraphViewModel
         {
