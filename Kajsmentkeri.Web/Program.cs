@@ -5,12 +5,20 @@ using Kajsmentkeri.Infrastructure.Persistence;
 using Kajsmentkeri.Web.Areas.Identity;
 using Kajsmentkeri.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLogging();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -54,7 +62,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddRazorPages();
-builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
+builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<AppUser>>();
 
 builder.Services.AddScoped<IPredictionScoringService, PredictionScoringService>();
 builder.Services.AddScoped<IPredictionService, PredictionService>();
@@ -94,6 +102,8 @@ else
     var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     identityDb.Database.Migrate();
 }*/
+
+app.UseForwardedHeaders();
 
 app.UseHttpsRedirection();
 
