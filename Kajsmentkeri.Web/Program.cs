@@ -46,6 +46,12 @@ builder.Services.AddDefaultIdentity<AppUser>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    var timeoutDays = builder.Configuration.GetValue<int>("Authentication:SessionTimeoutInDays", 30);
+    options.ExpireTimeSpan = TimeSpan.FromDays(timeoutDays);
+    options.SlidingExpiration = true;
+});
 
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();

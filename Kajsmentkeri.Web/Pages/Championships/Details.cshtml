@@ -396,7 +396,7 @@
                     {
                         <div id="@resultCellId-display">
                             <span>@result</span>
-                            @if (Model.IsAdmin && matchStarted)
+                            @if (Model.CurrentUserId != null && matchStarted)
                             {
                                 <button type="button" class="btn btn-warning btn-sm ms-1" onclick="showEdit('@resultCellId')">
                                     ✏️
@@ -404,7 +404,7 @@
                             }
                         </div>
 
-                        @if (Model.IsAdmin && matchStarted)
+                        @if (Model.CurrentUserId != null && matchStarted)
                         {
                             <form id="@resultCellId-form" asp-page-handler="UpdateResult" method="post" class="d-none" style="display: flex; gap: 0.25rem;">
                                 <input type="hidden" name="id" value="@Model.Championship!.Id" />
@@ -414,7 +414,7 @@
                             </form>
                         }
                     }
-                    else if (Model.IsAdmin && matchStarted)
+                    else if (Model.CurrentUserId != null && matchStarted)
                     {
                         <form asp-page-handler="UpdateResult" method="post" style="display: flex; gap: 0.25rem;">
                             <input type="hidden" name="id" value="@Model.Championship!.Id" />

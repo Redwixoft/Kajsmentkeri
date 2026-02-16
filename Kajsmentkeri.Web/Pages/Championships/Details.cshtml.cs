@@ -213,8 +213,8 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnPostUpdateResultAsync(Guid id)
     {
         var user = await _userManager.GetUserAsync(User);
-        if (user == null || !user.IsAdmin)
-            return Forbid();
+        if (user == null)
+            return Unauthorized();
 
         var match = await _matchService.GetMatchByIdAsync(MatchId);
         if (match == null || match.StartTimeUtc > _timeService.UtcNow)
