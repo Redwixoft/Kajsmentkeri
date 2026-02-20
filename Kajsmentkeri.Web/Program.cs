@@ -72,6 +72,7 @@ builder.Services.AddScoped<IChampionshipService, ChampionshipService>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IImportService, ImportService>();
+builder.Services.AddScoped<IPercentagePredictionService, PercentagePredictionService>();
 
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 

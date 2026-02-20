@@ -1,0 +1,77 @@
+@page
+@model Kajsmentkeri.Web.Pages.PercentagePredictionsModel
+@{
+    ViewData["Title"] = "Percentage Predictions";
+}
+
+<div class="container mt-4">
+    <h2>Percentage Predictions</h2>
+
+    @if (Request.Query.ContainsKey("success"))
+    {
+        <div class="alert alert-success">
+            Thank you! Your predictions have been successfully submitted.
+        </div>
+    }
+    else if (Model.AlreadySubmitted)
+    {
+        <div class="alert alert-info">
+            You have already submitted your predictions. Thank you for participating!
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Please provide your predictions for the following questions (values between 0 and 100).</p>
+        <hr />
+
+        <form method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            @for (int i = 1; i <= 10; i++)
+            {
+                var questionKey = $"Question {i}";
+                var questionProp = $"Question{i}";
+                var questionText = Model.Questions.ContainsKey($"Question{i}") ? Model.Questions[$"Question{i}"] : $"Question {i}";
+
+                <div class="mb-3">
+                    <label class="form-label">@i. @questionText</label>
+                    <div class="input-group">
+                        @switch (i)
+                        {
+                            case 1: <input asp-for="Input.Question1" class="form-control" min="0" max="100" required />; break;
+                            case 2: <input asp-for="Input.Question2" class="form-control" min="0" max="100" required />; break;
+                            case 3: <input asp-for="Input.Question3" class="form-control" min="0" max="100" required />; break;
+                            case 4: <input asp-for="Input.Question4" class="form-control" min="0" max="100" required />; break;
+                            case 5: <input asp-for="Input.Question5" class="form-control" min="0" max="100" required />; break;
+                            case 6: <input asp-for="Input.Question6" class="form-control" min="0" max="100" required />; break;
+                            case 7: <input asp-for="Input.Question7" class="form-control" min="0" max="100" required />; break;
+                            case 8: <input asp-for="Input.Question8" class="form-control" min="0" max="100" required />; break;
+                            case 9: <input asp-for="Input.Question9" class="form-control" min="0" max="100" required />; break;
+                            case 10: <input asp-for="Input.Question10" class="form-control" min="0" max="100" required />; break;
+                        }
+                        <span class="input-group-text">%</span>
+                    </div>
+                    @switch (i)
+                    {
+                        case 1: <span asp-validation-for="Input.Question1" class="text-danger"></span>; break;
+                        case 2: <span asp-validation-for="Input.Question2" class="text-danger"></span>; break;
+                        case 3: <span asp-validation-for="Input.Question3" class="text-danger"></span>; break;
+                        case 4: <span asp-validation-for="Input.Question4" class="text-danger"></span>; break;
+                        case 5: <span asp-validation-for="Input.Question5" class="text-danger"></span>; break;
+                        case 6: <span asp-validation-for="Input.Question6" class="text-danger"></span>; break;
+                        case 7: <span asp-validation-for="Input.Question7" class="text-danger"></span>; break;
+                        case 8: <span asp-validation-for="Input.Question8" class="text-danger"></span>; break;
+                        case 9: <span asp-validation-for="Input.Question9" class="text-danger"></span>; break;
+                        case 10: <span asp-validation-for="Input.Question10" class="text-danger"></span>; break;
+                    }
+                </div>
+            }
+
+            <button type="submit" class="btn btn-primary mt-3">Submit Predictions</button>
+        </form>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

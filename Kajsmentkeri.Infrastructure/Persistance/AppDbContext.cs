@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Prediction> Predictions => Set<Prediction>();
     public DbSet<PredictionAuditLog> PredictionAuditLogs => Set<PredictionAuditLog>();
     public DbSet<ChampionshipWinnerPrediction> ChampionshipWinnerPredictions => Set<ChampionshipWinnerPrediction>();
+    public DbSet<PercentagePrediction> PercentagePredictions => Set<PercentagePrediction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -54,6 +55,11 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<ChampionshipWinnerPrediction>()
             .HasIndex(p => new { p.UserId, p.ChampionshipId })
+            .IsUnique();
+
+        // PercentagePrediction
+        modelBuilder.Entity<PercentagePrediction>()
+            .HasIndex(p => p.UserId)
             .IsUnique();
     }
 }
