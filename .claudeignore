@@ -1,0 +1,20 @@
+# .claudeignore for .NET projects
+
+# Build outputs - compiled binaries have no value to Claude
+**/bin/
+**/obj/
+
+# NuGet packages - dependency source code rarely needed
+**/packages/
+
+# Compiled assemblies
+**/*.dll
+**/*.exe
+**/*.pdb
+
+# Git
+**/.git/
+
+# OS files
+**/.DS_Store
+**/Thumbs.db
