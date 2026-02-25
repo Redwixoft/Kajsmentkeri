@@ -25,6 +25,7 @@ public class ListModel : PageModel
 
     public List<AppUser> Users { get; set; } = new();
     public Dictionary<Guid, LeaderboardEntryDto> UserStats { get; set; } = new();
+    public Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>> MedalCounts { get; set; } = new();
     public bool IsCurrentUserAdmin { get; set; }
 
     public string NameSort { get; set; } = string.Empty;
@@ -34,6 +35,9 @@ public class ListModel : PageModel
     public string MissesSort { get; set; } = string.Empty;
     public string LuckersSort { get; set; } = string.Empty;
     public string OnlyOnesSort { get; set; } = string.Empty;
+    public string OnlyOneTriesSort { get; set; } = string.Empty;
+    public string MedalsSort { get; set; } = string.Empty;
+    public string ChampionshipsSort { get; set; } = string.Empty;
     public string AdminSort { get; set; } = string.Empty;
     public string CurrentSort { get; set; } = string.Empty;
 
@@ -47,12 +51,16 @@ public class ListModel : PageModel
         MissesSort = sortOrder == "misses" ? "misses_asc" : "misses";
         LuckersSort = sortOrder == "luckers" ? "luckers_asc" : "luckers";
         OnlyOnesSort = sortOrder == "onlyones" ? "onlyones_asc" : "onlyones";
+        OnlyOneTriesSort = sortOrder == "onlyonetries" ? "onlyonetries_asc" : "onlyonetries";
+        MedalsSort = sortOrder == "medals" ? "medals_asc" : "medals";
+        ChampionshipsSort = sortOrder == "championships" ? "championships_asc" : "championships";
         AdminSort = sortOrder == "admin" ? "admin_desc" : "admin";
 
         var usersQuery = _userManager.Users.AsQueryable();
         var users = await usersQuery.ToListAsync();
         var stats = await _leaderboardService.GetGlobalLeaderboardAsync();
         UserStats = stats.ToDictionary(s => s.UserId, s => s);
+        MedalCounts = await _leaderboardService.GetMedalCountsAsync();
 
         // Sorting logic
         Users = sortOrder switch
@@ -70,6 +78,12 @@ public class ListModel : PageModel
             "luckers_asc" => users.OrderBy(u => UserStats.TryGetValue(u.Id, out var s) ? s.ExactScores : 0).ToList(),
             "onlyones" => users.OrderByDescending(u => UserStats.TryGetValue(u.Id, out var s) ? s.OnlyCorrect : 0).ToList(),
             "onlyones_asc" => users.OrderBy(u => UserStats.TryGetValue(u.Id, out var s) ? s.OnlyCorrect : 0).ToList(),
+            "onlyonetries" => users.OrderByDescending(u => UserStats.TryGetValue(u.Id, out var s) ? s.OnlyOneTries : 0).ToList(),
+            "onlyonetries_asc" => users.OrderBy(u => UserStats.TryGetValue(u.Id, out var s) ? s.OnlyOneTries : 0).ToList(),
+            "medals" => users.OrderByDescending(u => MedalCounts.TryGetValue(u.Id, out var m) ? m.Count(x => x.Position == 1) : 0).ThenByDescending(u => MedalCounts.TryGetValue(u.Id, out var m) ? m.Count(x => x.Position == 2) : 0).ThenByDescending(u => MedalCounts.TryGetValue(u.Id, out var m) ? m.Count(x => x.Position == 3) : 0).ToList(),
+            "medals_asc" => users.OrderBy(u => MedalCounts.TryGetValue(u.Id, out var m) ? m.Count(x => x.Position == 1) : 0).ThenBy(u => MedalCounts.TryGetValue(u.Id, out var m) ? m.Count(x => x.Position == 2) : 0).ThenBy(u => MedalCounts.TryGetValue(u.Id, out var m) ? m.Count(x => x.Position == 3) : 0).ToList(),
+            "championships" => users.OrderByDescending(u => UserStats.TryGetValue(u.Id, out var s) ? s.ChampionshipCount : 0).ToList(),
+            "championships_asc" => users.OrderBy(u => UserStats.TryGetValue(u.Id, out var s) ? s.ChampionshipCount : 0).ToList(),
             "admin" => users.OrderBy(u => u.IsAdmin).ToList(),
             "admin_desc" => users.OrderByDescending(u => u.IsAdmin).ToList(),
             _ => users.OrderBy(u => u.UserName).ToList(),

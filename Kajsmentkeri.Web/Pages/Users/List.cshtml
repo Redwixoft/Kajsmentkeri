@@ -44,6 +44,21 @@
                     Only Ones @(Model.CurrentSort == "onlyones" || Model.CurrentSort == "onlyones_asc" ? (Model.CurrentSort == "onlyones" ? "↓" : "↑") : "")
                 </a>
             </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.OnlyOneTriesSort" class="text-decoration-none text-dark">
+                    Only-one tries @(Model.CurrentSort == "onlyonetries" || Model.CurrentSort == "onlyonetries_asc" ? (Model.CurrentSort == "onlyonetries" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.ChampionshipsSort" class="text-decoration-none text-dark">
+                    Championships @(Model.CurrentSort == "championships" || Model.CurrentSort == "championships_asc" ? (Model.CurrentSort == "championships" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.MedalsSort" class="text-decoration-none text-dark">
+                    Medals @(Model.CurrentSort == "medals" || Model.CurrentSort == "medals_asc" ? (Model.CurrentSort == "medals" ? "↓" : "↑") : "")
+                </a>
+            </th>
             @if (Model.IsCurrentUserAdmin)
             {
                 <th>
@@ -67,6 +82,22 @@
                 <td>@(hasStats ? stats.OneGoalMisses : 0)</td>
                 <td>@(hasStats ? stats.ExactScores : 0)</td>
                 <td>@(hasStats ? stats.OnlyCorrect : 0)</td>
+                @{
+                    var tries = hasStats ? stats.OnlyOneTries : 0;
+                    var tooltip = (hasStats && tries > 0) ? $"{(int)Math.Round((double)stats.OnlyCorrect / tries * 100)}%" : null;
+                }
+                <td title="@tooltip">@tries</td>
+                <td>@(hasStats ? stats.ChampionshipCount : 0)</td>
+                <td>
+                    @if (Model.MedalCounts.TryGetValue(user.Id, out var medals))
+                    {
+                        foreach (var medal in medals.OrderBy(m => m.Position).ThenByDescending(m => m.Year))
+                        {
+                            var emoji = medal.Position == 1 ? "🥇" : medal.Position == 2 ? "🥈" : "🥉";
+                            <span title="@medal.ChampionshipName @medal.Year">@emoji</span>
+                        }
+                    }
+                </td>
                 @if (Model.IsCurrentUserAdmin)
                 {
                     <td>@(user.IsAdmin ? "Yes" : "No")</td>

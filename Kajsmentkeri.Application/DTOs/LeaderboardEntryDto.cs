@@ -9,8 +9,10 @@ public class LeaderboardEntryDto
     public int CorrectWinners { get; set; }
     public int OneGoalMisses { get; set; }
     public int OnlyCorrect { get; set; }
+    public int OnlyOneTries { get; set; }
     public int ExactScores { get; set; }
     public int WinnerPredictionPoints { get; set; }
+    public int ChampionshipCount { get; set; }
 
     public decimal RarityPoints { get; set; }
 }
