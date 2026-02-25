@@ -112,6 +112,17 @@
     </tbody>
 </table>
 
+<div class="mt-4 mb-4">
+    <div class="btn-group mb-3 flex-wrap" role="group">
+        <button type="button" class="btn btn-primary btn-sm chart-btn" data-metric="points">Total Points</button>
+        <button type="button" class="btn btn-outline-primary btn-sm chart-btn" data-metric="winners">Winners</button>
+        <button type="button" class="btn btn-outline-primary btn-sm chart-btn" data-metric="misses">One-Goal Misses</button>
+        <button type="button" class="btn btn-outline-primary btn-sm chart-btn" data-metric="luckers">Luckers</button>
+        <button type="button" class="btn btn-outline-primary btn-sm chart-btn" data-metric="onlyOnes">Only Ones</button>
+    </div>
+    <canvas id="usersChart"></canvas>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -142,12 +153,83 @@
             var button = event.relatedTarget;
             var id = button.getAttribute('data-id');
             var name = button.getAttribute('data-name');
-            
+
             var nameInput = deleteModal.querySelector('#deleteTargetName');
             var idInput = deleteModal.querySelector('#deleteTargetId');
 
             nameInput.textContent = name;
             idInput.value = id;
         });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    @{
+        var chartUsers = Model.Users.Select(u => {
+            var s = Model.UserStats.GetValueOrDefault(u.Id);
+            return new {
+                name = u.UserName ?? "?",
+                points = s?.TotalPoints ?? 0,
+                winners = s?.CorrectWinners ?? 0,
+                misses = s?.OneGoalMisses ?? 0,
+                luckers = s?.ExactScores ?? 0,
+                onlyOnes = s?.OnlyCorrect ?? 0
+            };
+        }).ToList();
+    }
+    <script>
+        const allUserData = @Html.Raw(Json.Serialize(chartUsers));
+
+        const metricConfigs = {
+            points:   { label: 'Total Points',   color: 'rgba(13, 110, 253, 0.8)'  },
+            winners:  { label: 'Winners',         color: 'rgba(25, 135, 84, 0.8)'   },
+            misses:   { label: 'One-Goal Misses', color: 'rgba(255, 193, 7, 0.9)'   },
+            luckers:  { label: 'Luckers',         color: 'rgba(220, 53, 69, 0.8)'   },
+            onlyOnes: { label: 'Only Ones',       color: 'rgba(111, 66, 193, 0.8)'  }
+        };
+
+        let usersChart = null;
+
+        function showChart(metric) {
+            const sorted = [...allUserData].sort((a, b) => b[metric] - a[metric]);
+            const cfg = metricConfigs[metric];
+
+            document.querySelectorAll('.chart-btn').forEach(btn => {
+                const active = btn.dataset.metric === metric;
+                btn.classList.toggle('btn-primary', active);
+                btn.classList.toggle('btn-outline-primary', !active);
+            });
+
+            if (usersChart) {
+                usersChart.data.labels = sorted.map(u => u.name);
+                usersChart.data.datasets[0].data = sorted.map(u => u[metric]);
+                usersChart.data.datasets[0].label = cfg.label;
+                usersChart.data.datasets[0].backgroundColor = cfg.color;
+                usersChart.update();
+            } else {
+                usersChart = new Chart(document.getElementById('usersChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: sorted.map(u => u.name),
+                        datasets: [{
+                            label: cfg.label,
+                            data: sorted.map(u => u[metric]),
+                            backgroundColor: cfg.color,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                    }
+                });
+            }
+        }
+
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+            btn.addEventListener('click', () => showChart(btn.dataset.metric));
+        });
+
+        showChart('points');
     </script>
 }
