@@ -26,6 +26,7 @@ public class ListModel : PageModel
     public List<AppUser> Users { get; set; } = new();
     public Dictionary<Guid, LeaderboardEntryDto> UserStats { get; set; } = new();
     public Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>> MedalCounts { get; set; } = new();
+    public ChampionshipRecordsDto Records { get; set; } = new();
     public bool IsCurrentUserAdmin { get; set; }
 
     public string NameSort { get; set; } = string.Empty;
@@ -61,6 +62,7 @@ public class ListModel : PageModel
         var stats = await _leaderboardService.GetGlobalLeaderboardAsync();
         UserStats = stats.ToDictionary(s => s.UserId, s => s);
         MedalCounts = await _leaderboardService.GetMedalCountsAsync();
+        Records = await _leaderboardService.GetChampionshipRecordsAsync();
 
         // Sorting logic
         Users = sortOrder switch

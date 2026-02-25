@@ -112,6 +112,50 @@
     </tbody>
 </table>
 
+@{
+    var recordRows = new List<(string Label, List<Kajsmentkeri.Application.DTOs.RecordEntryDto> Holders)>
+    {
+        ("Most Points",           Model.Records.MostPoints),
+        ("Most Winners",          Model.Records.MostWinners),
+        ("Most One-Goal Misses",  Model.Records.MostOneGoalMisses),
+        ("Most Luckers",          Model.Records.MostLuckers),
+        ("Most Only Ones",        Model.Records.MostOnlyOnes),
+        ("Highest Point Gap (1st vs 2nd)", Model.Records.HighestPointGap)
+    };
+}
+<div class="mt-4 mb-4">
+    <h5>Records</h5>
+    <table class="table table-sm table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Record</th>
+                <th>Holder</th>
+                <th>Value</th>
+                <th>Championship</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var (label, holders) in recordRows)
+            {
+                if (holders.Count == 0) continue;
+                for (int i = 0; i < holders.Count; i++)
+                {
+                    var h = holders[i];
+                    <tr>
+                        @if (i == 0)
+                        {
+                            <td rowspan="@holders.Count" class="fw-bold align-middle">@label</td>
+                        }
+                        <td>@h.UserName</td>
+                        <td>@h.Value</td>
+                        <td>@h.ChampionshipName @h.ChampionshipYear</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
 <div class="mt-4 mb-4">
     <div class="btn-group mb-3 flex-wrap" role="group">
         <button type="button" class="btn btn-primary btn-sm chart-btn" data-metric="points">Total Points</button>

@@ -9,4 +9,5 @@ public interface ILeaderboardService
     Task<List<LeaderboardEntryDto>> GetGlobalLeaderboardAsync();
     Task<LineGraphViewModel> GetLeaderboardProgressAsync(Guid championshipId);
     Task<Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>>> GetMedalCountsAsync();
+    Task<ChampionshipRecordsDto> GetChampionshipRecordsAsync();
 }

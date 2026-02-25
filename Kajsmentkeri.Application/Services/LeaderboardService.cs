@@ -167,6 +167,118 @@ public class LeaderboardService : ILeaderboardService
         return leaderboard;
     }
 
+    public async Task<ChampionshipRecordsDto> GetChampionshipRecordsAsync()
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var championships = await context.Championships
+            .Where(c => !c.IsTest)
+            .Select(c => new { c.Id, c.Name, c.Year })
+            .ToListAsync();
+
+        if (championships.Count == 0)
+            return new ChampionshipRecordsDto();
+
+        var championshipIds = championships.Select(c => c.Id).ToList();
+
+        var rawStats = await context.Predictions
+            .Where(p => championshipIds.Contains(p.Match.ChampionshipId))
+            .GroupBy(p => new { p.Match.ChampionshipId, p.UserId })
+            .Select(g => new
+            {
+                ChampionshipId = g.Key.ChampionshipId,
+                UserId = g.Key.UserId,
+                Points = g.Sum(p => p.Points),
+                Winners = g.Count(p => p.GotWinner),
+                Misses = g.Count(p => p.OneGoalMiss),
+                Luckers = g.Count(p => p.GotExactScore),
+                OnlyOnes = g.Count(p => p.IsOnlyCorrect)
+            })
+            .ToListAsync();
+
+        var winnerPointsList = await context.ChampionshipWinnerPredictions
+            .Where(p => championshipIds.Contains(p.ChampionshipId) && p.PointsAwarded.HasValue)
+            .Select(p => new { p.ChampionshipId, p.UserId, Points = p.PointsAwarded!.Value })
+            .ToListAsync();
+
+        var winnerPointsLookup = winnerPointsList
+            .ToDictionary(p => (p.ChampionshipId, p.UserId), p => p.Points);
+
+        var userIds = rawStats.Select(p => p.UserId).Distinct().ToList();
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var userNames = await userManager.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "?");
+
+        var champLookup = championships.ToDictionary(c => c.Id);
+
+        var entries = rawStats.Select(p => (
+            ChampionshipId: p.ChampionshipId,
+            UserName: userNames.GetValueOrDefault(p.UserId, "?"),
+            TotalPoints: p.Points + winnerPointsLookup.GetValueOrDefault((p.ChampionshipId, p.UserId), 0),
+            Winners: p.Winners,
+            Misses: p.Misses,
+            Luckers: p.Luckers,
+            OnlyOnes: p.OnlyOnes
+        )).ToList();
+
+        RecordEntryDto ToDto(Guid champId, string userName, int value) => new()
+        {
+            UserName = userName,
+            Value = value,
+            ChampionshipName = champLookup[champId].Name,
+            ChampionshipYear = champLookup[champId].Year
+        };
+
+        List<RecordEntryDto> MaxRecord(int max, Func<(Guid ChampionshipId, string UserName, int TotalPoints, int Winners, int Misses, int Luckers, int OnlyOnes), int> getValue) =>
+            entries.Where(e => getValue(e) == max).Select(e => ToDto(e.ChampionshipId, e.UserName, max)).ToList();
+
+        var maxPoints   = entries.Count > 0 ? entries.Max(e => e.TotalPoints) : 0;
+        var maxWinners  = entries.Count > 0 ? entries.Max(e => e.Winners)     : 0;
+        var maxMisses   = entries.Count > 0 ? entries.Max(e => e.Misses)      : 0;
+        var maxLuckers  = entries.Count > 0 ? entries.Max(e => e.Luckers)     : 0;
+        var maxOnlyOnes = entries.Count > 0 ? entries.Max(e => e.OnlyOnes)    : 0;
+
+        // Highest point gap between 1st and 2nd per championship
+        int maxGap = 0;
+        var gapRecords = new List<RecordEntryDto>();
+        foreach (var champ in championships)
+        {
+            var ranked = entries
+                .Where(e => e.ChampionshipId == champ.Id)
+                .OrderByDescending(e => e.TotalPoints)
+                .ThenByDescending(e => e.Winners)
+                .ThenByDescending(e => e.Misses)
+                .ThenByDescending(e => e.OnlyOnes)
+                .ToList();
+
+            if (ranked.Count >= 2)
+            {
+                int gap = ranked[0].TotalPoints - ranked[1].TotalPoints;
+                if (gap > maxGap)
+                {
+                    maxGap = gap;
+                    gapRecords = [ToDto(champ.Id, ranked[0].UserName, gap)];
+                }
+                else if (gap == maxGap && maxGap > 0)
+                {
+                    gapRecords.Add(ToDto(champ.Id, ranked[0].UserName, gap));
+                }
+            }
+        }
+
+        return new ChampionshipRecordsDto
+        {
+            MostPoints        = maxPoints   > 0 ? MaxRecord(maxPoints,   e => e.TotalPoints) : [],
+            MostWinners       = maxWinners  > 0 ? MaxRecord(maxWinners,  e => e.Winners)     : [],
+            MostOneGoalMisses = maxMisses   > 0 ? MaxRecord(maxMisses,   e => e.Misses)      : [],
+            MostLuckers       = maxLuckers  > 0 ? MaxRecord(maxLuckers,  e => e.Luckers)     : [],
+            MostOnlyOnes      = maxOnlyOnes > 0 ? MaxRecord(maxOnlyOnes, e => e.OnlyOnes)    : [],
+            HighestPointGap   = gapRecords
+        };
+    }
+
     public async Task<Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>>> GetMedalCountsAsync()
     {
         using var context = _dbContextFactory.CreateDbContext();
