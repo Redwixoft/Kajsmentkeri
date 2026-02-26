@@ -419,8 +419,9 @@ public class LeaderboardService : ILeaderboardService
             .OrderBy(m => m.StartTimeUtc)
             .ToListAsync();
 
+        var matchIds = matches.Select(m => m.Id).ToList();
         var predictions = await context.Predictions
-            .Where(p => matches.Select(m => m.Id).Contains(p.MatchId))
+            .Where(p => matchIds.Contains(p.MatchId))
             .ToListAsync();
 
         var userIdsWithPredictions = predictions.Select(p => p.UserId).Distinct().ToList();
@@ -431,31 +432,34 @@ public class LeaderboardService : ILeaderboardService
             .Where(u => userIdsWithPredictions.Contains(u.Id))
             .ToListAsync();
 
-        var graph = new LineGraphViewModel
-        {
-            Labels = ["Start"]
-        };
-        graph.Labels.AddRange(matches.Select(m => $"{m.HomeTeam}-{m.AwayTeam}").ToList());
+        var userNames = users.ToDictionary(u => u.Id, u => u.UserName ?? "Unknown");
+        return BuildLeaderboardProgress(matches, predictions, userNames);
+    }
 
-        foreach (var user in users)
+    public LineGraphViewModel BuildLeaderboardProgress(
+        IList<Match> scoredMatches,
+        IList<Prediction> predictions,
+        IReadOnlyDictionary<Guid, string> userNames)
+    {
+        var predictionLookup = predictions.ToDictionary(p => (p.MatchId, p.UserId));
+
+        var graph = new LineGraphViewModel { Labels = ["Start"] };
+        graph.Labels.AddRange(scoredMatches.Select(m => $"{m.HomeTeam}-{m.AwayTeam}"));
+
+        foreach (var (userId, userName) in userNames)
         {
             var cumulative = 0;
-            var data = new List<int>() { 0 };
+            var data = new List<int> { 0 };
 
-            foreach (var match in matches)
+            foreach (var match in scoredMatches)
             {
-                var prediction = predictions.FirstOrDefault(p => p.MatchId == match.Id && p.UserId == user.Id);
-                if (prediction != null)
+                if (predictionLookup.TryGetValue((match.Id, userId), out var prediction))
                     cumulative += prediction.Points;
 
                 data.Add(cumulative);
             }
 
-            graph.Series.Add(new LineSeriesDto
-            {
-                Name = user.UserName ?? "Unknown",
-                Data = data
-            });
+            graph.Series.Add(new LineSeriesDto { Name = userName, Data = data });
         }
 
         return graph;

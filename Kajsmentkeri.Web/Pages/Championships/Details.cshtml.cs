@@ -93,7 +93,6 @@ public class DetailsModel : PageModel
         var leaderboardTask = _leaderboardService.GetLeaderboardAsync(id);
         var matchesTask = _matchService.GetMatchesByChampionshipAsync(id);
         var predictionsTask = _predictionService.GetPredictionsForChampionshipAsync(id);
-        var leaderboardProgressTask = _leaderboardService.GetLeaderboardProgressAsync(id);
 
         Championship = await championshipTask;
         if (Championship == null)
@@ -144,7 +143,12 @@ public class DetailsModel : PageModel
             UserRanks[Leaderboard[i].UserId] = i + 1;
         }
 
-        Graph = await leaderboardProgressTask; 
+        var userNameMap = users.ToDictionary(u => u.Id, u => u.UserName ?? "?");
+        var scoredMatches = Matches
+            .Where(m => m.HomeScore.HasValue && m.AwayScore.HasValue)
+            .OrderBy(m => m.StartTimeUtc)
+            .ToList();
+        Graph = _leaderboardService.BuildLeaderboardProgress(scoredMatches, predictions, userNameMap);
 
         if (Championship.SupportsChampionshipWinnerPrediction)
         {

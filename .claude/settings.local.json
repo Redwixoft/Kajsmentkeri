@@ -3,7 +3,11 @@
     "allow": [
       "Bash(dotnet build:*)",
       "Bash(dotnet ef:*)",
-      "Bash(/usr/bin/find:*)"
+      "Bash(/usr/bin/find:*)",
+      "Bash(dotnet:*)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\":*)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build:*)",
+      "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" ef:*)"
     ]
   }
 }

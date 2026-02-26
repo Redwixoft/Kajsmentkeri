@@ -73,5 +73,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ChampionshipParticipation>()
             .HasIndex(p => new { p.UserId, p.ChampionshipId })
             .IsUnique();
+
+        // PredictionAuditLog — queried by MatchId in audit log lookups
+        modelBuilder.Entity<PredictionAuditLog>()
+            .HasIndex(p => p.MatchId);
     }
 }
