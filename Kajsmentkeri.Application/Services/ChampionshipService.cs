@@ -106,6 +106,8 @@ public class ChampionshipService : IChampionshipService
         existing.IsTest = championship.IsTest;
         existing.SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction;
         existing.IsChampionshipEnded = championship.IsChampionshipEnded;
+        existing.AllowHighConfidencePrediction = championship.AllowHighConfidencePrediction;
+        existing.Type = championship.Type;
 
         if (existing.ScoringRules != null && championship.ScoringRules != null)
         {
@@ -211,6 +213,39 @@ public class ChampionshipService : IChampionshipService
 
         championship.IsChampionshipEnded = true;
         await context.SaveChangesAsync();
+    }
+
+    public async Task<bool> IsParticipatingAsync(Guid championshipId, Guid userId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.ChampionshipParticipations
+            .AnyAsync(p => p.ChampionshipId == championshipId && p.UserId == userId);
+    }
+
+    public async Task JoinChampionshipAsync(Guid championshipId, Guid userId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        var alreadyJoined = await context.ChampionshipParticipations
+            .AnyAsync(p => p.ChampionshipId == championshipId && p.UserId == userId);
+        if (alreadyJoined) return;
+
+        context.ChampionshipParticipations.Add(new ChampionshipParticipation
+        {
+            Id = Guid.NewGuid(),
+            ChampionshipId = championshipId,
+            UserId = userId,
+            JoinedAt = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+    }
+
+    public async Task<List<Guid>> GetParticipantUserIdsAsync(Guid championshipId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        return await context.ChampionshipParticipations
+            .Where(p => p.ChampionshipId == championshipId)
+            .Select(p => p.UserId)
+            .ToListAsync();
     }
 
     public async Task UpdateWinnerPaymentInfoAsync(Guid championshipId, string iban, string note)

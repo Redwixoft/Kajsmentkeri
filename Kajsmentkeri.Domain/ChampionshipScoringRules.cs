@@ -10,7 +10,7 @@ public class ChampionshipScoringRules
     public int PointsForCorrectWinner { get; set; } = 3;
     public int PointsForExactScore { get; set; } = 2;
     public int PointsForOnlyCorrectWinner { get; set; } = 2;
-    public int RarityPointsBonus { get; set; } = 0;
+    public decimal RarityPointsBonus { get; set; } = 0;
 
     public int PointsForChampionshipWinner { get; set; } = 3;
     public int PointsForChampionshipRunnerUp { get; set; } = 2;

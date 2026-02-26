@@ -19,6 +19,7 @@ public class Prediction
     public bool OneGoalMiss { get; set; }
     public bool IsOnlyCorrect { get; set; }
     public decimal RarityPart { get; set; }
+    public bool IsHighConfidence { get; set; }
 
     public override string ToString()
     {

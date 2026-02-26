@@ -83,16 +83,18 @@ public class LeaderboardService : ILeaderboardService
             .ThenByDescending(x => x.CorrectWinners)
             .ThenByDescending(x => x.OneGoalMisses)
             .ThenByDescending(x => x.OnlyCorrect)
+            .ThenByDescending(x => x.RarityPoints)
             .ToList();
 
         return leaderboard;
     }
 
-    public async Task<List<LeaderboardEntryDto>> GetGlobalLeaderboardAsync()
+    public async Task<List<LeaderboardEntryDto>> GetGlobalLeaderboardAsync(ChampionshipType? type = null)
     {
         using var context = _dbContextFactory.CreateDbContext();
         var grouped = await context.Predictions
             .Where(p => !p.Match.Championship.IsTest)
+            .Where(p => type == null || p.Match.Championship.Type == type)
             .GroupBy(p => p.UserId)
             .Select(g => new
             {
@@ -108,12 +110,14 @@ public class LeaderboardService : ILeaderboardService
 
         var winnerPointsGlobal = await context.ChampionshipWinnerPredictions
             .Where(p => !p.Championship.IsTest && p.PointsAwarded.HasValue)
+            .Where(p => type == null || p.Championship.Type == type)
             .GroupBy(p => p.UserId)
             .Select(g => new { UserId = g.Key, Points = g.Sum(p => p.PointsAwarded!.Value) })
             .ToDictionaryAsync(p => p.UserId, p => p.Points);
 
         var championshipCounts = await context.Predictions
             .Where(p => !p.Match.Championship.IsTest)
+            .Where(p => type == null || p.Match.Championship.Type == type)
             .Select(p => new { p.UserId, p.Match.ChampionshipId })
             .Distinct()
             .GroupBy(p => p.UserId)
@@ -123,6 +127,7 @@ public class LeaderboardService : ILeaderboardService
         // Compute OnlyOneTries: scored matches where the user was the sole predictor of their chosen outcome
         var allScoredPredictions = await context.Predictions
             .Where(p => !p.Match.Championship.IsTest && p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
+            .Where(p => type == null || p.Match.Championship.Type == type)
             .Select(p => new { p.MatchId, p.UserId, p.PredictedHome, p.PredictedAway })
             .ToListAsync();
 
@@ -162,17 +167,19 @@ public class LeaderboardService : ILeaderboardService
             .ThenByDescending(x => x.CorrectWinners)
             .ThenByDescending(x => x.OneGoalMisses)
             .ThenByDescending(x => x.OnlyCorrect)
+            .ThenByDescending(x => x.RarityPoints)
             .ToList();
 
         return leaderboard;
     }
 
-    public async Task<ChampionshipRecordsDto> GetChampionshipRecordsAsync()
+    public async Task<ChampionshipRecordsDto> GetChampionshipRecordsAsync(ChampionshipType? type = null)
     {
         using var context = _dbContextFactory.CreateDbContext();
 
         var championships = await context.Championships
             .Where(c => !c.IsTest)
+            .Where(c => type == null || c.Type == type)
             .Select(c => new { c.Id, c.Name, c.Year })
             .ToListAsync();
 
@@ -192,7 +199,8 @@ public class LeaderboardService : ILeaderboardService
                 Winners = g.Count(p => p.GotWinner),
                 Misses = g.Count(p => p.OneGoalMiss),
                 Luckers = g.Count(p => p.GotExactScore),
-                OnlyOnes = g.Count(p => p.IsOnlyCorrect)
+                OnlyOnes = g.Count(p => p.IsOnlyCorrect),
+                RarityPoints = g.Sum(p => p.RarityPart)
             })
             .ToListAsync();
 
@@ -220,7 +228,8 @@ public class LeaderboardService : ILeaderboardService
             Winners: p.Winners,
             Misses: p.Misses,
             Luckers: p.Luckers,
-            OnlyOnes: p.OnlyOnes
+            OnlyOnes: p.OnlyOnes,
+            RarityPoints: p.RarityPoints
         )).ToList();
 
         RecordEntryDto ToDto(Guid champId, string userName, int value) => new()
@@ -231,7 +240,7 @@ public class LeaderboardService : ILeaderboardService
             ChampionshipYear = champLookup[champId].Year
         };
 
-        List<RecordEntryDto> MaxRecord(int max, Func<(Guid ChampionshipId, string UserName, int TotalPoints, int Winners, int Misses, int Luckers, int OnlyOnes), int> getValue) =>
+        List<RecordEntryDto> MaxRecord(int max, Func<(Guid ChampionshipId, string UserName, int TotalPoints, int Winners, int Misses, int Luckers, int OnlyOnes, decimal RarityPoints), int> getValue) =>
             entries.Where(e => getValue(e) == max).Select(e => ToDto(e.ChampionshipId, e.UserName, max)).ToList();
 
         var maxPoints   = entries.Count > 0 ? entries.Max(e => e.TotalPoints) : 0;
@@ -251,6 +260,7 @@ public class LeaderboardService : ILeaderboardService
                 .ThenByDescending(e => e.Winners)
                 .ThenByDescending(e => e.Misses)
                 .ThenByDescending(e => e.OnlyOnes)
+                .ThenByDescending(e => e.RarityPoints)
                 .ToList();
 
             if (ranked.Count >= 2)
@@ -279,12 +289,13 @@ public class LeaderboardService : ILeaderboardService
         };
     }
 
-    public async Task<Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>>> GetMedalCountsAsync()
+    public async Task<Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>>> GetMedalCountsAsync(ChampionshipType? type = null)
     {
         using var context = _dbContextFactory.CreateDbContext();
 
         var qualifyingChampionships = await context.Championships
             .Where(c => !c.IsTest && (c.IsChampionshipEnded || c.Year < 2026))
+            .Where(c => type == null || c.Type == type)
             .Select(c => new { c.Id, c.Name, c.Year })
             .ToListAsync();
 
@@ -303,7 +314,8 @@ public class LeaderboardService : ILeaderboardService
                 TotalPoints = g.Sum(p => p.Points),
                 CorrectWinners = g.Count(p => p.GotWinner),
                 OneGoalMisses = g.Count(p => p.OneGoalMiss),
-                OnlyCorrect = g.Count(p => p.IsOnlyCorrect)
+                OnlyCorrect = g.Count(p => p.IsOnlyCorrect),
+                RarityPoints = g.Sum(p => p.RarityPart)
             })
             .ToListAsync();
 
@@ -327,12 +339,14 @@ public class LeaderboardService : ILeaderboardService
                     Total = p.TotalPoints + winnerPointsLookup.GetValueOrDefault((championship.Id, p.UserId), 0),
                     p.CorrectWinners,
                     p.OneGoalMisses,
-                    p.OnlyCorrect
+                    p.OnlyCorrect,
+                    p.RarityPoints
                 })
                 .OrderByDescending(e => e.Total)
                 .ThenByDescending(e => e.CorrectWinners)
                 .ThenByDescending(e => e.OneGoalMisses)
                 .ThenByDescending(e => e.OnlyCorrect)
+                .ThenByDescending(e => e.RarityPoints)
                 .ToList();
 
             for (int i = 0; i < Math.Min(3, ranked.Count); i++)
@@ -345,6 +359,56 @@ public class LeaderboardService : ILeaderboardService
         }
 
         return medals;
+    }
+
+    public async Task<Dictionary<Guid, string?>> GetChampionshipWinnersAsync(IEnumerable<Guid> championshipIds)
+    {
+        var ids = championshipIds.ToList();
+        if (ids.Count == 0)
+            return new Dictionary<Guid, string?>();
+
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var scores = await context.Predictions
+            .Where(p => ids.Contains(p.Match.ChampionshipId))
+            .GroupBy(p => new { p.Match.ChampionshipId, p.UserId })
+            .Select(g => new { ChampionshipId = g.Key.ChampionshipId, UserId = g.Key.UserId, Points = g.Sum(p => p.Points) })
+            .ToListAsync();
+
+        var winnerPredPoints = await context.ChampionshipWinnerPredictions
+            .Where(p => ids.Contains(p.ChampionshipId) && p.PointsAwarded.HasValue)
+            .Select(p => new { p.ChampionshipId, p.UserId, Points = p.PointsAwarded!.Value })
+            .ToListAsync();
+
+        var winnerPredLookup = winnerPredPoints.ToDictionary(p => (p.ChampionshipId, p.UserId), p => p.Points);
+
+        var winnerUserIds = new Dictionary<Guid, Guid>();
+        foreach (var champId in ids)
+        {
+            var top = scores
+                .Where(s => s.ChampionshipId == champId)
+                .Select(s => new { s.UserId, Total = s.Points + winnerPredLookup.GetValueOrDefault((champId, s.UserId), 0) })
+                .OrderByDescending(s => s.Total)
+                .FirstOrDefault();
+
+            if (top != null)
+                winnerUserIds[champId] = top.UserId;
+        }
+
+        if (winnerUserIds.Count == 0)
+            return ids.ToDictionary(id => id, id => (string?)null);
+
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var userNames = await userManager.Users
+            .Where(u => winnerUserIds.Values.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.UserName);
+
+        return ids.ToDictionary(
+            id => id,
+            id => winnerUserIds.TryGetValue(id, out var userId) && userNames.TryGetValue(userId, out var name)
+                ? name
+                : null);
     }
 
     public async Task<LineGraphViewModel> GetLeaderboardProgressAsync(Guid championshipId)

@@ -123,7 +123,7 @@ public class PredictionScoringService : IPredictionScoringService
             prediction.GotExactScore = gotExact;
             prediction.OneGoalMiss = oneGoalMiss;
             prediction.IsOnlyCorrect = isOnlyCorrect;
-            prediction.Points = points;
+            prediction.Points = prediction.IsHighConfidence ? points * 2 : points;
             prediction.RarityPart = rarityPart;
         }
     }

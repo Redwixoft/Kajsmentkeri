@@ -1,4 +1,5 @@
 @page
+@using Kajsmentkeri.Domain
 @model Kajsmentkeri.Web.Pages.Users.ListModel
 @{
     ViewData["Title"] = "Users";
@@ -6,63 +7,74 @@
 
 <h1>Users</h1>
 
+<div class="btn-group mb-3" role="group" aria-label="Sport type filter">
+    <a asp-page="./List" asp-route-sortOrder="@Model.CurrentSort" asp-route-sportType="@((int)ChampionshipType.IceHockey)"
+       class="btn @(Model.SportType == ChampionshipType.IceHockey ? "btn-primary" : "btn-outline-primary")">
+        🏒 Ice Hockey
+    </a>
+    <a asp-page="./List" asp-route-sortOrder="@Model.CurrentSort" asp-route-sportType="@((int)ChampionshipType.Football)"
+       class="btn @(Model.SportType == ChampionshipType.Football ? "btn-primary" : "btn-outline-primary")">
+        ⚽ Football
+    </a>
+</div>
+
 <table class="table table-striped">
     <thead>
         <tr>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.NameSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.NameSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Username @(Model.CurrentSort == "" || Model.CurrentSort == "name_desc" ? (Model.CurrentSort == "name_desc" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.EmailSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.EmailSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Email @(Model.CurrentSort == "email" || Model.CurrentSort == "email_desc" ? (Model.CurrentSort == "email_desc" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.PointsSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.PointsSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Total Points @(Model.CurrentSort == "points" || Model.CurrentSort == "points_asc" ? (Model.CurrentSort == "points" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.WinnersSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.WinnersSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Winners @(Model.CurrentSort == "winners" || Model.CurrentSort == "winners_asc" ? (Model.CurrentSort == "winners" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.MissesSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.MissesSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     One-Goal Misses @(Model.CurrentSort == "misses" || Model.CurrentSort == "misses_asc" ? (Model.CurrentSort == "misses" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.LuckersSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.LuckersSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Luckers @(Model.CurrentSort == "luckers" || Model.CurrentSort == "luckers_asc" ? (Model.CurrentSort == "luckers" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.OnlyOnesSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.OnlyOnesSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Only Ones @(Model.CurrentSort == "onlyones" || Model.CurrentSort == "onlyones_asc" ? (Model.CurrentSort == "onlyones" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.OnlyOneTriesSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.OnlyOneTriesSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Only-one tries @(Model.CurrentSort == "onlyonetries" || Model.CurrentSort == "onlyonetries_asc" ? (Model.CurrentSort == "onlyonetries" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.ChampionshipsSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.ChampionshipsSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Championships @(Model.CurrentSort == "championships" || Model.CurrentSort == "championships_asc" ? (Model.CurrentSort == "championships" ? "↓" : "↑") : "")
                 </a>
             </th>
             <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.MedalsSort" class="text-decoration-none text-dark">
+                <a asp-page="./List" asp-route-sortOrder="@Model.MedalsSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Medals @(Model.CurrentSort == "medals" || Model.CurrentSort == "medals_asc" ? (Model.CurrentSort == "medals" ? "↓" : "↑") : "")
                 </a>
             </th>
             @if (Model.IsCurrentUserAdmin)
             {
                 <th>
-                    <a asp-page="./List" asp-route-sortOrder="@Model.AdminSort" class="text-decoration-none text-dark">
+                    <a asp-page="./List" asp-route-sortOrder="@Model.AdminSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                         Admin @(Model.CurrentSort == "admin" || Model.CurrentSort == "admin_desc" ? (Model.CurrentSort == "admin_desc" ? "↓" : "↑") : "")
                     </a>
                 </th>

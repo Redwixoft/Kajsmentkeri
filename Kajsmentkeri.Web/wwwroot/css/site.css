@@ -85,6 +85,15 @@ a,
     object-fit: contain;
 }
 
+.match-rocket-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+tr:hover .match-rocket-btn {
+    opacity: 1;
+}
+
 .header-logo {
     height: 32px;
     width: auto;

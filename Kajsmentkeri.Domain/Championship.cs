@@ -18,4 +18,6 @@ public class Championship
     public ChampionshipScoringRules ScoringRules { get; set; } = null!;
     public ICollection<Match> Matches { get; set; } = new List<Match>();
     public bool IsTest { get; set; }
+    public bool AllowHighConfidencePrediction { get; set; }
+    public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
 }

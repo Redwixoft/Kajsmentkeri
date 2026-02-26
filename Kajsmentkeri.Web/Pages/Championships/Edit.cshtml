@@ -1,4 +1,5 @@
 @page "{id:guid}"
+@using Kajsmentkeri.Domain
 @model Kajsmentkeri.Web.Pages.Championships.EditModel
 @{
     ViewData["Title"] = $"Edit {Model.Input.Name} ({Model.Input.Year})";
@@ -18,7 +19,16 @@
                             <div class="col-12 border-bottom pb-2 mb-2">
                                 <h5 class="text-secondary">Basic Information</h5>
                             </div>
-                            
+
+                            <div class="col-sm-6">
+                                <label asp-for="Input.Type" class="form-label fw-bold"></label>
+                                <select asp-for="Input.Type" class="form-select">
+                                    <option value="@((int)ChampionshipType.IceHockey)">🏒 Ice Hockey</option>
+                                    <option value="@((int)ChampionshipType.Football)">⚽ Football</option>
+                                </select>
+                                <span asp-validation-for="Input.Type" class="text-danger small"></span>
+                            </div>
+
                             <div class="col-12">
                                 <label asp-for="Input.Name" class="form-label fw-bold"></label>
                                 <input asp-for="Input.Name" class="form-control" placeholder="Enter championship name" />
@@ -73,7 +83,7 @@
                                 <label asp-for="Input.RarityPointsBonus" class="form-label fw-bold"></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="bi bi-gem"></i></span>
-                                    <input asp-for="Input.RarityPointsBonus" class="form-control" type="number" />
+                                    <input asp-for="Input.RarityPointsBonus" class="form-control" type="number" step="0.01" />
                                 </div>
                                 <span asp-validation-for="Input.RarityPointsBonus" class="text-danger small"></span>
                                 <div class="form-text">If > 0, rarity points will be shown in leaderboard.</div>
@@ -100,6 +110,14 @@
                                     <input asp-for="Input.SupportsChampionshipWinnerPrediction" class="form-check-input" />
                                     <label asp-for="Input.SupportsChampionshipWinnerPrediction" class="form-check-label fw-bold"></label>
                                     <span asp-validation-for="Input.SupportsChampionshipWinnerPrediction" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input asp-for="Input.AllowHighConfidencePrediction" class="form-check-input" />
+                                    <label asp-for="Input.AllowHighConfidencePrediction" class="form-check-label fw-bold"></label>
+                                    <div class="form-text">When enabled, each user may mark one prediction per championship as high confidence (🚀). Points for that prediction are doubled.</div>
                                 </div>
                             </div>
 

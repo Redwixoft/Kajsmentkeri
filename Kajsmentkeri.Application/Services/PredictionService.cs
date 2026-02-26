@@ -254,4 +254,55 @@ public class PredictionService : IPredictionService
     {
         await SetPredictionInternalAsync(matchId, userId, predictedHome, predictedAway, checkLock: false);
     }
+
+    public async Task ToggleHighConfidencePredictionAsync(Guid matchId)
+    {
+        if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
+            throw new UnauthorizedAccessException("User must be logged in.");
+
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var match = await context.Matches
+            .Include(m => m.Championship)
+            .FirstOrDefaultAsync(m => m.Id == matchId);
+
+        if (match == null) throw new InvalidOperationException("Match not found");
+        if (!match.Championship.AllowHighConfidencePrediction)
+            throw new InvalidOperationException("High confidence predictions are not allowed for this championship.");
+
+        var lockTime = await GetPredictionLockTimeAsync(match.ChampionshipId, matchId, _currentUser.UserId.Value);
+        if (_timeService.UtcNow > lockTime)
+            throw new InvalidOperationException("Prediction for this match is already locked.");
+
+        var prediction = await context.Predictions
+            .FirstOrDefaultAsync(p => p.MatchId == matchId && p.UserId == _currentUser.UserId.Value);
+
+        if (prediction == null)
+            throw new InvalidOperationException("You must submit a prediction before marking it as high confidence.");
+
+        if (!prediction.IsHighConfidence)
+        {
+            // Check if the user already has a high confidence prediction in this championship
+            var championshipMatchIds = await context.Matches
+                .Where(m => m.ChampionshipId == match.ChampionshipId)
+                .Select(m => m.Id)
+                .ToListAsync();
+
+            var existing = await context.Predictions
+                .FirstOrDefaultAsync(p => p.UserId == _currentUser.UserId.Value
+                    && p.IsHighConfidence
+                    && championshipMatchIds.Contains(p.MatchId));
+
+            if (existing != null)
+                throw new InvalidOperationException("You already have a high confidence prediction in this championship. Remove it first before marking a different prediction.");
+
+            prediction.IsHighConfidence = true;
+        }
+        else
+        {
+            prediction.IsHighConfidence = false;
+        }
+
+        await context.SaveChangesAsync();
+    }
 }

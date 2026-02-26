@@ -34,6 +34,37 @@ public class ImportChampionshipModel : PageModel
     [BindProperty]
     public string? Description { get; set; } = "Imported Championship";
 
+    [BindProperty]
+    public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
+
+    [BindProperty]
+    [Range(0, 10)]
+    public int PointsForCorrectWinner { get; set; } = 3;
+
+    [BindProperty]
+    [Range(0, 10)]
+    public int PointsForExactScore { get; set; } = 2;
+
+    [BindProperty]
+    [Range(0, 10)]
+    public int PointsForOnlyCorrectWinner { get; set; } = 2;
+
+    [BindProperty]
+    [Range(0.0, 10.0)]
+    public decimal RarityPointsBonus { get; set; } = 0;
+
+    [BindProperty]
+    [Range(0, 10)]
+    public int PointsForChampionshipWinner { get; set; } = 3;
+
+    [BindProperty]
+    [Range(0, 10)]
+    public int PointsForChampionshipRunnerUp { get; set; } = 2;
+
+    [BindProperty]
+    [Range(0, 10)]
+    public int PointsForChampionshipThirdPlace { get; set; } = 1;
+
     public ImportAnalysisResultViewModel? Analysis { get; set; }
 
     public List<AppUser> Users { get; set; } = new();
@@ -111,7 +142,15 @@ public class ImportChampionshipModel : PageModel
             TeamMap = teamMap,
             ChampionshipName = ChampionshipName,
             Year = Year,
-            Description = Description
+            Description = Description,
+            Type = Type,
+            PointsForCorrectWinner = PointsForCorrectWinner,
+            PointsForExactScore = PointsForExactScore,
+            PointsForOnlyCorrectWinner = PointsForOnlyCorrectWinner,
+            RarityPointsBonus = RarityPointsBonus,
+            PointsForChampionshipWinner = PointsForChampionshipWinner,
+            PointsForChampionshipRunnerUp = PointsForChampionshipRunnerUp,
+            PointsForChampionshipThirdPlace = PointsForChampionshipThirdPlace
         };
 
         await _importService.ImportChampionshipAsync(data);

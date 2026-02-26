@@ -60,8 +60,8 @@ public class EditModel : PageModel
         public int PointsForOnlyCorrectWinner { get; set; } = 2;
 
         [Display(Name = "Points for rarity")]
-        [Range(0, 10)]
-        public int RarityPointsBonus { get; set; } = 0;
+        [Range(0.0, 10.0)]
+        public decimal RarityPointsBonus { get; set; } = 0;
 
         [Display(Name = "Enforce leaderboard-based prediction visibility")]
         public bool EnforceLeaderboardVisibilityRules { get; set; }
@@ -83,6 +83,12 @@ public class EditModel : PageModel
         [Display(Name = "Points for 3rd place prediction")]
         [Range(0, 10)]
         public int PointsForChampionshipThirdPlace { get; set; } = 1;
+
+        [Display(Name = "Allow High Confidence Prediction")]
+        public bool AllowHighConfidencePrediction { get; set; }
+
+        [Display(Name = "Championship Type")]
+        public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
     }
 
     public class MatchViewModel
@@ -120,6 +126,8 @@ public class EditModel : PageModel
             EnforceLeaderboardVisibilityRules = championship.EnforceLeaderboardVisibilityRules,
             IsTest = championship.IsTest,
             SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction,
+            AllowHighConfidencePrediction = championship.AllowHighConfidencePrediction,
+            Type = championship.Type,
             PointsForChampionshipWinner = championship.ScoringRules?.PointsForChampionshipWinner ?? 3,
             PointsForChampionshipRunnerUp = championship.ScoringRules?.PointsForChampionshipRunnerUp ?? 2,
             PointsForChampionshipThirdPlace = championship.ScoringRules?.PointsForChampionshipThirdPlace ?? 1
@@ -160,6 +168,8 @@ public class EditModel : PageModel
         championship.EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules;
         championship.IsTest = Input.IsTest;
         championship.SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction;
+        championship.AllowHighConfidencePrediction = Input.AllowHighConfidencePrediction;
+        championship.Type = Input.Type;
 
         if (championship.ScoringRules == null)
         {

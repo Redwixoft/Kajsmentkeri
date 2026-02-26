@@ -135,7 +135,17 @@ public class ImportService : IImportService
 
         // 1. Create Championship
         var champ = await _championshipService.CreateChampionshipAsync(data.ChampionshipName, data.Year, data.Description ?? "Imported Championship");
-        
+
+        champ.Type = data.Type;
+        champ.ScoringRules.PointsForCorrectWinner = data.PointsForCorrectWinner;
+        champ.ScoringRules.PointsForExactScore = data.PointsForExactScore;
+        champ.ScoringRules.PointsForOnlyCorrectWinner = data.PointsForOnlyCorrectWinner;
+        champ.ScoringRules.RarityPointsBonus = data.RarityPointsBonus;
+        champ.ScoringRules.PointsForChampionshipWinner = data.PointsForChampionshipWinner;
+        champ.ScoringRules.PointsForChampionshipRunnerUp = data.PointsForChampionshipRunnerUp;
+        champ.ScoringRules.PointsForChampionshipThirdPlace = data.PointsForChampionshipThirdPlace;
+        await _championshipService.UpdateChampionshipAsync(champ);
+
         // Add static mappings to the data.TeamMap for the import process
         var staticMappings = _configuration.GetSection("CountryMappings").Get<Dictionary<string, string>>() ?? new();
         foreach (var mapping in staticMappings)

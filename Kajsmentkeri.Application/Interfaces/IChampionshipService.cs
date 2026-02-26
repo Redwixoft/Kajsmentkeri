@@ -13,4 +13,7 @@ public interface IChampionshipService
     Task DeleteChampionshipAsync(Guid id);
     Task EndChampionshipAsync(Guid championshipId);
     Task UpdateWinnerPaymentInfoAsync(Guid championshipId, string iban, string note);
+    Task<bool> IsParticipatingAsync(Guid championshipId, Guid userId);
+    Task JoinChampionshipAsync(Guid championshipId, Guid userId);
+    Task<List<Guid>> GetParticipantUserIdsAsync(Guid championshipId);
 }

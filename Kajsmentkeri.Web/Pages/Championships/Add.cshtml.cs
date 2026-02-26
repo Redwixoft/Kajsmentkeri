@@ -48,8 +48,8 @@ public class AddModel : PageModel
         public int PointsForOnlyCorrectWinner { get; set; } = 2;
 
         [Display(Name = "Points for rarity")]
-        [Range(0, 10)]
-        public int RarityPointsBonus { get; set; } = 0;
+        [Range(0.0, 10.0)]
+        public decimal RarityPointsBonus { get; set; } = 0;
 
         [Display(Name = "Enforce leaderboard-based prediction visibility")]
         public bool EnforceLeaderboardVisibilityRules { get; set; }
@@ -71,6 +71,12 @@ public class AddModel : PageModel
         [Display(Name = "Points for 3rd place prediction")]
         [Range(0, 10)]
         public int PointsForChampionshipThirdPlace { get; set; } = 1;
+
+        [Display(Name = "Allow High Confidence Prediction")]
+        public bool AllowHighConfidencePrediction { get; set; }
+
+        [Display(Name = "Championship Type")]
+        public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
     }
 
     public void OnGet()
@@ -96,6 +102,8 @@ public class AddModel : PageModel
             EnforceLeaderboardVisibilityRules = Input.EnforceLeaderboardVisibilityRules,
             IsTest = Input.IsTest,
             SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction,
+            AllowHighConfidencePrediction = Input.AllowHighConfidencePrediction,
+            Type = Input.Type,
             CreatedById = user.Id,
             CreatedAt = DateTime.UtcNow,
             ScoringRules = new ChampionshipScoringRules

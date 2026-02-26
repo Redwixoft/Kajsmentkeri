@@ -55,6 +55,9 @@ public class DetailsModel : PageModel
     public Guid? LeaderUserId { get; set; }
     public Guid? TailUserId { get; set; }
 
+    public bool IsCurrentUserParticipating { get; set; }
+    public HashSet<Guid> ParticipantUserIds { get; set; } = new();
+
     // Winner prediction props
     public ChampionshipWinnerPrediction? MyWinnerPrediction { get; set; }
     public List<string> AllTeams { get; set; } = new();
@@ -105,11 +108,18 @@ public class DetailsModel : PageModel
         var predictions = await predictionsTask;
         var users = await _userManager.Users.ToListAsync();
 
+        var participantIds = await _championshipService.GetParticipantUserIdsAsync(id);
         var usersWithPredictions = predictions.Select(p => p.UserId).Distinct().ToHashSet();
-        
+
+        // Merge formal participants with users who already have predictions (backwards compatibility)
+        ParticipantUserIds = new HashSet<Guid>(participantIds);
+        ParticipantUserIds.UnionWith(usersWithPredictions);
+
+        IsCurrentUserParticipating = CurrentUserId.HasValue && ParticipantUserIds.Contains(CurrentUserId.Value);
+
         // Sort users: logged-in first, then others alphabetically
         Users = users
-            .Where(u => u.Id == CurrentUserId || usersWithPredictions.Contains(u.Id))
+            .Where(u => u.Id == CurrentUserId || ParticipantUserIds.Contains(u.Id))
             .OrderBy(u => u.Id == CurrentUserId ? 0 : 1)
             .ThenBy(u => u.UserName)
             .Select(u => new UserColumn
@@ -289,6 +299,40 @@ public class DetailsModel : PageModel
         }).ToList();
 
         return new JsonResult(formattedLogs);
+    }
+
+    public async Task<IActionResult> OnPostJoinChampionshipAsync(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return new JsonResult(new { success = false, message = "User not logged in" }) { StatusCode = 401 };
+
+        try
+        {
+            await _championshipService.JoinChampionshipAsync(id, user.Id);
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
+    }
+
+    public async Task<IActionResult> OnPostToggleHighConfidenceAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return new JsonResult(new { success = false, message = "User not logged in" }) { StatusCode = 401 };
+
+        try
+        {
+            await _predictionService.ToggleHighConfidencePredictionAsync(MatchId);
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
     }
 
     public async Task<IActionResult> OnPostSubmitWinnerPredictionAsync(Guid id)

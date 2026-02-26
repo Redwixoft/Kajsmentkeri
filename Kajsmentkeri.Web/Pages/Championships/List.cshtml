@@ -16,10 +16,7 @@
         <tr>
             <th>Name</th>
             <th>Year</th>
-            @if (Model.IsAdmin)
-            {
-                <th>Created by</th>
-            }
+            <th>Winner</th>
             <th></th>
         </tr>
     </thead>
@@ -28,6 +25,7 @@
         {
             <tr>
                 <td>
+                    @(item.Type == Kajsmentkeri.Domain.ChampionshipType.Football ? "⚽" : "🏒")
                     @item.Name
                     @if (item.IsTest)
                     {
@@ -35,10 +33,7 @@
                     }
                 </td>
                 <td>@item.Year</td>
-                @if (Model.IsAdmin)
-                {
-                    <td>@item.CreatedByUserName</td>
-                }
+                <td>@(item.WinnerUserName ?? "")</td>
                 <td>
                     <a asp-page="/Championships/Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
                         View

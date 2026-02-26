@@ -11,12 +11,14 @@ public class ListModel : PageModel
 {
     private readonly UserManager<AppUser> _userManager;
     private readonly IChampionshipService _championshipService;
+    private readonly ILeaderboardService _leaderboardService;
     private readonly ILogger<ListModel> _logger;
 
-    public ListModel(UserManager<AppUser> userManager, IChampionshipService championshipService, ILogger<ListModel> logger)
+    public ListModel(UserManager<AppUser> userManager, IChampionshipService championshipService, ILeaderboardService leaderboardService, ILogger<ListModel> logger)
     {
         _userManager = userManager;
         _championshipService = championshipService;
+        _leaderboardService = leaderboardService;
         _logger = logger;
     }
 
@@ -31,10 +33,6 @@ public class ListModel : PageModel
 
         _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) championship loaded: {DateTime.UtcNow}");
 
-        // Fetch all users once
-        var users = await _userManager.Users.ToListAsync();
-        var userMap = users.ToDictionary(u => u.Id, u => u.UserName ?? "Unknown");
-
         var currentUser = await _userManager.GetUserAsync(User);
         IsAdmin = currentUser?.IsAdmin == true;
 
@@ -43,15 +41,17 @@ public class ListModel : PageModel
             championships = championships.Where(c => !c.IsTest).ToList();
         }
 
+        var endedIds = championships.Where(c => c.IsChampionshipEnded).Select(c => c.Id);
+        var winners = await _leaderboardService.GetChampionshipWinnersAsync(endedIds);
+
         Championships = championships.Select(c => new ChampionshipViewModel
         {
             Id = c.Id,
             Name = c.Name,
             Year = c.Year,
             IsTest = c.IsTest,
-            CreatedByUserName = userMap.TryGetValue(c.CreatedById, out var username)
-                ? username
-                : "Unknown"
+            Type = c.Type,
+            WinnerUserName = winners.TryGetValue(c.Id, out var winner) ? winner : null
         }).ToList();
 
         _logger.LogInformation($"{nameof(ListModel)}.{nameof(OnGetAsync)} (Championship) end: {DateTime.UtcNow}");
@@ -64,7 +64,8 @@ public class ListModel : PageModel
         public string Name { get; set; } = string.Empty;
         public int Year { get; set; }
         public bool IsTest { get; set; }
-        public string CreatedByUserName { get; set; } = string.Empty;
+        public ChampionshipType Type { get; set; }
+        public string? WinnerUserName { get; set; }
     }
 
 

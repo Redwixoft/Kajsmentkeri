@@ -1,4 +1,5 @@
 @page
+@using Kajsmentkeri.Domain
 @model Kajsmentkeri.Web.Pages.Admin.ImportChampionshipModel
 @{
     ViewData["Title"] = "Import Championship";
@@ -42,6 +43,62 @@ else
                     <textarea asp-for="Description" class="form-control" rows="2"></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                  </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">Championship Settings</div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Type" class="control-label">Championship Type</label>
+                        <select asp-for="Type" class="form-select">
+                            <option value="@((int)ChampionshipType.IceHockey)">🏒 Ice Hockey</option>
+                            <option value="@((int)ChampionshipType.Football)">⚽ Football</option>
+                        </select>
+                    </div>
+                </div>
+                <h6 class="text-muted mt-1 mb-2">Match Points</h6>
+                <div class="row mb-3">
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="PointsForCorrectWinner" class="control-label">Correct Winner</label>
+                        <input asp-for="PointsForCorrectWinner" class="form-control" type="number" min="0" max="10" />
+                        <span asp-validation-for="PointsForCorrectWinner" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="PointsForExactScore" class="control-label">Exact Score (bonus)</label>
+                        <input asp-for="PointsForExactScore" class="form-control" type="number" min="0" max="10" />
+                        <span asp-validation-for="PointsForExactScore" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="PointsForOnlyCorrectWinner" class="control-label">Only Correct Winner (bonus)</label>
+                        <input asp-for="PointsForOnlyCorrectWinner" class="form-control" type="number" min="0" max="10" />
+                        <span asp-validation-for="PointsForOnlyCorrectWinner" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="RarityPointsBonus" class="control-label">Rarity Bonus</label>
+                        <input asp-for="RarityPointsBonus" class="form-control" type="number" min="0" max="10" step="0.01" />
+                        <span asp-validation-for="RarityPointsBonus" class="text-danger"></span>
+                    </div>
+                </div>
+                <h6 class="text-muted mb-2">Championship Winner Prediction Points</h6>
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="PointsForChampionshipWinner" class="control-label">1st Place</label>
+                        <input asp-for="PointsForChampionshipWinner" class="form-control" type="number" min="0" max="10" />
+                        <span asp-validation-for="PointsForChampionshipWinner" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="PointsForChampionshipRunnerUp" class="control-label">2nd Place</label>
+                        <input asp-for="PointsForChampionshipRunnerUp" class="form-control" type="number" min="0" max="10" />
+                        <span asp-validation-for="PointsForChampionshipRunnerUp" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label asp-for="PointsForChampionshipThirdPlace" class="control-label">3rd Place</label>
+                        <input asp-for="PointsForChampionshipThirdPlace" class="form-control" type="number" min="0" max="10" />
+                        <span asp-validation-for="PointsForChampionshipThirdPlace" class="text-danger"></span>
+                    </div>
+                </div>
             </div>
         </div>
 
