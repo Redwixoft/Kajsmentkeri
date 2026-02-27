@@ -78,7 +78,7 @@
                         Admin @(Model.CurrentSort == "admin" || Model.CurrentSort == "admin_desc" ? (Model.CurrentSort == "admin_desc" ? "↓" : "↑") : "")
                     </a>
                 </th>
-                <th>Actions</th>
+
             }
         </tr>
     </thead>
@@ -113,11 +113,6 @@
                 @if (Model.IsCurrentUserAdmin)
                 {
                     <td>@(user.IsAdmin ? "Yes" : "No")</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@user.Id" data-name="@user.UserName">
-                            Delete
-                        </button>
-                    </td>
                 }
             </tr>
         }
@@ -132,7 +127,9 @@
         ("Most One-Goal Misses",  Model.Records.MostOneGoalMisses),
         ("Most Luckers",          Model.Records.MostLuckers),
         ("Most Only Ones",        Model.Records.MostOnlyOnes),
-        ("Highest Point Gap (1st vs 2nd)", Model.Records.HighestPointGap)
+        ("Highest Point Gap (1st vs 2nd)", Model.Records.HighestPointGap),
+        ("Longest Positive Streak",        Model.Records.LongestPositiveStreak),
+        ("Longest Negative Streak",        Model.Records.LongestNegativeStreak)
     };
 }
 <div class="mt-4 mb-4">

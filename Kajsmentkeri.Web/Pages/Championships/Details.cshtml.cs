@@ -143,7 +143,9 @@ public class DetailsModel : PageModel
             UserRanks[Leaderboard[i].UserId] = i + 1;
         }
 
-        var userNameMap = users.ToDictionary(u => u.Id, u => u.UserName ?? "?");
+        var userNameMap = users
+            .Where(u => ParticipantUserIds.Contains(u.Id))
+            .ToDictionary(u => u.Id, u => u.UserName ?? "?");
         var scoredMatches = Matches
             .Where(m => m.HomeScore.HasValue && m.AwayScore.HasValue)
             .OrderBy(m => m.StartTimeUtc)

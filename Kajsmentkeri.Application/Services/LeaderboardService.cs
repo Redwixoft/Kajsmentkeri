@@ -279,14 +279,54 @@ public class LeaderboardService : ILeaderboardService
             }
         }
 
+        // Streak records: longest consecutive correct/incorrect winner predictions per (championship, user)
+        var scoredPredictionDetails = await context.Predictions
+            .Where(p => championshipIds.Contains(p.Match.ChampionshipId)
+                     && p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
+            .Select(p => new { p.Match.ChampionshipId, p.UserId, p.GotWinner, p.Match.StartTimeUtc })
+            .ToListAsync();
+
+        var streakEntries = scoredPredictionDetails
+            .GroupBy(p => (p.ChampionshipId, p.UserId))
+            .Select(g =>
+            {
+                int maxPos = 0, maxNeg = 0, curPos = 0, curNeg = 0;
+                foreach (var pred in g.OrderBy(p => p.StartTimeUtc))
+                {
+                    if (pred.GotWinner) { curPos++; curNeg = 0; if (curPos > maxPos) maxPos = curPos; }
+                    else                { curNeg++; curPos = 0; if (curNeg > maxNeg) maxNeg = curNeg; }
+                }
+                return (g.Key.ChampionshipId, g.Key.UserId, MaxPos: maxPos, MaxNeg: maxNeg);
+            })
+            .ToList();
+
+        int maxPosStreak = streakEntries.Count > 0 ? streakEntries.Max(e => e.MaxPos) : 0;
+        int maxNegStreak = streakEntries.Count > 0 ? streakEntries.Max(e => e.MaxNeg) : 0;
+
+        var posStreakRecords = maxPosStreak > 0
+            ? streakEntries
+                .Where(e => e.MaxPos == maxPosStreak)
+                .Select(e => ToDto(e.ChampionshipId, userNames.GetValueOrDefault(e.UserId, "?"), maxPosStreak))
+                .ToList()
+            : new List<RecordEntryDto>();
+
+        var negStreakRecords = maxNegStreak > 0
+            ? streakEntries
+                .Where(e => e.MaxNeg == maxNegStreak)
+                .Select(e => ToDto(e.ChampionshipId, userNames.GetValueOrDefault(e.UserId, "?"), maxNegStreak))
+                .ToList()
+            : new List<RecordEntryDto>();
+
         return new ChampionshipRecordsDto
         {
-            MostPoints        = maxPoints   > 0 ? MaxRecord(maxPoints,   e => e.TotalPoints) : [],
-            MostWinners       = maxWinners  > 0 ? MaxRecord(maxWinners,  e => e.Winners)     : [],
-            MostOneGoalMisses = maxMisses   > 0 ? MaxRecord(maxMisses,   e => e.Misses)      : [],
-            MostLuckers       = maxLuckers  > 0 ? MaxRecord(maxLuckers,  e => e.Luckers)     : [],
-            MostOnlyOnes      = maxOnlyOnes > 0 ? MaxRecord(maxOnlyOnes, e => e.OnlyOnes)    : [],
-            HighestPointGap   = gapRecords
+            MostPoints            = maxPoints   > 0 ? MaxRecord(maxPoints,   e => e.TotalPoints) : [],
+            MostWinners           = maxWinners  > 0 ? MaxRecord(maxWinners,  e => e.Winners)     : [],
+            MostOneGoalMisses     = maxMisses   > 0 ? MaxRecord(maxMisses,   e => e.Misses)      : [],
+            MostLuckers           = maxLuckers  > 0 ? MaxRecord(maxLuckers,  e => e.Luckers)     : [],
+            MostOnlyOnes          = maxOnlyOnes > 0 ? MaxRecord(maxOnlyOnes, e => e.OnlyOnes)    : [],
+            HighestPointGap       = gapRecords,
+            LongestPositiveStreak = posStreakRecords,
+            LongestNegativeStreak = negStreakRecords
         };
     }
 
