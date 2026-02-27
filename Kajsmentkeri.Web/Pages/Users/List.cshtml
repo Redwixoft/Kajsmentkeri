@@ -26,11 +26,7 @@
                     Username @(Model.CurrentSort == "" || Model.CurrentSort == "name_desc" ? (Model.CurrentSort == "name_desc" ? "↓" : "↑") : "")
                 </a>
             </th>
-            <th>
-                <a asp-page="./List" asp-route-sortOrder="@Model.EmailSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
-                    Email @(Model.CurrentSort == "email" || Model.CurrentSort == "email_desc" ? (Model.CurrentSort == "email_desc" ? "↓" : "↑") : "")
-                </a>
-            </th>
+
             <th>
                 <a asp-page="./List" asp-route-sortOrder="@Model.PointsSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Total Points @(Model.CurrentSort == "points" || Model.CurrentSort == "points_asc" ? (Model.CurrentSort == "points" ? "↓" : "↑") : "")
@@ -88,17 +84,24 @@
             var hasStats = Model.UserStats.TryGetValue(user.Id, out var stats);
             <tr>
                 <td>@user.UserName</td>
-                <td>@user.Email</td>
+
                 <td>@(hasStats ? stats.TotalPoints : 0)</td>
-                <td>@(hasStats ? stats.CorrectWinners : 0)</td>
-                <td>@(hasStats ? stats.OneGoalMisses : 0)</td>
-                <td>@(hasStats ? stats.ExactScores : 0)</td>
-                <td>@(hasStats ? stats.OnlyCorrect : 0)</td>
                 @{
+                    var scored = hasStats ? stats.TotalScoredPredictions : 0;
+                    string PctStr(double val, int decimals) =>
+                        scored > 0 ? val.ToString($"F{decimals}").TrimEnd('0').TrimEnd('.') + "%" : null;
+                    var winnersPctStr  = PctStr((double)(hasStats ? stats.CorrectWinners : 0) / scored * 100, 2);
+                    var missesPctStr   = PctStr((double)(hasStats ? stats.OneGoalMisses  : 0) / scored * 100, 2);
+                    var luckersPctStr  = PctStr((double)(hasStats ? stats.ExactScores    : 0) / scored * 100, 2);
+                    var onlyOnesPctStr = PctStr((double)(hasStats ? stats.OnlyCorrect    : 0) / scored * 100, 2);
                     var tries = hasStats ? stats.OnlyOneTries : 0;
-                    var tooltip = (hasStats && tries > 0) ? $"{(int)Math.Round((double)stats.OnlyCorrect / tries * 100)}%" : null;
+                    var triesPctStr    = PctStr((double)tries / scored * 100, 2);
                 }
-                <td title="@tooltip">@tries</td>
+                <td title="@winnersPctStr">@(hasStats ? stats.CorrectWinners : 0)</td>
+                <td title="@missesPctStr">@(hasStats ? stats.OneGoalMisses : 0)</td>
+                <td title="@luckersPctStr">@(hasStats ? stats.ExactScores : 0)</td>
+                <td title="@onlyOnesPctStr">@(hasStats ? stats.OnlyCorrect : 0)</td>
+                <td title="@triesPctStr">@tries</td>
                 <td>@(hasStats ? stats.ChampionshipCount : 0)</td>
                 <td>
                     @if (Model.MedalCounts.TryGetValue(user.Id, out var medals))

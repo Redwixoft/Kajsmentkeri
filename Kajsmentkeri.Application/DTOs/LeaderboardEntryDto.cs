@@ -13,6 +13,7 @@ public class LeaderboardEntryDto
     public int ExactScores { get; set; }
     public int WinnerPredictionPoints { get; set; }
     public int ChampionshipCount { get; set; }
+    public int TotalScoredPredictions { get; set; }
 
     public decimal RarityPoints { get; set; }
 }
