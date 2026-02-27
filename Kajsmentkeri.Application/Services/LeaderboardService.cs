@@ -236,6 +236,7 @@ public class LeaderboardService : ILeaderboardService
         {
             UserName = userName,
             Value = value,
+            ChampionshipId = champId,
             ChampionshipName = champLookup[champId].Name,
             ChampionshipYear = champLookup[champId].Year
         };

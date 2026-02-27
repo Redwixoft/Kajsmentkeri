@@ -160,7 +160,7 @@
                         }
                         <td>@h.UserName</td>
                         <td>@h.Value</td>
-                        <td>@h.ChampionshipName @h.ChampionshipYear</td>
+                        <td><a asp-page="/Championships/Details" asp-route-id="@h.ChampionshipId">@h.ChampionshipName @h.ChampionshipYear</a></td>
                     </tr>
                 }
             }
