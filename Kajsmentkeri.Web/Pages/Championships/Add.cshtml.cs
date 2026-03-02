@@ -77,6 +77,16 @@ public class AddModel : PageModel
 
         [Display(Name = "Championship Type")]
         public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
+
+        [Display(Name = "Entry fee (€)")]
+        [Range(0, 10000)]
+        public decimal EntryFee { get; set; } = 10m;
+
+        [Display(Name = "Runner-up pays nothing")]
+        public bool RunnerUpPaysFree { get; set; } = true;
+
+        [Display(Name = "Last place pays double")]
+        public bool LastPlacePaysDouble { get; set; } = true;
     }
 
     public void OnGet()
@@ -104,6 +114,9 @@ public class AddModel : PageModel
             SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction,
             AllowHighConfidencePrediction = Input.AllowHighConfidencePrediction,
             Type = Input.Type,
+            EntryFee = Input.EntryFee,
+            RunnerUpPaysFree = Input.RunnerUpPaysFree,
+            LastPlacePaysDouble = Input.LastPlacePaysDouble,
             CreatedById = user.Id,
             CreatedAt = DateTime.UtcNow,
             ScoringRules = new ChampionshipScoringRules

@@ -139,6 +139,34 @@
                                 <span asp-validation-for="Input.PointsForChampionshipThirdPlace" class="text-danger small"></span>
                             </div>
 
+                            <!-- Payment Rules Section -->
+                            <div class="col-12 border-bottom pb-2 mt-4 mb-2">
+                                <h5 class="text-secondary">Payment Rules</h5>
+                            </div>
+
+                            <div class="col-sm-4">
+                                <label asp-for="Input.EntryFee" class="form-label fw-bold"></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    <input asp-for="Input.EntryFee" class="form-control" type="number" step="1" min="0" />
+                                </div>
+                                <span asp-validation-for="Input.EntryFee" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input asp-for="Input.RunnerUpPaysFree" class="form-check-input" />
+                                    <label asp-for="Input.RunnerUpPaysFree" class="form-check-label fw-bold"></label>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input asp-for="Input.LastPlacePaysDouble" class="form-check-input" />
+                                    <label asp-for="Input.LastPlacePaysDouble" class="form-check-label fw-bold"></label>
+                                </div>
+                            </div>
+
                             <div class="col-12 mt-4 pt-3 d-flex gap-2 border-top">
                                 <button type="submit" class="btn btn-primary px-4">
                                     <i class="bi bi-check-lg me-1"></i> Save Changes

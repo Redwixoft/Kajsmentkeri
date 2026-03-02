@@ -89,6 +89,16 @@ public class EditModel : PageModel
 
         [Display(Name = "Championship Type")]
         public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
+
+        [Display(Name = "Entry fee (€)")]
+        [Range(0, 10000)]
+        public decimal EntryFee { get; set; } = 10m;
+
+        [Display(Name = "Runner-up pays nothing")]
+        public bool RunnerUpPaysFree { get; set; } = true;
+
+        [Display(Name = "Last place pays double")]
+        public bool LastPlacePaysDouble { get; set; } = true;
     }
 
     public class MatchViewModel
@@ -128,6 +138,9 @@ public class EditModel : PageModel
             SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction,
             AllowHighConfidencePrediction = championship.AllowHighConfidencePrediction,
             Type = championship.Type,
+            EntryFee = championship.EntryFee,
+            RunnerUpPaysFree = championship.RunnerUpPaysFree,
+            LastPlacePaysDouble = championship.LastPlacePaysDouble,
             PointsForChampionshipWinner = championship.ScoringRules?.PointsForChampionshipWinner ?? 3,
             PointsForChampionshipRunnerUp = championship.ScoringRules?.PointsForChampionshipRunnerUp ?? 2,
             PointsForChampionshipThirdPlace = championship.ScoringRules?.PointsForChampionshipThirdPlace ?? 1
@@ -170,6 +183,9 @@ public class EditModel : PageModel
         championship.SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction;
         championship.AllowHighConfidencePrediction = Input.AllowHighConfidencePrediction;
         championship.Type = Input.Type;
+        championship.EntryFee = Input.EntryFee;
+        championship.RunnerUpPaysFree = Input.RunnerUpPaysFree;
+        championship.LastPlacePaysDouble = Input.LastPlacePaysDouble;
 
         if (championship.ScoringRules == null)
         {

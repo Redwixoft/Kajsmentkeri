@@ -108,6 +108,9 @@ public class ChampionshipService : IChampionshipService
         existing.IsChampionshipEnded = championship.IsChampionshipEnded;
         existing.AllowHighConfidencePrediction = championship.AllowHighConfidencePrediction;
         existing.Type = championship.Type;
+        existing.EntryFee = championship.EntryFee;
+        existing.RunnerUpPaysFree = championship.RunnerUpPaysFree;
+        existing.LastPlacePaysDouble = championship.LastPlacePaysDouble;
 
         if (existing.ScoringRules != null && championship.ScoringRules != null)
         {

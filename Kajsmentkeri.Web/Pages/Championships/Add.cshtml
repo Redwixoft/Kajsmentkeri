@@ -103,6 +103,25 @@
         </div>
     </div>
 
+    <hr />
+    <h5>Payment Rules</h5>
+    <div class="mb-3">
+        <label asp-for="Input.EntryFee" class="form-label"></label>
+        <div class="input-group" style="max-width: 160px;">
+            <span class="input-group-text">€</span>
+            <input asp-for="Input.EntryFee" class="form-control" type="number" step="1" min="0" />
+        </div>
+        <span asp-validation-for="Input.EntryFee" class="text-danger"></span>
+    </div>
+    <div class="mb-3 form-check">
+        <input asp-for="Input.RunnerUpPaysFree" class="form-check-input" />
+        <label asp-for="Input.RunnerUpPaysFree" class="form-check-label"></label>
+    </div>
+    <div class="mb-3 form-check">
+        <input asp-for="Input.LastPlacePaysDouble" class="form-check-input" />
+        <label asp-for="Input.LastPlacePaysDouble" class="form-check-label"></label>
+    </div>
+
     <button type="submit" class="btn btn-primary">Create</button>
 </form>
 
