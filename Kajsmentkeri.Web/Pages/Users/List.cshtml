@@ -28,6 +28,11 @@
             </th>
 
             <th>
+                <a asp-page="./List" asp-route-sortOrder="@Model.TotalPredictionsSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
+                    Total Predictions @(Model.CurrentSort == "totalpredictions" || Model.CurrentSort == "totalpredictions_asc" ? (Model.CurrentSort == "totalpredictions" ? "↓" : "↑") : "")
+                </a>
+            </th>
+            <th>
                 <a asp-page="./List" asp-route-sortOrder="@Model.PointsSort" asp-route-sportType="@((int)Model.SportType)" class="text-decoration-none text-dark">
                     Total Points @(Model.CurrentSort == "points" || Model.CurrentSort == "points_asc" ? (Model.CurrentSort == "points" ? "↓" : "↑") : "")
                 </a>
@@ -85,6 +90,7 @@
             <tr>
                 <td>@user.UserName</td>
 
+                <td>@(hasStats ? stats.TotalPredictions : 0)</td>
                 <td>@(hasStats ? stats.TotalPoints : 0)</td>
                 @{
                     var scored = hasStats ? stats.TotalScoredPredictions : 0;
@@ -93,14 +99,19 @@
                     var winnersPctStr  = PctStr((double)(hasStats ? stats.CorrectWinners : 0) / scored * 100, 2);
                     var missesPctStr   = PctStr((double)(hasStats ? stats.OneGoalMisses  : 0) / scored * 100, 2);
                     var luckersPctStr  = PctStr((double)(hasStats ? stats.ExactScores    : 0) / scored * 100, 2);
-                    var onlyOnesPctStr = PctStr((double)(hasStats ? stats.OnlyCorrect    : 0) / scored * 100, 2);
+                    var onlyOnes = hasStats ? stats.OnlyCorrect : 0;
+                    var onlyOnesPctStr = PctStr((double)onlyOnes / scored * 100, 2);
                     var tries = hasStats ? stats.OnlyOneTries : 0;
                     var triesPctStr    = PctStr((double)tries / scored * 100, 2);
+                    var onlyOnesSuccessPct = tries > 0 ? (int)Math.Round((double)onlyOnes / tries * 100) : (int?)null;
+                    var onlyOnesTooltip = onlyOnesPctStr != null && onlyOnesSuccessPct.HasValue
+                        ? $"{onlyOnesPctStr} ({onlyOnesSuccessPct}% success)"
+                        : onlyOnesPctStr;
                 }
                 <td title="@winnersPctStr">@(hasStats ? stats.CorrectWinners : 0)</td>
                 <td title="@missesPctStr">@(hasStats ? stats.OneGoalMisses : 0)</td>
                 <td title="@luckersPctStr">@(hasStats ? stats.ExactScores : 0)</td>
-                <td title="@onlyOnesPctStr">@(hasStats ? stats.OnlyCorrect : 0)</td>
+                <td title="@onlyOnesTooltip">@onlyOnes</td>
                 <td title="@triesPctStr">@tries</td>
                 <td>@(hasStats ? stats.ChampionshipCount : 0)</td>
                 <td>

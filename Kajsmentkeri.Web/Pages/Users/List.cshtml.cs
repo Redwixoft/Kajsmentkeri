@@ -32,6 +32,7 @@ public class ListModel : PageModel
 
     public string NameSort { get; set; } = string.Empty;
     public string EmailSort { get; set; } = string.Empty;
+    public string TotalPredictionsSort { get; set; } = string.Empty;
     public string PointsSort { get; set; } = string.Empty;
     public string WinnersSort { get; set; } = string.Empty;
     public string MissesSort { get; set; } = string.Empty;
@@ -49,6 +50,7 @@ public class ListModel : PageModel
         CurrentSort = sortOrder;
         NameSort = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
         EmailSort = sortOrder == "email" ? "email_desc" : "email";
+        TotalPredictionsSort = sortOrder == "totalpredictions" ? "totalpredictions_asc" : "totalpredictions";
         PointsSort = sortOrder == "points" ? "points_asc" : "points";
         WinnersSort = sortOrder == "winners" ? "winners_asc" : "winners";
         MissesSort = sortOrder == "misses" ? "misses_asc" : "misses";
@@ -72,6 +74,8 @@ public class ListModel : PageModel
             "name_desc" => users.OrderByDescending(u => u.UserName).ToList(),
             "email" => users.OrderBy(u => u.Email).ToList(),
             "email_desc" => users.OrderByDescending(u => u.Email).ToList(),
+            "totalpredictions" => users.OrderByDescending(u => UserStats.TryGetValue(u.Id, out var s) ? s.TotalPredictions : 0).ToList(),
+            "totalpredictions_asc" => users.OrderBy(u => UserStats.TryGetValue(u.Id, out var s) ? s.TotalPredictions : 0).ToList(),
             "points" => users.OrderByDescending(u => UserStats.TryGetValue(u.Id, out var s) ? s.TotalPoints : 0).ToList(),
             "points_asc" => users.OrderBy(u => UserStats.TryGetValue(u.Id, out var s) ? s.TotalPoints : 0).ToList(),
             "winners" => users.OrderByDescending(u => UserStats.TryGetValue(u.Id, out var s) ? s.CorrectWinners : 0).ToList(),

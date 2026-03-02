@@ -105,6 +105,7 @@ public class LeaderboardService : ILeaderboardService
                 OnlyCorrect = g.Count(p => p.IsOnlyCorrect),
                 ExactScores = g.Count(p => p.GotExactScore),
                 RarityPoints = g.Sum(p => p.RarityPart),
+                TotalPredictions = g.Count(),
                 TotalScoredPredictions = g.Count(p => p.Match.HomeScore.HasValue)
             })
             .ToListAsync();
@@ -163,6 +164,7 @@ public class LeaderboardService : ILeaderboardService
                 WinnerPredictionPoints = winnerPointsGlobal.GetValueOrDefault(g.UserId, 0),
                 RarityPoints = g.RarityPoints,
                 ChampionshipCount = championshipCounts.GetValueOrDefault(g.UserId, 0),
+                TotalPredictions = g.TotalPredictions,
                 TotalScoredPredictions = g.TotalScoredPredictions
             })
             .OrderByDescending(x => x.TotalPoints)
