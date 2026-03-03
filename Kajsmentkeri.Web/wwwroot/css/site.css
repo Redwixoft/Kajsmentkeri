@@ -80,7 +80,7 @@ a,
 }
 
 .team-flag {
-    height: 20px;
+    max-width: 24px;
     width: auto;
     object-fit: contain;
 }
