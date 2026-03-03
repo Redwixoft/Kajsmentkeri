@@ -908,9 +908,28 @@
                         </ul>
                     }
                     <h6>Rarity Points</h6>
-                    <div class="alert alert-info py-2">
-                        <small>ℹ️ Rarity points are a future experimental feature.</small>
-                    </div>
+                    @{
+                        var rarityBonus = Model.Championship?.ScoringRules?.RarityPointsBonus ?? 0;
+                    }
+                    @if (rarityBonus > 0)
+                    {
+                        <ul class="list-group mb-2">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Bonus pool per match
+                                <span class="badge bg-primary rounded-pill">@rarityBonus</span>
+                            </li>
+                        </ul>
+                        <div class="alert alert-info py-2">
+                            <small>ℹ️ After each match, the bonus pool is split equally among all players who correctly predicted the winner. The fewer people who got it right, the larger the individual share. If only one person predicted correctly, they receive the full pool.</small>
+                            <small class="d-block mt-1">Rarity points do <strong>not</strong> count toward total points on the leaderboard. They only act as a tiebreaker when two players are equal in points, correct winners, one-goal misses, and only ones.</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary py-2">
+                            <small>Not enabled for this championship.</small>
+                        </div>
+                    }
 
                     <hr />
 
@@ -987,8 +1006,15 @@
                 </div>
                 <div class="modal-body">
                     <p>
-                        By participating in this championship you agree to pay <strong>€@Model.Championship!.EntryFee</strong> to the winner at the end@if (Model.Championship.LastPlacePaysDouble){<text> (or <strong>€@(Model.Championship.EntryFee * 2)</strong> if you finish last)</text>}.
-                        @if (Model.Championship.RunnerUpPaysFree){<text>The runner-up pays nothing.</text>}
+                        By participating in this championship you agree to pay <strong>€@Model.Championship!.EntryFee</strong> to the winner at the end
+                        @if (Model.Championship.LastPlacePaysDouble)
+                        {
+                            <text>(or <strong>€@(Model.Championship.EntryFee * 2)</strong> if you finish last)</text>
+                        }.
+                        @if (Model.Championship.RunnerUpPaysFree)
+                        {
+                            <text>The runner-up pays nothing.</text>
+                        }
                     </p>
                     <p>Make sure you understand <a href="#" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('joinChampionshipModal')).hide(); showRules();">the scoring rules</a> before joining.</p>
                     <div class="form-check mt-3">

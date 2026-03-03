@@ -154,7 +154,13 @@ public class DetailsModel : PageModel
 
         if (Championship.SupportsChampionshipWinnerPrediction)
         {
-            AllTeams = Matches.SelectMany(m => new[] { m.HomeTeam, m.AwayTeam }).Distinct().OrderBy(t => t).ToList();
+            AllTeams = Matches
+                .SelectMany(m => new[] { m.HomeTeam, m.AwayTeam })
+                .GroupBy(t => t)
+                .Where(g => g.Count() >= 2)
+                .Select(g => g.Key)
+                .OrderBy(t => t)
+                .ToList();
             AllWinnerPredictions = await _predictionService.GetWinnerPredictionsForChampionshipAsync(id);
             if (CurrentUserId.HasValue)
             {
