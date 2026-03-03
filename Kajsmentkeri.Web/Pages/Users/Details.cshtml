@@ -1,0 +1,288 @@
+@page "/Users/Details/{id:guid}"
+@using Kajsmentkeri.Domain
+@model Kajsmentkeri.Web.Pages.Users.DetailsModel
+@{
+    ViewData["Title"] = Model.ProfileUser.UserName ?? "User Details";
+}
+
+<h1>@Model.ProfileUser.UserName</h1>
+<p class="text-muted mb-3">@Model.ProfileUser.Email</p>
+
+<div class="btn-group mb-4" role="group" aria-label="Sport type filter">
+    <a asp-page="./Details" asp-route-id="@Model.ProfileUser.Id" asp-route-sportType="@((int)ChampionshipType.IceHockey)"
+       class="btn @(Model.SportType == ChampionshipType.IceHockey ? "btn-primary" : "btn-outline-primary")">
+        🏒 Ice Hockey
+    </a>
+    <a asp-page="./Details" asp-route-id="@Model.ProfileUser.Id" asp-route-sportType="@((int)ChampionshipType.Football)"
+       class="btn @(Model.SportType == ChampionshipType.Football ? "btn-primary" : "btn-outline-primary")">
+        ⚽ Football
+    </a>
+</div>
+
+@if (Model.Stats != null)
+{
+    var stats = Model.Stats;
+    var scored = stats.TotalScoredPredictions;
+    string? PctStr(double val, int decimals) =>
+        scored > 0 ? val.ToString($"F{decimals}").TrimEnd('0').TrimEnd('.') + "%" : null;
+    var winnersPctStr  = PctStr((double)stats.CorrectWinners / scored * 100, 2);
+    var missesPctStr   = PctStr((double)stats.OneGoalMisses  / scored * 100, 2);
+    var luckersPctStr  = PctStr((double)stats.ExactScores    / scored * 100, 2);
+    var onlyOnes       = stats.OnlyCorrect;
+    var onlyOnesPctStr = PctStr((double)onlyOnes / scored * 100, 2);
+    var tries          = stats.OnlyOneTries;
+    var triesPctStr    = PctStr((double)tries / scored * 100, 2);
+    var onlyOnesSuccessPct = tries > 0 ? (int)Math.Round((double)onlyOnes / tries * 100) : (int?)null;
+    var onlyOnesTooltip = onlyOnesPctStr != null && onlyOnesSuccessPct.HasValue
+        ? $"{onlyOnesPctStr} ({onlyOnesSuccessPct}% success)"
+        : onlyOnesPctStr;
+
+    <div class="mb-4">
+        <h5>Stats</h5>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Total Predictions</th>
+                        <th>Total Points</th>
+                        <th>Winners</th>
+                        <th>One-Goal Misses</th>
+                        <th>Luckers</th>
+                        <th>Only Ones</th>
+                        <th>Only-one Tries</th>
+                        <th>Championships</th>
+                        <th>Medals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@stats.TotalPredictions</td>
+                        <td>@stats.TotalPoints</td>
+                        <td title="@winnersPctStr">@stats.CorrectWinners</td>
+                        <td title="@missesPctStr">@stats.OneGoalMisses</td>
+                        <td title="@luckersPctStr">@stats.ExactScores</td>
+                        <td title="@onlyOnesTooltip">@onlyOnes</td>
+                        <td title="@triesPctStr">@tries</td>
+                        <td>@stats.ChampionshipCount</td>
+                        <td>
+                            @foreach (var medal in Model.Medals.OrderBy(m => m.Position).ThenByDescending(m => m.Year))
+                            {
+                                var emoji = medal.Position == 1 ? "🥇" : medal.Position == 2 ? "🥈" : "🥉";
+                                <span title="@medal.ChampionshipName @medal.Year">@emoji</span>
+                            }
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-muted mb-4">No statistics available for this sport type.</p>
+}
+
+@if (Model.ChampionshipStats.Any())
+{
+    <div class="mb-4">
+        <h5>Championship Finishes</h5>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Championship</th>
+                        <th>Points</th>
+                        <th>Rank</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.ChampionshipStats)
+                    {
+                        var rankEmoji = c.Rank == 1 ? " 🥇" : c.Rank == 2 ? " 🥈" : c.Rank == 3 ? " 🥉" : "";
+                        <tr>
+                            <td><a asp-page="/Championships/Details" asp-route-id="@c.ChampionshipId">@c.ChampionshipName @c.Year</a></td>
+                            <td>@c.TotalPoints</td>
+                            <td>@c.Rank / @c.TotalParticipants@rankEmoji</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@{
+    var recordRows = new List<(string Label, List<Kajsmentkeri.Application.DTOs.RecordEntryDto> Holders)>
+    {
+        ("Best Points",             Model.PersonalRecords.MostPoints),
+        ("Most Winners",            Model.PersonalRecords.MostWinners),
+        ("Most One-Goal Misses",    Model.PersonalRecords.MostOneGoalMisses),
+        ("Most Luckers",            Model.PersonalRecords.MostLuckers),
+        ("Most Only Ones",          Model.PersonalRecords.MostOnlyOnes),
+        ("Longest Positive Streak", Model.PersonalRecords.LongestPositiveStreak),
+        ("Longest Negative Streak", Model.PersonalRecords.LongestNegativeStreak)
+    };
+    var hasRecords = recordRows.Any(r => r.Holders.Count > 0);
+}
+
+@if (hasRecords)
+{
+    <div class="mb-4">
+        <h5>Personal Records</h5>
+        <table class="table table-sm table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Record</th>
+                    <th>Value</th>
+                    <th>Championship</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var (label, holders) in recordRows)
+                {
+                    if (holders.Count == 0) continue;
+                    for (int i = 0; i < holders.Count; i++)
+                    {
+                        var h = holders[i];
+                        <tr>
+                            @if (i == 0)
+                            {
+                                <td rowspan="@holders.Count" class="fw-bold align-middle">@label</td>
+                            }
+                            <td>@h.Value</td>
+                            <td><a asp-page="/Championships/Details" asp-route-id="@h.ChampionshipId">@h.ChampionshipName @h.ChampionshipYear</a></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.ChampionshipStats.Any())
+{
+    <div class="mt-2 mb-4">
+        <h5>Championship History</h5>
+        <div class="btn-group mb-3 flex-wrap" role="group">
+            <button type="button" class="btn btn-primary btn-sm champ-btn" data-metric="points">Total Points</button>
+            <button type="button" class="btn btn-outline-primary btn-sm champ-btn" data-metric="winners">Winners</button>
+            <button type="button" class="btn btn-outline-primary btn-sm champ-btn" data-metric="misses">One-Goal Misses</button>
+            <button type="button" class="btn btn-outline-primary btn-sm champ-btn" data-metric="luckers">Luckers</button>
+            <button type="button" class="btn btn-outline-primary btn-sm champ-btn" data-metric="onlyOnes">Only Ones</button>
+        </div>
+        <canvas id="champChart"></canvas>
+
+        <h5 class="mt-4">Ranks</h5>
+        <canvas id="rankChart"></canvas>
+    </div>
+}
+
+@section Scripts {
+    @if (Model.ChampionshipStats.Any())
+    {
+        var chartData = Model.ChampionshipStats.Select(c => new {
+            label             = $"{c.ChampionshipName} {c.Year}",
+            points            = c.TotalPoints,
+            winners           = c.CorrectWinners,
+            misses            = c.OneGoalMisses,
+            luckers           = c.ExactScores,
+            onlyOnes          = c.OnlyCorrect,
+            rank              = c.Rank,
+            totalParticipants = c.TotalParticipants
+        }).ToList();
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const champData = @Html.Raw(Json.Serialize(chartData));
+
+            const metricConfigs = {
+                points:   { label: 'Total Points',   color: 'rgba(13, 110, 253, 0.8)'  },
+                winners:  { label: 'Winners',         color: 'rgba(25, 135, 84, 0.8)'   },
+                misses:   { label: 'One-Goal Misses', color: 'rgba(255, 193, 7, 0.9)'   },
+                luckers:  { label: 'Luckers',         color: 'rgba(220, 53, 69, 0.8)'   },
+                onlyOnes: { label: 'Only Ones',       color: 'rgba(111, 66, 193, 0.8)'  }
+            };
+
+            let champChart = null;
+
+            function showChampChart(metric) {
+                const cfg = metricConfigs[metric];
+
+                document.querySelectorAll('.champ-btn').forEach(btn => {
+                    const active = btn.dataset.metric === metric;
+                    btn.classList.toggle('btn-primary', active);
+                    btn.classList.toggle('btn-outline-primary', !active);
+                });
+
+                if (champChart) {
+                    champChart.data.datasets[0].data = champData.map(c => c[metric]);
+                    champChart.data.datasets[0].label = cfg.label;
+                    champChart.data.datasets[0].backgroundColor = cfg.color;
+                    champChart.update();
+                } else {
+                    champChart = new Chart(document.getElementById('champChart').getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: champData.map(c => c.label),
+                            datasets: [{
+                                label: cfg.label,
+                                data: champData.map(c => c[metric]),
+                                backgroundColor: cfg.color,
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                        }
+                    });
+                }
+            }
+
+            document.querySelectorAll('.champ-btn').forEach(btn => {
+                btn.addEventListener('click', () => showChampChart(btn.dataset.metric));
+            });
+
+            showChampChart('points');
+
+            // Ranks chart — Y-axis reversed so rank 1 appears at top
+            new Chart(document.getElementById('rankChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: champData.map(c => c.label),
+                    datasets: [{
+                        label: 'Rank',
+                        data: champData.map(c => c.rank),
+                        backgroundColor: 'rgba(253, 126, 20, 0.8)',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => {
+                                    const d = champData[ctx.dataIndex];
+                                    return `Rank ${d.rank} of ${d.totalParticipants}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            reverse: true,
+                            min: 0,
+                            ticks: {
+                                precision: 0,
+                                stepSize: 1
+                            },
+                            title: { display: true, text: '← better' }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
+}

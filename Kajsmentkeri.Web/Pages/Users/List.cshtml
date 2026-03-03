@@ -88,7 +88,7 @@
         {
             var hasStats = Model.UserStats.TryGetValue(user.Id, out var stats);
             <tr>
-                <td>@user.UserName</td>
+                <td><a asp-page="./Details" asp-route-id="@user.Id">@user.UserName</a></td>
 
                 <td>@(hasStats ? stats.TotalPredictions : 0)</td>
                 <td>@(hasStats ? stats.TotalPoints : 0)</td>
