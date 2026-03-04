@@ -71,6 +71,15 @@
     </div>
 }
 
+@if (Model.CurrentUserId != null && !Model.IsCurrentUserParticipating && !Model.Championship!.IsChampionshipEnded)
+{
+    <div class="d-grid mb-4">
+        <button type="button" class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#joinChampionshipModal">
+            🏆 Join the Championship
+        </button>
+    </div>
+}
+
 @if (Model.IsAdmin)
 {
     <hr />
@@ -246,7 +255,7 @@
     </div>
 </div>
 
-@if (Model.Championship!.SupportsChampionshipWinnerPrediction && Model.CurrentUserId != null)
+@if (Model.Championship!.SupportsChampionshipWinnerPrediction && Model.CurrentUserId != null && Model.IsCurrentUserParticipating)
 {
     <div class="card bg-light mb-4">
         <div class="card-body">
@@ -493,7 +502,7 @@
                     }
 
                     var cellId = $"edit-{match.Id}-{user.UserId}";
-                    var canEdit = isOwnColumn && !isPredictionLocked;
+                    var canEdit = isOwnColumn && !isPredictionLocked && Model.IsCurrentUserParticipating;
                     var canToggleHighConfidence = isOwnColumn && !isPredictionLocked && hasPrediction && Model.Championship!.AllowHighConfidencePrediction;
 
                     <td class="prediction-cell @predictionCss">
@@ -656,7 +665,34 @@
                 document.getElementById('confirmJoinBtn').disabled = !this.checked;
             });
 
+            document.getElementById('joinNextBtn').addEventListener('click', function () {
+                document.getElementById('joinStage1').classList.add('d-none');
+                document.getElementById('joinStage2').classList.remove('d-none');
+                document.getElementById('joinStepIndicator').textContent = 'Step 2 of 2';
+                document.getElementById('joinNextBtn').classList.add('d-none');
+                document.getElementById('joinBackBtn').classList.remove('d-none');
+                document.getElementById('confirmJoinBtn').classList.remove('d-none');
+            });
+
+            document.getElementById('joinBackBtn').addEventListener('click', function () {
+                document.getElementById('joinStage2').classList.add('d-none');
+                document.getElementById('joinStage1').classList.remove('d-none');
+                document.getElementById('joinStepIndicator').textContent = 'Step 1 of 2';
+                document.getElementById('joinBackBtn').classList.add('d-none');
+                document.getElementById('confirmJoinBtn').classList.add('d-none');
+                document.getElementById('joinNextBtn').classList.remove('d-none');
+            });
+
             document.getElementById('joinChampionshipModal').addEventListener('hidden.bs.modal', function () {
+                // Reset to stage 1
+                document.getElementById('joinStage1').classList.remove('d-none');
+                document.getElementById('joinStage2').classList.add('d-none');
+                document.getElementById('joinStepIndicator').textContent = 'Step 1 of 2';
+                document.getElementById('joinNextBtn').classList.remove('d-none');
+                document.getElementById('joinBackBtn').classList.add('d-none');
+                document.getElementById('confirmJoinBtn').classList.add('d-none');
+                document.getElementById('rulesConfirmCheck').checked = false;
+                document.getElementById('confirmJoinBtn').disabled = true;
                 if (pendingForm) {
                     pendingForm = null;
                 }
@@ -684,6 +720,8 @@
                             const form = pendingForm;
                             pendingForm = null;
                             form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        } else {
+                            location.reload();
                         }
                     } else {
                         alert('Error joining: ' + result.message);
@@ -998,35 +1036,137 @@
 
     <!-- Join Championship Modal -->
     <div class="modal fade" id="joinChampionshipModal" tabindex="-1" aria-labelledby="joinChampionshipModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="joinChampionshipModalLabel">Join Championship</h5>
+                    <div>
+                        <h5 class="modal-title mb-0" id="joinChampionshipModalLabel">Join Championship</h5>
+                        <small class="text-muted" id="joinStepIndicator">Step 1 of 2</small>
+                    </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>
-                        By participating in this championship you agree to pay <strong>€@Model.Championship!.EntryFee</strong> to the winner at the end
-                        @if (Model.Championship.LastPlacePaysDouble)
+
+                    <!-- Stage 1: General Rules -->
+                    <div id="joinStage1">
+                        <h6>Scoring</h6>
+                        <ul class="list-group mb-3">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Correct winner
+                                <span class="badge bg-primary rounded-pill">@Model.Championship!.ScoringRules!.PointsForCorrectWinner pts</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Exact score <small class="text-muted ms-2">(on top of correct winner)</small>
+                                <span class="badge bg-primary rounded-pill">+@Model.Championship.ScoringRules.PointsForExactScore pts</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Only correct winner <small class="text-muted ms-2">(you're the only one who got it right)</small>
+                                <span class="badge bg-primary rounded-pill">+@Model.Championship.ScoringRules.PointsForOnlyCorrectWinner pts</span>
+                            </li>
+                        </ul>
+
+                        @if (Model.Championship.EnforceLeaderboardVisibilityRules)
                         {
-                            <text>(or <strong>€@(Model.Championship.EntryFee * 2)</strong> if you finish last)</text>
-                        }.
-                        @if (Model.Championship.RunnerUpPaysFree)
-                        {
-                            <text>The runner-up pays nothing.</text>
+                            <div class="alert alert-warning py-2 mb-3">
+                                <strong>⚠️ Visibility rules are active.</strong> The higher you rank on the leaderboard, the fewer other players' predictions are visible to you before a match starts. The leader sees no predictions at all; the last-placed player sees everyone's.
+                            </div>
                         }
-                    </p>
-                    <p>Make sure you understand <a href="#" onclick="event.preventDefault(); bootstrap.Modal.getInstance(document.getElementById('joinChampionshipModal')).hide(); showRules();">the scoring rules</a> before joining.</p>
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" id="rulesConfirmCheck" />
-                        <label class="form-check-label" for="rulesConfirmCheck">
-                            I understand and accept the championship rules
-                        </label>
+
+                        <div class="alert alert-info py-2 mb-3">
+                            <strong>Prediction deadlines (from match 9 onwards):</strong>
+                            <ul class="mb-0 mt-1">
+                                <li>The <strong>leaderboard leader</strong> can only add or edit a prediction up to <strong>10 minutes before</strong> the match starts.</li>
+                                <li>The <strong>last-placed player</strong> can add or edit a prediction up to <strong>5 minutes after</strong> the match starts.</li>
+                                <li>Everyone else must submit before the match starts.</li>
+                            </ul>
+                        </div>
+
+                        <h6>Payment</h6>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Entry fee (paid to the winner at the end)
+                                <strong>€@Model.Championship.EntryFee</strong>
+                            </li>
+                            @if (Model.Championship.LastPlacePaysDouble)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Last place pays
+                                    <strong>€@(Model.Championship.EntryFee * 2)</strong>
+                                </li>
+                            }
+                            @if (Model.Championship.RunnerUpPaysFree)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Runner-up pays
+                                    <strong>€0</strong>
+                                </li>
+                            }
+                        </ul>
                     </div>
+
+                    <!-- Stage 2: Special Features + Confirm -->
+                    <div id="joinStage2" class="d-none">
+                        @if (!Model.Championship.SupportsChampionshipWinnerPrediction && !Model.Championship.AllowHighConfidencePrediction && !(Model.Championship.ScoringRules?.RarityPointsBonus > 0))
+                        {
+                            <p class="text-muted">No special features are enabled for this championship.</p>
+                        }
+
+                        @if (Model.Championship.SupportsChampionshipWinnerPrediction)
+                        {
+                            <h6>Championship Winner Prediction</h6>
+                            <p class="mb-2 text-muted" style="font-size: 0.9rem;">Before the first match starts, you can predict which team will win the championship. Points are awarded once the tournament ends.</p>
+                            <ul class="list-group mb-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    🥇 Correct champion
+                                    <span class="badge bg-warning text-dark rounded-pill">@Model.Championship.ScoringRules!.PointsForChampionshipWinner pts</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    🥈 Correct runner-up
+                                    <span class="badge bg-light text-dark border rounded-pill">@Model.Championship.ScoringRules.PointsForChampionshipRunnerUp pts</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    🥉 Correct third place
+                                    <span class="badge bg-warning bg-opacity-50 text-dark rounded-pill">@Model.Championship.ScoringRules.PointsForChampionshipThirdPlace pts</span>
+                                </li>
+                            </ul>
+                        }
+
+                        @if (Model.Championship.AllowHighConfidencePrediction)
+                        {
+                            <h6>High Confidence Prediction 🚀</h6>
+                            <p class="mb-2 text-muted" style="font-size: 0.9rem;">Once per championship you can mark one prediction as high confidence. If that prediction is correct, you earn <strong>double points</strong> for that match. To use it, click the 🚀 button next to a match after entering your prediction.</p>
+                        }
+
+                        @if (Model.Championship.ScoringRules?.RarityPointsBonus > 0)
+                        {
+                            <h6>Rarity Points</h6>
+                            <ul class="list-group mb-2">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Bonus pool per match
+                                    <span class="badge bg-primary rounded-pill">@Model.Championship.ScoringRules!.RarityPointsBonus</span>
+                                </li>
+                            </ul>
+                            <div class="alert alert-info py-2">
+                                <small>ℹ️ After each match, the bonus pool is split equally among all players who correctly predicted the winner. The fewer people who got it right, the larger the individual share. If only one person predicted correctly, they receive the full pool.</small>
+                                <small class="d-block mt-1">Rarity points do <strong>not</strong> count toward total points on the leaderboard. They only act as a tiebreaker when two players are equal in points, correct winners, one-goal misses, and only ones.</small>
+                            </div>
+                        }
+
+                        <hr />
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="rulesConfirmCheck" />
+                            <label class="form-check-label" for="rulesConfirmCheck">
+                                I understand and accept all the championship rules
+                            </label>
+                        </div>
+                    </div>
+
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmJoinBtn" disabled>Join & Submit Prediction</button>
+                    <button type="button" class="btn btn-secondary" id="joinCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="joinNextBtn">Next →</button>
+                    <button type="button" class="btn btn-outline-secondary d-none" id="joinBackBtn">← Back</button>
+                    <button type="button" class="btn btn-primary d-none" id="confirmJoinBtn" disabled>Join & Submit Prediction</button>
                 </div>
             </div>
         </div>
