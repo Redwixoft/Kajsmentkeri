@@ -735,6 +735,8 @@
                 }
             });
 
+            const isIceHockey = @(Model.Championship?.Type == ChampionshipType.IceHockey ? "true" : "false");
+
             document.querySelectorAll("form").forEach(form => {
                 form.addEventListener("submit", async function (e) {
                     const input = form.querySelector("input[name='PredictionInput'], input[name='ResultInput']");
@@ -748,6 +750,16 @@
                         alert("Invalid format. Please use format like 2:1 you fucking moron!");
                         input.focus();
                         return;
+                    }
+
+                    if (isIceHockey && input.name === 'PredictionInput') {
+                        const scoreParts = value.split(':');
+                        if (parseInt(scoreParts[0], 10) === parseInt(scoreParts[1], 10)) {
+                            e.preventDefault();
+                            alert("There are no ties in ice hockey you fucking moron!");
+                            input.focus();
+                            return;
+                        }
                     }
 
                     // AJAX handling for prediction forms

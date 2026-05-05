@@ -244,7 +244,13 @@ public class DetailsModel : PageModel
             return new JsonResult(new { success = false, message = "Invalid format. Use X:Y" });
         }
 
-        try 
+        var championship = await _championshipService.GetByIdAsync(match.ChampionshipId);
+        if (championship?.Type == ChampionshipType.IceHockey && home == away)
+        {
+            return new JsonResult(new { success = false, message = "There are no ties in ice hockey you fucking moron!" });
+        }
+
+        try
         {
             await _predictionService.SubmitPredictionAsync(MatchId, home, away);
             
