@@ -283,6 +283,35 @@ public class LeaderboardService : ILeaderboardService
             }
         }
 
+        // Smallest point gap between 1st and 2nd per championship
+        int minGap = int.MaxValue;
+        var smallestGapRecords = new List<RecordEntryDto>();
+        foreach (var champ in championships)
+        {
+            var ranked = entries
+                .Where(e => e.ChampionshipId == champ.Id)
+                .OrderByDescending(e => e.TotalPoints)
+                .ThenByDescending(e => e.Winners)
+                .ThenByDescending(e => e.Misses)
+                .ThenByDescending(e => e.OnlyOnes)
+                .ThenByDescending(e => e.RarityPoints)
+                .ToList();
+
+            if (ranked.Count >= 2)
+            {
+                int gap = ranked[0].TotalPoints - ranked[1].TotalPoints;
+                if (gap < minGap)
+                {
+                    minGap = gap;
+                    smallestGapRecords = [ToDto(champ.Id, ranked[0].UserName, gap)];
+                }
+                else if (gap == minGap)
+                {
+                    smallestGapRecords.Add(ToDto(champ.Id, ranked[0].UserName, gap));
+                }
+            }
+        }
+
         // Streak records: longest consecutive correct/incorrect winner predictions per (championship, user)
         var scoredPredictionDetails = await context.Predictions
             .Where(p => championshipIds.Contains(p.Match.ChampionshipId)
@@ -329,6 +358,7 @@ public class LeaderboardService : ILeaderboardService
             MostLuckers           = maxLuckers  > 0 ? MaxRecord(maxLuckers,  e => e.Luckers)     : [],
             MostOnlyOnes          = maxOnlyOnes > 0 ? MaxRecord(maxOnlyOnes, e => e.OnlyOnes)    : [],
             HighestPointGap       = gapRecords,
+            SmallestPointGap      = minGap < int.MaxValue ? smallestGapRecords : [],
             LongestPositiveStreak = posStreakRecords,
             LongestNegativeStreak = negStreakRecords
         };
