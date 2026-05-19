@@ -233,6 +233,10 @@
                             }
 
                             @entry.UserName
+                            @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == entry.UserId && kvp.Value.IsHighConfidence))
+                            {
+                                <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
+                            }
                             @if (Model.CurrentUserId == entry.UserId)
                             {
                                 <span>👈</span>
@@ -378,6 +382,10 @@
                         <img src="/images/flags/@(userWinnerPredHeader.TeamName).png" class="team-flag me-1" alt="@userWinnerPredHeader.TeamName" title="Predicted winner: @userWinnerPredHeader.TeamName" onerror="this.style.display='none'" />
                     }
                     @user.UserName
+                    @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == user.UserId && kvp.Value.IsHighConfidence))
+                    {
+                        <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
+                    }
                 </th>
             }
         </tr>
@@ -398,7 +406,7 @@
             var isMyHighConfidenceRow = myMatchPrediction?.IsHighConfidence == true;
             var myPredLocked = Model.CurrentUserId.HasValue && Model.IsPredictionLockedSync(match.Id, Model.CurrentUserId.Value);
             var canToggleHCForRow = Model.CurrentUserId.HasValue && !myPredLocked && myMatchPrediction != null && Model.Championship!.AllowHighConfidencePrediction;
-            <tr class="@(isMyHighConfidenceRow ? "table-warning" : "")" title="@(isMyHighConfidenceRow ? "Your high confidence prediction!" : "")" style="@(isMyHighConfidenceRow ? "border-left: 3px solid #fd7e14;" : "")">
+            <tr title="@(isMyHighConfidenceRow ? "Your high confidence prediction!" : "")" style="@(isMyHighConfidenceRow ? "outline: 2px solid #fd7e14; outline-offset: -1px;" : "")">
                 <td>
                     <div class="d-flex align-items-center justify-content-center">
                         @if (matchStarted)
@@ -567,7 +575,7 @@
         if (!hasResult || prediction is null)
             return "";
 
-        var textColor = rowIsHighConfidence ? "text-dark" : "text-white";
+        var textColor = "text-white";
 
         if (prediction.Points == 0)
             return $"bg-danger {textColor}";

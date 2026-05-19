@@ -296,7 +296,31 @@ public class DetailsModel : PageModel
     public async Task<IActionResult> OnGetAuditLogsAsync(Guid matchId)
     {
         var logs = await _predictionService.GetAuditLogsForMatchAsync(matchId);
-        var formattedLogs = logs.Select(l =>
+
+        // Build a map of score → users who currently hold that prediction for this match
+        var predictionsByScore = new Dictionary<(int, int), List<(Guid UserId, string Name)>>();
+        var match = await _matchService.GetMatchByIdAsync(matchId);
+        if (match != null)
+        {
+            var allPredictions = await _predictionService.GetPredictionsForChampionshipAsync(match.ChampionshipId);
+            var matchPredictions = allPredictions.Where(p => p.MatchId == matchId).ToList();
+            var userIds = matchPredictions.Select(p => p.UserId).ToHashSet();
+            var userNameMap = await _userManager.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Id.ToString());
+
+            foreach (var pred in matchPredictions)
+            {
+                var key = (pred.PredictedHome, pred.PredictedAway);
+                if (!predictionsByScore.ContainsKey(key))
+                    predictionsByScore[key] = new();
+                if (userNameMap.TryGetValue(pred.UserId, out var name))
+                    predictionsByScore[key].Add((pred.UserId, name));
+            }
+        }
+
+        var formattedLogs = new List<object>();
+        foreach (var l in logs)
         {
             var timestamp = _timeService.ToBratislava(l.TimestampUtc).ToString("yyyy-MM-dd HH:mm:ss");
             string message;
@@ -312,9 +336,22 @@ public class DetailsModel : PageModel
                 message = $"<b>{l.AdminName}</b> {(l.OldHomeScore == null ? "added" : "updated")} their prediction " +
                           $"on match <b>{l.MatchSummary}</b>. " +
                           $"The prediction is now <b>{l.NewHomeScore}:{l.NewAwayScore}</b> " +
-                          $"{(l.OldHomeScore == null ? "" : $"(was {l.OldHomeScore}:{l.OldAwayScore} before)")}.";            }
-            return new { timestamp, message };
-        }).ToList();
+                          $"{(l.OldHomeScore == null ? "" : $"(was {l.OldHomeScore}:{l.OldAwayScore} before)")}.";
+            }
+
+            var scoreKey = (l.NewHomeScore, l.NewAwayScore);
+            if (predictionsByScore.TryGetValue(scoreKey, out var usersWithSamePred))
+            {
+                var others = usersWithSamePred
+                    .Where(u => u.UserId != l.TargetUserId)
+                    .Select(u => u.Name)
+                    .ToList();
+                if (others.Count > 0)
+                    message += $" Same prediction was already added by: {string.Join(", ", others)}.";
+            }
+
+            formattedLogs.Add(new { timestamp, message });
+        }
 
         return new JsonResult(formattedLogs);
     }
