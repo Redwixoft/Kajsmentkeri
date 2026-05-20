@@ -36,10 +36,7 @@ if (!builder.Environment.IsDevelopment())
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    {
-        options.UseNpgsql(connectionString);
-        options.LogTo(Console.WriteLine, LogLevel.Debug);
-    });
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
