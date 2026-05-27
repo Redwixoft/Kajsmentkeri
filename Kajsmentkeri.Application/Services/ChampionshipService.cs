@@ -166,7 +166,14 @@ public class ChampionshipService : IChampionshipService
             context.ChampionshipWinnerPredictions.RemoveRange(winnerPredictions);
         }
 
-        // 5. Delete Championship
+        // 5. Delete Participations
+        var participations = await context.ChampionshipParticipations.Where(p => p.ChampionshipId == id).ToListAsync();
+        if (participations.Any())
+        {
+            context.ChampionshipParticipations.RemoveRange(participations);
+        }
+
+        // 6. Delete Championship
         context.Championships.Remove(championship);
 
         await context.SaveChangesAsync();
