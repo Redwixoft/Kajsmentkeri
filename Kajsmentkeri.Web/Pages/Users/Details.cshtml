@@ -9,6 +9,10 @@
 <p class="text-muted mb-3">@Model.ProfileUser.Email</p>
 
 <div class="btn-group mb-4" role="group" aria-label="Sport type filter">
+    <a asp-page="./Details" asp-route-id="@Model.ProfileUser.Id"
+       class="btn @(!Model.SportType.HasValue ? "btn-primary" : "btn-outline-primary")">
+        Both
+    </a>
     <a asp-page="./Details" asp-route-id="@Model.ProfileUser.Id" asp-route-sportType="@((int)ChampionshipType.IceHockey)"
        class="btn @(Model.SportType == ChampionshipType.IceHockey ? "btn-primary" : "btn-outline-primary")">
         🏒 Ice Hockey
@@ -52,6 +56,9 @@
                         <th>Only-one Tries</th>
                         <th>Championships</th>
                         <th>Medals</th>
+                        <th>Top Prediction</th>
+                        <th>Best Team</th>
+                        <th>Worst Team</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,10 +74,31 @@
                         <td>
                             @foreach (var medal in Model.Medals.OrderBy(m => m.Position).ThenByDescending(m => m.Year))
                             {
-                                var emoji = medal.Position == 1 ? "🥇" : medal.Position == 2 ? "🥈" : "🥉";
+                                var emoji = medal.Position == 1 ? "🥇" : medal.Position == 2 ? "🥈" : medal.Position == 3 ? "🥉" : "💩";
                                 <span title="@medal.ChampionshipName @medal.Year">@emoji</span>
                             }
                         </td>
+                        @if (Model.PredictionProfile != null)
+                        {
+                            var p = Model.PredictionProfile;
+                            <td>@(p.MostCommonPrediction != null ? $"{p.MostCommonPrediction} ({p.MostCommonPredictionCount}×)" : "")</td>
+                            <td>
+                                @if (p.BestTeam != null)
+                                {
+                                    <img src="/images/flags/@(p.BestTeam).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@p.BestTeam <span class="text-muted">(@p.BestTeamCount correct)</span>
+                                }
+                            </td>
+                            <td>
+                                @if (p.WorstTeam != null)
+                                {
+                                    <img src="/images/flags/@(p.WorstTeam).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@p.WorstTeam <span class="text-muted">(@p.WorstTeamCount incorrect)</span>
+                                }
+                            </td>
+                        }
+                        else
+                        {
+                            <td></td><td></td><td></td>
+                        }
                     </tr>
                 </tbody>
             </table>
@@ -93,16 +121,32 @@ else
                         <th>Championship</th>
                         <th>Points</th>
                         <th>Rank</th>
+                        <th>Top Prediction</th>
+                        <th>Best Team</th>
+                        <th>Worst Team</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var c in Model.ChampionshipStats)
                     {
-                        var rankEmoji = c.Rank == 1 ? " 🥇" : c.Rank == 2 ? " 🥈" : c.Rank == 3 ? " 🥉" : "";
+                        var rankEmoji = c.Rank == 1 ? " 🥇" : c.Rank == 2 ? " 🥈" : c.Rank == 3 ? " 🥉" : c.Rank == c.TotalParticipants && c.TotalParticipants > 3 ? " 💩" : "";
                         <tr>
                             <td><a asp-page="/Championships/Details" asp-route-id="@c.ChampionshipId">@c.ChampionshipName @c.Year</a></td>
                             <td>@c.TotalPoints</td>
                             <td>@c.Rank / @c.TotalParticipants@rankEmoji</td>
+                            <td>@(c.MostCommonPrediction != null ? $"{c.MostCommonPrediction} ({c.MostCommonPredictionCount}×)" : "")</td>
+                            <td>
+                                @if (c.BestTeam != null)
+                                {
+                                    <img src="/images/flags/@(c.BestTeam).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@c.BestTeam <span class="text-muted">(@c.BestTeamCount)</span>
+                                }
+                            </td>
+                            <td>
+                                @if (c.WorstTeam != null)
+                                {
+                                    <img src="/images/flags/@(c.WorstTeam).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@c.WorstTeam <span class="text-muted">(@c.WorstTeamCount)</span>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>

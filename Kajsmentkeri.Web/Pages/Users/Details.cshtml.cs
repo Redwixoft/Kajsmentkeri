@@ -25,9 +25,10 @@ public class DetailsModel : PageModel
     public List<(int Position, string ChampionshipName, int Year)> Medals { get; set; } = new();
     public ChampionshipRecordsDto PersonalRecords { get; set; } = new();
     public List<UserChampionshipStatsDto> ChampionshipStats { get; set; } = new();
-    public ChampionshipType SportType { get; set; } = ChampionshipType.IceHockey;
+    public UserPredictionProfileDto? PredictionProfile { get; set; }
+    public ChampionshipType? SportType { get; set; }
 
-    public async Task<IActionResult> OnGetAsync(Guid id, ChampionshipType sportType = ChampionshipType.IceHockey)
+    public async Task<IActionResult> OnGetAsync(Guid id, ChampionshipType? sportType = null)
     {
         SportType = sportType;
 
@@ -37,14 +38,21 @@ public class DetailsModel : PageModel
 
         ProfileUser = user;
 
-        var globalStats = await _leaderboardService.GetGlobalLeaderboardAsync(sportType);
+        var globalStatsTask    = _leaderboardService.GetGlobalLeaderboardAsync(sportType);
+        var medalTask          = _leaderboardService.GetMedalCountsAsync(sportType);
+        var recordsTask        = _leaderboardService.GetUserPersonalRecordsAsync(id, sportType);
+        var champStatsTask     = _leaderboardService.GetUserChampionshipStatsAsync(id, sportType);
+        var profileTask        = _leaderboardService.GetUserPredictionProfileAsync(id, sportType);
+
+        var globalStats = await globalStatsTask;
         Stats = globalStats.FirstOrDefault(s => s.UserId == id);
 
-        var medalCounts = await _leaderboardService.GetMedalCountsAsync(sportType);
+        var medalCounts = await medalTask;
         Medals = medalCounts.TryGetValue(id, out var medals) ? medals : new();
 
-        PersonalRecords = await _leaderboardService.GetUserPersonalRecordsAsync(id, sportType);
-        ChampionshipStats = await _leaderboardService.GetUserChampionshipStatsAsync(id, sportType);
+        PersonalRecords   = await recordsTask;
+        ChampionshipStats = await champStatsTask;
+        PredictionProfile = await profileTask;
 
         return Page();
     }

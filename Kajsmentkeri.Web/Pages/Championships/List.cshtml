@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model Kajsmentkeri.Web.Pages.Championships.ListModel
 @{
     ViewData["Title"] = "Championships";
@@ -11,13 +11,128 @@
     <a class="btn btn-primary mb-3" asp-page="/Championships/Add">Add Championship</a>
 }
 
+<div class="btn-group mb-3" role="group" aria-label="Sport type filter">
+    <a asp-page="./List" class="btn @(Model.SportType == null ? "btn-primary" : "btn-outline-primary")">
+        Both
+    </a>
+    <a asp-page="./List" asp-route-sportType="@((int)Kajsmentkeri.Domain.ChampionshipType.IceHockey)"
+       class="btn @(Model.SportType == Kajsmentkeri.Domain.ChampionshipType.IceHockey ? "btn-primary" : "btn-outline-primary")">
+        🏒 Ice Hockey
+    </a>
+    <a asp-page="./List" asp-route-sportType="@((int)Kajsmentkeri.Domain.ChampionshipType.Football)"
+       class="btn @(Model.SportType == Kajsmentkeri.Domain.ChampionshipType.Football ? "btn-primary" : "btn-outline-primary")">
+        ⚽ Football
+    </a>
+</div>
+
+@if (Model.Stats.TopResults.Count > 0 || Model.Stats.TopPredictions.Count > 0)
+{
+    <div class="card bg-light border mb-4">
+        <div class="card-header fw-semibold" style="font-size: 0.85rem; cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#statsSection">
+            📊 All-Time Stats
+        </div>
+        <div class="collapse show" id="statsSection">
+            <div class="card-body p-3">
+                <div class="row g-3">
+                    @if (Model.Stats.TopResults.Count > 0)
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="border rounded p-2 h-100 bg-white">
+                                <div class="text-muted mb-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Most Common Result</div>
+                                @for (int i = 0; i < Model.Stats.TopResults.Count; i++)
+                                {
+                                    var (score, count) = Model.Stats.TopResults[i];
+                                    <div class="d-flex justify-content-between align-items-baseline @(i == 0 ? "fw-bold" : "text-muted small")">
+                                        <span>@(i + 1). @score</span>
+                                        <span>@count/@Model.Stats.TotalMatchesWithResults</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Stats.TopLuckers.Count > 0)
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="border rounded p-2 h-100 bg-white">
+                                <div class="text-muted mb-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Most Common Lucker 🎯</div>
+                                @for (int i = 0; i < Model.Stats.TopLuckers.Count; i++)
+                                {
+                                    var (score, count) = Model.Stats.TopLuckers[i];
+                                    <div class="d-flex justify-content-between align-items-baseline @(i == 0 ? "fw-bold" : "text-muted small")">
+                                        <span>@(i + 1). @score</span>
+                                        <span>@count/@Model.Stats.TotalExactScorePredictions</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Stats.TopPredictions.Count > 0)
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="border rounded p-2 h-100 bg-white">
+                                <div class="text-muted mb-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Top Predictions</div>
+                                @for (int i = 0; i < Model.Stats.TopPredictions.Count; i++)
+                                {
+                                    var (score, count, topUser, topUserCount) = Model.Stats.TopPredictions[i];
+                                    <div class="@(i == 0 ? "fw-bold" : "text-muted small") @(i > 0 ? "mt-1" : "")">
+                                        <div class="d-flex justify-content-between align-items-baseline">
+                                            <span>@(i + 1). @score</span>
+                                            <span>@count×</span>
+                                        </div>
+                                        @if (topUser != null)
+                                        {
+                                            <div class="text-muted fw-normal" style="font-size: 0.72rem;">Most by <strong>@topUser</strong> (@topUserCount×)</div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Stats.LeastCommonPredictions.Count > 0)
+                    {
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="border rounded p-2 h-100 bg-white">
+                                <div class="text-muted mb-1" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Least Common Predictions</div>
+                                @for (int i = 0; i < Model.Stats.LeastCommonPredictions.Count; i++)
+                                {
+                                    var (score, count, users) = Model.Stats.LeastCommonPredictions[i];
+                                    <div class="@(i == 0 ? "fw-bold" : "text-muted small") @(i > 0 ? "mt-1" : "")">
+                                        <div class="d-flex justify-content-between align-items-baseline">
+                                            <span>@(i + 1). @score</span>
+                                            <span>@count×</span>
+                                        </div>
+                                        @if (users.Count > 0)
+                                        {
+                                            <div class="text-muted fw-normal" style="font-size: 0.72rem;">@string.Join(", ", users)</div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <table class="table table-striped">
     <thead>
+        @{
+            string Arrow(string asc, string desc) =>
+                Model.CurrentSort == asc ? " ↑" : Model.CurrentSort == desc ? " ↓" : "";
+        }
         <tr>
-            <th>Name</th>
-            <th>Year</th>
-            <th>Winner</th>
-            <th></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.NameSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Name@Arrow("name", "name_desc")</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.YearSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Year@Arrow("year", "")</a></th>
+            <th>Standings</th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.WinnersSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Winners@Arrow("winners", "winners_desc")</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.LuckersSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Luckers@Arrow("luckers", "luckers_desc")</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.OnlyOnesSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Only Ones@Arrow("onlyones", "onlyones_desc")</a></th>
+            @if (Model.IsAdmin)
+            {
+                <th></th>
+            }
         </tr>
     </thead>
     <tbody>
@@ -26,28 +141,50 @@
             <tr>
                 <td>
                     @(item.Type == Kajsmentkeri.Domain.ChampionshipType.Football ? "⚽" : "🏒")
-                    @item.Name
+                    <a asp-page="/Championships/Details" asp-route-id="@item.Id">@item.Name</a>
                     @if (item.IsTest)
                     {
                         <span class="badge bg-warning text-dark">TEST</span>
                     }
                 </td>
                 <td>@item.Year</td>
-                <td>@(item.WinnerUserName ?? "")</td>
                 <td>
-                    <a asp-page="/Championships/Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
-                        View
-                    </a>
-                    @if (Model.IsAdmin)
+                    @{
+                        var medals = new[] { "🥇", "🥈", "🥉" };
+                        var top3 = item.Standings.Where(s => s.Position <= 3).ToList();
+                        var extra = item.Standings.FirstOrDefault(s => s.Position > 3);
+                    }
+                    @for (int i = 0; i < top3.Count; i++)
                     {
-                        <a asp-page="/Championships/Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning ms-1">
+                        if (i > 0) { <text>, </text> }
+                        var isCurrent = top3[i].UserName == Model.CurrentUserName;
+                        <text>@medals[top3[i].Position - 1] </text><span class="@(isCurrent ? "fw-bold" : "")">@top3[i].UserName</span>
+                    }
+                    @if (extra != null)
+                    {
+                        <text>@(top3.Count > 0 ? ", " : "")</text>
+                        @if (extra.Position >= 5)
+                        {
+                            <text>..., </text>
+                        }
+                        var extraIsCurrent = extra.UserName == Model.CurrentUserName;
+                        <text>@extra.Position. </text><span class="@(extraIsCurrent ? "fw-bold" : "")">@extra.UserName</span>
+                    }
+                </td>
+                <td>@(item.TotalWinners > 0 ? item.TotalWinners.ToString() : "")</td>
+                <td>@(item.TotalLuckers > 0 ? item.TotalLuckers.ToString() : "")</td>
+                <td>@(item.TotalOnlyOnes > 0 ? item.TotalOnlyOnes.ToString() : "")</td>
+                @if (Model.IsAdmin)
+                {
+                    <td>
+                        <a asp-page="/Championships/Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
                             Edit
                         </a>
                         <button type="button" class="btn btn-sm btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.Id" data-name="@item.Name">
                             Delete
                         </button>
-                    }
-                </td>
+                    </td>
+                }
             </tr>
         }
     </tbody>
@@ -83,7 +220,7 @@
             var button = event.relatedTarget;
             var id = button.getAttribute('data-id');
             var name = button.getAttribute('data-name');
-            
+
             var nameInput = deleteModal.querySelector('#deleteTargetName');
             var idInput = deleteModal.querySelector('#deleteTargetId');
 

@@ -179,7 +179,12 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <h5 class="mt-3">Leaderboard</h5>
+        <div class="d-flex align-items-center justify-content-between mt-3 mb-1">
+            <h5 class="mb-0">Leaderboard</h5>
+            <button type="button" id="toggleHiddenStats" class="btn btn-outline-secondary btn-sm" title="Show/hide advanced stats">
+                🔬 <span id="toggleHiddenStatsLabel">Show hidden stats</span>
+            </button>
+        </div>
         <table class="table table-bordered table-sm table-striped text-center align-middle">
             <thead class="table-light">
                 <tr>
@@ -189,14 +194,31 @@
                     <th>Match winners</th>
                     <th>One-goal misses</th>
                     <th>Luckers</th>
-                    <th>Only ones</th>                    
-                    @if (Model.Championship?.ScoringRules?.RarityPointsBonus > 0)
-                    {
-                        <th>Rarity points</th>
-                    }
+                    <th>Only ones</th>
+                    <th class="hidden-stat d-none">Rarity pts</th>
+                    <th class="hidden-stat d-none">
+                        Score diff
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline"
+                                data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                data-bs-content="How far off was your predicted margin of victory, added up across all matches. Example: result was 3:1 (won by 2) and you predicted 2:0 (won by 2) → 0. Result 3:1 and you predicted 1:0 (won by 1) → 1. Lower is better."
+                                title="Score Difference">ℹ️</button>
+                    </th>
+                    <th class="hidden-stat d-none">
+                        Exact diff
+                        <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline"
+                                data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                data-bs-content="How many total goals were you off across all matches, counting each side separately. Example: result was 3:1 and you predicted 2:0 → off by 1 on home + 1 on away = 2. Result 3:1 and you predicted 3:2 → off by 0 + 1 = 1. Lower is better."
+                                title="Exact Difference">ℹ️</button>
+                    </th>
                 </tr>
             </thead>
             <tbody>
+                @if (Model.MotivationalText != null)
+                {
+                    <tr class="table-warning">
+                        <td colspan="20" class="text-start fst-italic px-3 py-2" style="font-size: 0.85rem;">💬 @Model.MotivationalText</td>
+                    </tr>
+                }
                 @for (int i = 0; i < Model.Leaderboard.Count; i++)
                 {
                     var entry = Model.Leaderboard[i];
@@ -204,34 +226,33 @@
 
                     var nameCellClass = rank switch
                     {
-                        1 => "bg-warning text-dark",   // gold
-                        2 => "bg-light text-dark border border-secondary", // silver
-                        3 => "bg-warning bg-opacity-50 text-dark", // bronze
+                        1 => "bg-warning text-dark",
+                        2 => "bg-light text-dark border border-secondary",
+                        3 => "bg-warning bg-opacity-50 text-dark",
                         _ => ""
                     };
 
                     var totalFinishedMatches = Model.Matches.Count(m => m.HomeScore.HasValue && m.AwayScore.HasValue);
-                    var winnersPercentage = totalFinishedMatches > 0 
-                        ? (double)entry.CorrectWinners / totalFinishedMatches * 100 
+                    var winnersPercentage = totalFinishedMatches > 0
+                        ? (double)entry.CorrectWinners / totalFinishedMatches * 100
                         : 0;
 
+                    Model.UserDiffStats.TryGetValue(entry.UserId, out var diff);
+
                     <tr>
-                        <td>@($"{(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : rank.ToString())}")</td>
+                        <td>@($"{(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : rank == Model.Leaderboard.Count ? "💩 " : rank.ToString())}")</td>
                         <td class="@nameCellClass">
                             @if (Model.CurrentUserId == entry.UserId)
                             {
                                 <span>👉</span>
                             }
-                            
                             @{
                                 var userWinnerPred = Model.AllWinnerPredictions.FirstOrDefault(p => p.UserId == entry.UserId);
                             }
-                            
                             @if (userWinnerPred != null)
                             {
                                 <img src="/images/flags/@(userWinnerPred.TeamName).png" class="team-flag me-1" alt="@userWinnerPred.TeamName" title="Predicted winner: @userWinnerPred.TeamName" onerror="this.style.display='none'" />
                             }
-
                             @entry.UserName
                             @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == entry.UserId && kvp.Value.IsHighConfidence))
                             {
@@ -247,14 +268,12 @@
                         <td>@entry.OneGoalMisses</td>
                         <td>@entry.ExactScores</td>
                         <td>@entry.OnlyCorrect</td>
-                        @if (Model.Championship?.ScoringRules?.RarityPointsBonus > 0)
-                        {
-                            <td>@entry.RarityPoints.ToString("0.####")</td>
-                        }
+                        <td class="hidden-stat d-none">@(Model.Championship?.ScoringRules?.RarityPointsBonus > 0 ? entry.RarityPoints.ToString("0.####") : "—")</td>
+                        <td class="hidden-stat d-none">@diff.ScoreDiff</td>
+                        <td class="hidden-stat d-none">@diff.ExactDiff</td>
                     </tr>
                 }
             </tbody>
-
         </table>
     </div>
 </div>
@@ -394,6 +413,10 @@
         @{
             var leaderName = Model.Leaderboard.FirstOrDefault()?.UserName ?? "???";
             var trailingName = Model.Leaderboard.LastOrDefault()?.UserName ?? "???";
+            var currentUserHcLocked = Model.CurrentUserId.HasValue && Model.PredictionMap
+                .Any(kvp => kvp.Key.UserId == Model.CurrentUserId.Value
+                         && kvp.Value.IsHighConfidence
+                         && Model.IsPredictionLockedSync(kvp.Key.MatchId, Model.CurrentUserId.Value));
         }
         @foreach (var match in Model.Matches)
         {
@@ -405,7 +428,7 @@
                 Model.PredictionMap.TryGetValue((match.Id, Model.CurrentUserId.Value), out myMatchPrediction);
             var isMyHighConfidenceRow = myMatchPrediction?.IsHighConfidence == true;
             var myPredLocked = Model.CurrentUserId.HasValue && Model.IsPredictionLockedSync(match.Id, Model.CurrentUserId.Value);
-            var canToggleHCForRow = Model.CurrentUserId.HasValue && !myPredLocked && myMatchPrediction != null && Model.Championship!.AllowHighConfidencePrediction;
+            var canToggleHCForRow = Model.CurrentUserId.HasValue && !myPredLocked && myMatchPrediction != null && Model.Championship!.AllowHighConfidencePrediction && !currentUserHcLocked;
             <tr title="@(isMyHighConfidenceRow ? "Your high confidence prediction!" : "")" style="@(isMyHighConfidenceRow ? "outline: 2px solid #fd7e14; outline-offset: -1px;" : "")">
                 <td>
                     <div class="d-flex align-items-center justify-content-center">
@@ -560,6 +583,147 @@
         }
     </tbody>
 </table>
+
+@if (Model.PageStats.HasData && Model.PageStats.TotalScoredMatches >= 8)
+{
+    <div class="mt-4 mb-4">
+        <h5>Championship Stats</h5>
+        <table class="table table-sm table-bordered table-striped" style="max-width: 680px;">
+            <tbody>
+                @{
+                    void StatRow(string label, string? value)
+                    {
+                        if (value == null) return;
+                        <tr>
+                            <td class="text-muted" style="width: 55%;">@label</td>
+                            <td class="fw-semibold">@value</td>
+                        </tr>
+                    }
+                }
+
+                @{ StatRow("Matches nobody guessed the winner",
+                    $"{Model.PageStats.MatchesNobodyGuessedWinner} / {Model.PageStats.TotalScoredMatches}"); }
+
+                @{ StatRow("Matches everyone guessed the winner",
+                    $"{Model.PageStats.MatchesEveryoneGuessedWinner} / {Model.PageStats.TotalScoredMatches}"); }
+
+                @if (Model.PageStats.MostPredictedTeams.Count > 0)
+                {
+                    <tr>
+                        <td class="text-muted">
+                            Most predicted team
+                            <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline"
+                                    data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
+                                    data-bs-content="The team that appeared most often as someone's predicted match winner, counting all matches they played. If you predicted Slovakia to beat Germany, that counts as one prediction for Slovakia."
+                                    title="Most Predicted Team">ℹ️</button>
+                        </td>
+                        <td class="fw-semibold">
+                            @for (int i = 0; i < Model.PageStats.MostPredictedTeams.Count; i++)
+                            {
+                                var team = Model.PageStats.MostPredictedTeams[i];
+                                if (i > 0) { <span class="text-muted fw-normal mx-1">/</span> }
+                                <img src="/images/flags/@(team).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@team
+                            }
+                            <span class="text-muted fw-normal">(@Model.PageStats.MostPredictedTeamCount total predictions)</span>
+                        </td>
+                    </tr>
+                }
+
+                @if (Model.PageStats.MostCorrectWinnerTeams.Count > 0)
+                {
+                    <tr>
+                        <td class="text-muted">Most correctly predicted team (winner)</td>
+                        <td class="fw-semibold">
+                            @for (int i = 0; i < Model.PageStats.MostCorrectWinnerTeams.Count; i++)
+                            {
+                                var team = Model.PageStats.MostCorrectWinnerTeams[i];
+                                if (i > 0) { <span class="text-muted fw-normal mx-1">/</span> }
+                                <img src="/images/flags/@(team).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@team
+                            }
+                            <span class="text-muted fw-normal">(@Model.PageStats.MostCorrectWinnerTeamCount correct guesses)</span>
+                        </td>
+                    </tr>
+                }
+
+                @if (Model.PageStats.MostExactScoreTeams.Count > 0)
+                {
+                    <tr>
+                        <td class="text-muted">Most correctly predicted team (exact score)</td>
+                        <td class="fw-semibold">
+                            @for (int i = 0; i < Model.PageStats.MostExactScoreTeams.Count; i++)
+                            {
+                                var team = Model.PageStats.MostExactScoreTeams[i];
+                                if (i > 0) { <span class="text-muted fw-normal mx-1">/</span> }
+                                <img src="/images/flags/@(team).png" class="team-flag me-1" alt="" onerror="this.style.display='none'" />@team
+                            }
+                            <span class="text-muted fw-normal">(@Model.PageStats.MostExactScoreTeamCount exact guesses)</span>
+                        </td>
+                    </tr>
+                }
+
+                @{ StatRow("Championship Lucker 🍀",
+                    Model.PageStats.ChampionshipLucker != null
+                        ? $"{Model.PageStats.ChampionshipLucker} ({Model.PageStats.ChampionshipLuckerCount} exact scores, lowest one-goal miss / exact score ratio)"
+                        : null); }
+
+                @{ StatRow("Championship Underdog 😤",
+                    Model.PageStats.ChampionshipUnderdog != null
+                        ? $"{Model.PageStats.ChampionshipUnderdog} (highest one-goal miss / exact score ratio)"
+                        : null); }
+
+                @{ StatRow("Most daring — and wrong 🤡",
+                    Model.PageStats.MostFailedOnlyOnesTrier != null
+                        ? $"{Model.PageStats.MostFailedOnlyOnesTrier} ({Model.PageStats.MostFailedOnlyOnesCount} failed solo predictions)"
+                        : null); }
+
+                @if (Model.PageStats.TopResults.Count > 0)
+                {
+                    <tr>
+                        <td class="text-muted">Most common result@(Model.PageStats.TopResults.Count > 1 ? "s (tied)" : "")</td>
+                        <td class="fw-semibold">
+                            @for (int i = 0; i < Model.PageStats.TopResults.Count; i++)
+                            {
+                                var (score, count) = Model.PageStats.TopResults[i];
+                                if (i > 0) { <span class="text-muted mx-1">·</span> }
+                                <span>@score <span class="text-muted fw-normal">(@count×)</span></span>
+                            }
+                        </td>
+                    </tr>
+                }
+
+                @if (Model.PageStats.TopPredictions.Count > 0)
+                {
+                    <tr>
+                        <td class="text-muted">Most common prediction@(Model.PageStats.TopPredictions.Count > 1 ? "s (tied)" : "")</td>
+                        <td class="fw-semibold">
+                            @for (int i = 0; i < Model.PageStats.TopPredictions.Count; i++)
+                            {
+                                var (score, count) = Model.PageStats.TopPredictions[i];
+                                if (i > 0) { <span class="text-muted mx-1">·</span> }
+                                <span>@score <span class="text-muted fw-normal">(@count×)</span></span>
+                            }
+                        </td>
+                    </tr>
+                }
+
+                @if (Model.PageStats.MostChaoticMatches.Count > 0)
+                {
+                    <tr>
+                        <td class="text-muted">Most chaotic match@(Model.PageStats.MostChaoticMatches.Count > 1 ? "es (tied)" : "") 🌪️</td>
+                        <td class="fw-semibold">
+                            @for (int i = 0; i < Model.PageStats.MostChaoticMatches.Count; i++)
+                            {
+                                if (i > 0) { <br /> }
+                                @Model.PageStats.MostChaoticMatches[i]
+                            }
+                            <span class="text-muted fw-normal">(@Model.PageStats.MostChaoticMatchVariety different predicted scores)</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 <div class="container">
     <canvas id="leaderboardChart" style="width: 100%; height: 600px;"></canvas>
@@ -1262,5 +1426,24 @@
              var myModal = new bootstrap.Modal(document.getElementById('rulesModal'));
              myModal.show();
         }
+
+        // Hidden stats toggle
+        (function () {
+            const btn = document.getElementById('toggleHiddenStats');
+            const label = document.getElementById('toggleHiddenStatsLabel');
+            let visible = false;
+            btn.addEventListener('click', function () {
+                visible = !visible;
+                document.querySelectorAll('.hidden-stat').forEach(el => {
+                    el.classList.toggle('d-none', !visible);
+                });
+                label.textContent = visible ? 'Hide hidden stats' : 'Show hidden stats';
+            });
+        })();
+
+        // Bootstrap popovers
+        document.querySelectorAll('[data-bs-toggle="popover"]').forEach(el => {
+            new bootstrap.Popover(el);
+        });
     </script>
 }

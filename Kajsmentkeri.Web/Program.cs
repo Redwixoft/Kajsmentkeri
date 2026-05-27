@@ -5,6 +5,7 @@ using Kajsmentkeri.Infrastructure.Persistence;
 using Kajsmentkeri.Web.Areas.Identity;
 using Kajsmentkeri.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -54,6 +55,9 @@ builder.Services.AddDefaultIdentity<AppUser>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddDataProtection()
+    .PersistKeysToDbContext<ApplicationDbContext>()
+    .SetApplicationName("Kajsmentkeri");
 builder.Services.ConfigureApplicationCookie(options =>
 {
     var timeoutDays = builder.Configuration.GetValue<int>("Authentication:SessionTimeoutInDays", 30);

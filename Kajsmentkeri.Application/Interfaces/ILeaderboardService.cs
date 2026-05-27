@@ -12,6 +12,11 @@ public interface ILeaderboardService
     Task<Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>>> GetMedalCountsAsync(ChampionshipType? type = null);
     Task<ChampionshipRecordsDto> GetChampionshipRecordsAsync(ChampionshipType? type = null);
     Task<Dictionary<Guid, string?>> GetChampionshipWinnersAsync(IEnumerable<Guid> championshipIds);
+    Task<GlobalStatsDto> GetGlobalStatsAsync(ChampionshipType? type = null);
+    Task<Dictionary<Guid, UserPredictionProfileDto>> GetUserPredictionProfilesAsync(ChampionshipType? type = null);
+    Task<UserPredictionProfileDto?> GetUserPredictionProfileAsync(Guid userId, ChampionshipType? type = null);
+    Task<Dictionary<Guid, List<(string UserName, int Position)>>> GetChampionshipStandingsAsync(IEnumerable<Guid> championshipIds, Guid? currentUserId = null, int topN = 3);
+    Task<Dictionary<Guid, (int TotalWinners, int TotalLuckers, int TotalOnlyOnes)>> GetChampionshipAggregatesAsync(IEnumerable<Guid> championshipIds);
     Task<ChampionshipRecordsDto> GetUserPersonalRecordsAsync(Guid userId, ChampionshipType? type = null);
     Task<List<UserChampionshipStatsDto>> GetUserChampionshipStatsAsync(Guid userId, ChampionshipType? type = null);
     LineGraphViewModel BuildLeaderboardProgress(

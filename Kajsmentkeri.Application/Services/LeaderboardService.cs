@@ -431,6 +431,15 @@ public class LeaderboardService : ILeaderboardService
                     medals[userId] = list = new List<(int, string, int)>();
                 list.Add((i + 1, championship.Name, championship.Year));
             }
+
+            // Last place (only when there are more than 3 participants)
+            if (ranked.Count > 3)
+            {
+                var lastUserId = ranked[^1].UserId;
+                if (!medals.TryGetValue(lastUserId, out var lastList))
+                    medals[lastUserId] = lastList = new List<(int, string, int)>();
+                lastList.Add((ranked.Count, championship.Name, championship.Year));
+            }
         }
 
         return medals;
@@ -484,6 +493,77 @@ public class LeaderboardService : ILeaderboardService
             id => winnerUserIds.TryGetValue(id, out var userId) && userNames.TryGetValue(userId, out var name)
                 ? name
                 : null);
+    }
+
+    public async Task<Dictionary<Guid, List<(string UserName, int Position)>>> GetChampionshipStandingsAsync(
+        IEnumerable<Guid> championshipIds, Guid? currentUserId = null, int topN = 3)
+    {
+        var ids = championshipIds.ToList();
+        if (ids.Count == 0)
+            return new Dictionary<Guid, List<(string UserName, int Position)>>();
+
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var scores = await context.Predictions
+            .Where(p => ids.Contains(p.Match.ChampionshipId))
+            .GroupBy(p => new { p.Match.ChampionshipId, p.UserId })
+            .Select(g => new { ChampionshipId = g.Key.ChampionshipId, UserId = g.Key.UserId, Points = g.Sum(p => p.Points) })
+            .ToListAsync();
+
+        var winnerPredPoints = await context.ChampionshipWinnerPredictions
+            .Where(p => ids.Contains(p.ChampionshipId) && p.PointsAwarded.HasValue)
+            .Select(p => new { p.ChampionshipId, p.UserId, Points = p.PointsAwarded!.Value })
+            .ToListAsync();
+
+        var winnerPredLookup = winnerPredPoints.ToDictionary(p => (p.ChampionshipId, p.UserId), p => p.Points);
+
+        var standingsByChamp = new Dictionary<Guid, List<Guid>>();
+        foreach (var champId in ids)
+        {
+            var ranked = scores
+                .Where(s => s.ChampionshipId == champId)
+                .Select(s => new { s.UserId, Total = s.Points + winnerPredLookup.GetValueOrDefault((champId, s.UserId), 0) })
+                .OrderByDescending(s => s.Total)
+                .Select(s => s.UserId)
+                .ToList();
+            standingsByChamp[champId] = ranked;
+        }
+
+        var allRelevantUserIds = standingsByChamp.Values
+            .SelectMany(list => list.Take(topN))
+            .ToHashSet();
+        if (currentUserId.HasValue)
+            allRelevantUserIds.Add(currentUserId.Value);
+
+        using var scope = _scopeFactory.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var userNames = await userManager.Users
+            .Where(u => allRelevantUserIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Id.ToString());
+
+        var result = new Dictionary<Guid, List<(string UserName, int Position)>>();
+        foreach (var champId in ids)
+        {
+            var ranked = standingsByChamp.TryGetValue(champId, out var r) ? r : new List<Guid>();
+            var entries = new List<(string UserName, int Position)>();
+
+            for (int i = 0; i < Math.Min(topN, ranked.Count); i++)
+            {
+                if (userNames.TryGetValue(ranked[i], out var name))
+                    entries.Add((name, i + 1));
+            }
+
+            if (currentUserId.HasValue)
+            {
+                var currentPos = ranked.IndexOf(currentUserId.Value);
+                if (currentPos >= topN && userNames.TryGetValue(currentUserId.Value, out var currentName))
+                    entries.Add((currentName, currentPos + 1));
+            }
+
+            result[champId] = entries;
+        }
+
+        return result;
     }
 
     public async Task<ChampionshipRecordsDto> GetUserPersonalRecordsAsync(Guid userId, ChampionshipType? type = null)
@@ -608,8 +688,8 @@ public class LeaderboardService : ILeaderboardService
         var championships = await context.Championships
             .Where(c => !c.IsTest)
             .Where(c => type == null || c.Type == type)
-            .OrderBy(c => c.Year)
-            .ThenBy(c => c.CreatedAt)
+            .OrderByDescending(c => c.Year)
+            .ThenByDescending(c => c.CreatedAt)
             .Select(c => new { c.Id, c.Name, c.Year })
             .ToListAsync();
 
@@ -703,21 +783,81 @@ public class LeaderboardService : ILeaderboardService
 
         var rawLookup = rawStats.ToDictionary(s => s.ChampionshipId);
 
+        // Per-championship prediction profile for this user
+        var profilePreds = await context.Predictions
+            .Where(p => p.UserId == userId && championshipIds.Contains(p.Match.ChampionshipId))
+            .Where(p => p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
+            .Select(p => new
+            {
+                p.Match.ChampionshipId,
+                p.PredictedHome,
+                p.PredictedAway,
+                p.GotWinner,
+                HomeTeam = p.Match.HomeTeam,
+                AwayTeam = p.Match.AwayTeam
+            })
+            .ToListAsync();
+
+        var profileByChampionship = profilePreds
+            .GroupBy(p => p.ChampionshipId)
+            .ToDictionary(g => g.Key, g =>
+            {
+                var preds = g.ToList();
+
+                var topPred = preds
+                    .GroupBy(p => p.PredictedHome >= p.PredictedAway
+                        ? (p.PredictedHome, p.PredictedAway)
+                        : (p.PredictedAway, p.PredictedHome))
+                    .Select(sg => (Score: $"{sg.Key.Item1}:{sg.Key.Item2}", Count: sg.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .FirstOrDefault();
+
+                var expanded = preds.SelectMany(p => new[]
+                {
+                    new { Team = p.HomeTeam, p.GotWinner },
+                    new { Team = p.AwayTeam, p.GotWinner }
+                }).ToList();
+
+                var best = expanded.Where(x => x.GotWinner)
+                    .GroupBy(x => x.Team)
+                    .Select(sg => (Team: sg.Key, Count: sg.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .FirstOrDefault();
+
+                var worst = expanded.Where(x => !x.GotWinner)
+                    .GroupBy(x => x.Team)
+                    .Select(sg => (Team: sg.Key, Count: sg.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .FirstOrDefault();
+
+                return (TopPred: topPred.Score, TopPredCount: topPred.Count, BestTeam: best.Team, BestTeamCount: best.Count, WorstTeam: worst.Team, WorstTeamCount: worst.Count);
+            });
+
         return championships
             .Where(c => rawLookup.ContainsKey(c.Id))
-            .Select(c => new UserChampionshipStatsDto
+            .Select(c =>
             {
-                ChampionshipId    = c.Id,
-                ChampionshipName  = c.Name,
-                Year              = c.Year,
-                TotalPoints       = rawLookup[c.Id].TotalPoints + winnerPoints.GetValueOrDefault(c.Id, 0),
-                CorrectWinners    = rawLookup[c.Id].CorrectWinners,
-                OneGoalMisses     = rawLookup[c.Id].OneGoalMisses,
-                ExactScores       = rawLookup[c.Id].ExactScores,
-                OnlyCorrect       = rawLookup[c.Id].OnlyCorrect,
-                OnlyOneTries      = onlyOneTries.GetValueOrDefault(c.Id, 0),
-                Rank              = ranks.TryGetValue(c.Id, out var r) ? r.Rank : 0,
-                TotalParticipants = ranks.TryGetValue(c.Id, out var t) ? t.TotalParticipants : 0
+                profileByChampionship.TryGetValue(c.Id, out var prof);
+                return new UserChampionshipStatsDto
+                {
+                    ChampionshipId           = c.Id,
+                    ChampionshipName         = c.Name,
+                    Year                     = c.Year,
+                    TotalPoints              = rawLookup[c.Id].TotalPoints + winnerPoints.GetValueOrDefault(c.Id, 0),
+                    CorrectWinners           = rawLookup[c.Id].CorrectWinners,
+                    OneGoalMisses            = rawLookup[c.Id].OneGoalMisses,
+                    ExactScores              = rawLookup[c.Id].ExactScores,
+                    OnlyCorrect              = rawLookup[c.Id].OnlyCorrect,
+                    OnlyOneTries             = onlyOneTries.GetValueOrDefault(c.Id, 0),
+                    Rank                     = ranks.TryGetValue(c.Id, out var r) ? r.Rank : 0,
+                    TotalParticipants        = ranks.TryGetValue(c.Id, out var t) ? t.TotalParticipants : 0,
+                    MostCommonPrediction      = prof.TopPred,
+                    MostCommonPredictionCount = prof.TopPredCount,
+                    BestTeam                  = prof.BestTeam,
+                    BestTeamCount             = prof.BestTeamCount,
+                    WorstTeam                 = prof.WorstTeam,
+                    WorstTeamCount            = prof.WorstTeamCount
+                };
             })
             .ToList();
     }
@@ -774,5 +914,279 @@ public class LeaderboardService : ILeaderboardService
         }
 
         return graph;
+    }
+
+    public async Task<GlobalStatsDto> GetGlobalStatsAsync(ChampionshipType? type = null)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var predictions = await context.Predictions
+            .Where(p => p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
+            .Where(p => type == null || p.Match.Championship.Type == type)
+            .Select(p => new
+            {
+                p.UserId,
+                p.MatchId,
+                p.PredictedHome,
+                p.PredictedAway,
+                p.GotExactScore,
+                ActualHome = p.Match.HomeScore!.Value,
+                ActualAway = p.Match.AwayScore!.Value
+            })
+            .ToListAsync();
+
+        if (predictions.Count == 0)
+            return new GlobalStatsDto();
+
+        static (int, int) Normalize(int a, int b) => a >= b ? (a, b) : (b, a);
+        static string FormatNorm((int h, int a) n) => $"{n.h}:{n.a}";
+
+        // Top 3 results — one result per unique match
+        var matchResults = predictions.DistinctBy(p => p.MatchId).ToList();
+        int totalMatches = matchResults.Count;
+        var topResults = matchResults
+            .GroupBy(p => Normalize(p.ActualHome, p.ActualAway))
+            .Select(g => (Score: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .Take(5)
+            .Select(x => (FormatNorm(x.Score), x.Count))
+            .ToList();
+
+        // Top 5 luckers — exact-score correct predictions, normalized
+        var exactPredictions = predictions.Where(p => p.GotExactScore).ToList();
+        int totalExact = exactPredictions.Count;
+        var topLuckers = exactPredictions
+            .GroupBy(p => Normalize(p.PredictedHome, p.PredictedAway))
+            .Select(g => (Score: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .Take(5)
+            .Select(x => (FormatNorm(x.Score), x.Count))
+            .ToList();
+
+        // All prediction groups with per-group user info
+        var predGroups = predictions
+            .GroupBy(p => Normalize(p.PredictedHome, p.PredictedAway))
+            .Select(g =>
+            {
+                var userGroups = g.GroupBy(p => p.UserId)
+                    .Select(ug => (UserId: ug.Key, Count: ug.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .ToList();
+                var topUser = userGroups.FirstOrDefault();
+                var allUserIds = userGroups.Select(u => u.UserId).ToList();
+                return new { Score = g.Key, Count = g.Count(), TopUserId = topUser.UserId, TopUserCount = topUser.Count, AllUserIds = allUserIds };
+            })
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        var leastGroups = predGroups.OrderBy(x => x.Count).Take(3).ToList();
+
+        // Collect all user IDs we need to resolve
+        var userIdsNeeded = new HashSet<Guid>();
+        foreach (var pg in predGroups.Take(3))
+            userIdsNeeded.Add(pg.TopUserId);
+        foreach (var pg in leastGroups)
+            foreach (var uid in pg.AllUserIds)
+                userIdsNeeded.Add(uid);
+
+        var userNames = new Dictionary<Guid, string>();
+        if (userIdsNeeded.Count > 0)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            foreach (var uid in userIdsNeeded)
+            {
+                var u = await userManager.FindByIdAsync(uid.ToString());
+                if (u?.UserName != null) userNames[uid] = u.UserName;
+            }
+        }
+
+        var topPredictions = predGroups.Take(3)
+            .Select(pg => (FormatNorm(pg.Score), pg.Count,
+                userNames.GetValueOrDefault(pg.TopUserId),
+                pg.TopUserCount))
+            .ToList();
+
+        var leastPredictions = leastGroups
+            .Select(pg => (FormatNorm(pg.Score), pg.Count,
+                pg.AllUserIds.Select(uid => userNames.GetValueOrDefault(uid)).Where(n => n != null).Select(n => n!).ToList()))
+            .ToList();
+
+        return new GlobalStatsDto
+        {
+            TopResults = topResults,
+            TotalMatchesWithResults = totalMatches,
+            TopLuckers = topLuckers,
+            TotalExactScorePredictions = totalExact,
+            TopPredictions = topPredictions,
+            LeastCommonPredictions = leastPredictions
+        };
+    }
+
+    public async Task<Dictionary<Guid, UserPredictionProfileDto>> GetUserPredictionProfilesAsync(ChampionshipType? type = null)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var predictions = await context.Predictions
+            .Where(p => p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
+            .Where(p => !p.Match.Championship.IsTest)
+            .Where(p => type == null || p.Match.Championship.Type == type)
+            .Select(p => new
+            {
+                p.UserId,
+                p.PredictedHome,
+                p.PredictedAway,
+                p.GotWinner,
+                HomeTeam = p.Match.HomeTeam,
+                AwayTeam = p.Match.AwayTeam
+            })
+            .ToListAsync();
+
+        if (predictions.Count == 0)
+            return new Dictionary<Guid, UserPredictionProfileDto>();
+
+        var userIds = predictions.Select(p => p.UserId).Distinct().ToList();
+
+        // Most common prediction per user (normalized: higher score first)
+        var mostCommon = predictions
+            .GroupBy(p => p.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => g
+                    .GroupBy(p => p.PredictedHome >= p.PredictedAway
+                        ? (p.PredictedHome, p.PredictedAway)
+                        : (p.PredictedAway, p.PredictedHome))
+                    .Select(sg => (Score: $"{sg.Key.Item1}:{sg.Key.Item2}", Count: sg.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .FirstOrDefault()
+            );
+
+        // Expand each prediction to both participating teams
+        var expanded = predictions
+            .SelectMany(p => new[]
+            {
+                new { p.UserId, Team = p.HomeTeam, p.GotWinner },
+                new { p.UserId, Team = p.AwayTeam, p.GotWinner }
+            })
+            .ToList();
+
+        // Best team: team whose matches the user most often correctly predicted
+        var bestTeam = expanded
+            .Where(x => x.GotWinner)
+            .GroupBy(x => (x.UserId, x.Team))
+            .Select(g => new { g.Key.UserId, g.Key.Team, Count = g.Count() })
+            .GroupBy(x => x.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(x => x.Count).First()
+            );
+
+        // Worst team: team whose matches the user most often incorrectly predicted
+        var worstTeam = expanded
+            .Where(x => !x.GotWinner)
+            .GroupBy(x => (x.UserId, x.Team))
+            .Select(g => new { g.Key.UserId, g.Key.Team, Count = g.Count() })
+            .GroupBy(x => x.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(x => x.Count).First()
+            );
+
+        return userIds.ToDictionary(
+            id => id,
+            id => new UserPredictionProfileDto
+            {
+                MostCommonPrediction = mostCommon.TryGetValue(id, out var pred) ? pred.Score : null,
+                MostCommonPredictionCount = mostCommon.TryGetValue(id, out var pred2) ? pred2.Count : 0,
+                BestTeam = bestTeam.TryGetValue(id, out var best) ? best.Team : null,
+                BestTeamCount = bestTeam.TryGetValue(id, out var best2) ? best2.Count : 0,
+                WorstTeam = worstTeam.TryGetValue(id, out var worst) ? worst.Team : null,
+                WorstTeamCount = worstTeam.TryGetValue(id, out var worst2) ? worst2.Count : 0
+            }
+        );
+    }
+
+    public async Task<Dictionary<Guid, (int TotalWinners, int TotalLuckers, int TotalOnlyOnes)>> GetChampionshipAggregatesAsync(IEnumerable<Guid> championshipIds)
+    {
+        var ids = championshipIds.ToList();
+        if (ids.Count == 0)
+            return new Dictionary<Guid, (int, int, int)>();
+
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var rows = await context.Predictions
+            .Where(p => ids.Contains(p.Match.ChampionshipId))
+            .GroupBy(p => p.Match.ChampionshipId)
+            .Select(g => new
+            {
+                ChampionshipId = g.Key,
+                TotalWinners   = g.Count(p => p.GotWinner),
+                TotalLuckers   = g.Count(p => p.GotExactScore),
+                TotalOnlyOnes  = g.Count(p => p.IsOnlyCorrect)
+            })
+            .ToListAsync();
+
+        return rows.ToDictionary(
+            r => r.ChampionshipId,
+            r => (r.TotalWinners, r.TotalLuckers, r.TotalOnlyOnes));
+    }
+
+    public async Task<UserPredictionProfileDto?> GetUserPredictionProfileAsync(Guid userId, ChampionshipType? type = null)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var predictions = await context.Predictions
+            .Where(p => p.UserId == userId)
+            .Where(p => p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
+            .Where(p => !p.Match.Championship.IsTest)
+            .Where(p => type == null || p.Match.Championship.Type == type)
+            .Select(p => new
+            {
+                p.PredictedHome,
+                p.PredictedAway,
+                p.GotWinner,
+                HomeTeam = p.Match.HomeTeam,
+                AwayTeam = p.Match.AwayTeam
+            })
+            .ToListAsync();
+
+        if (predictions.Count == 0)
+            return null;
+
+        var topPred = predictions
+            .GroupBy(p => p.PredictedHome >= p.PredictedAway
+                ? (p.PredictedHome, p.PredictedAway)
+                : (p.PredictedAway, p.PredictedHome))
+            .Select(g => (Score: $"{g.Key.Item1}:{g.Key.Item2}", Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .FirstOrDefault();
+
+        var expanded = predictions.SelectMany(p => new[]
+        {
+            new { Team = p.HomeTeam, p.GotWinner },
+            new { Team = p.AwayTeam, p.GotWinner }
+        }).ToList();
+
+        var best = expanded.Where(x => x.GotWinner)
+            .GroupBy(x => x.Team)
+            .Select(g => (Team: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .FirstOrDefault();
+
+        var worst = expanded.Where(x => !x.GotWinner)
+            .GroupBy(x => x.Team)
+            .Select(g => (Team: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .FirstOrDefault();
+
+        return new UserPredictionProfileDto
+        {
+            MostCommonPrediction = topPred.Score,
+            MostCommonPredictionCount = topPred.Count,
+            BestTeam = best.Team,
+            BestTeamCount = best.Count,
+            WorstTeam = worst.Team,
+            WorstTeamCount = worst.Count
+        };
     }
 }

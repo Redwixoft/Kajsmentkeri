@@ -28,7 +28,7 @@ public class ListModel : PageModel
     public Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>> MedalCounts { get; set; } = new();
     public ChampionshipRecordsDto Records { get; set; } = new();
     public bool IsCurrentUserAdmin { get; set; }
-    public ChampionshipType SportType { get; set; } = ChampionshipType.IceHockey;
+    public ChampionshipType? SportType { get; set; }
 
     public string NameSort { get; set; } = string.Empty;
     public string EmailSort { get; set; } = string.Empty;
@@ -44,7 +44,7 @@ public class ListModel : PageModel
     public string AdminSort { get; set; } = string.Empty;
     public string CurrentSort { get; set; } = string.Empty;
 
-    public async Task OnGetAsync(string sortOrder, ChampionshipType sportType = ChampionshipType.IceHockey)
+    public async Task OnGetAsync(string sortOrder, ChampionshipType? sportType = null)
     {
         SportType = sportType;
         CurrentSort = sortOrder;
@@ -63,10 +63,13 @@ public class ListModel : PageModel
 
         var usersQuery = _userManager.Users.AsQueryable();
         var users = await usersQuery.ToListAsync();
-        var stats = await _leaderboardService.GetGlobalLeaderboardAsync(sportType);
+        var statsTask = _leaderboardService.GetGlobalLeaderboardAsync(sportType);
+        var medalTask = _leaderboardService.GetMedalCountsAsync(sportType);
+        var recordsTask = _leaderboardService.GetChampionshipRecordsAsync(sportType);
+        var stats = await statsTask;
         UserStats = stats.ToDictionary(s => s.UserId, s => s);
-        MedalCounts = await _leaderboardService.GetMedalCountsAsync(sportType);
-        Records = await _leaderboardService.GetChampionshipRecordsAsync(sportType);
+        MedalCounts = await medalTask;
+        Records = await recordsTask;
 
         // Sorting logic
         Users = sortOrder switch
