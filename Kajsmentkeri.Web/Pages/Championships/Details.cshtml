@@ -676,6 +676,16 @@
                         ? $"{Model.PageStats.MostFailedOnlyOnesTrier} ({Model.PageStats.MostFailedOnlyOnesCount} failed solo predictions)"
                         : null); }
 
+                @{ StatRow("Longest correct streak 🔥",
+                    Model.PageStats.LongestPositiveStreakLength > 1
+                        ? $"{string.Join(", ", Model.PageStats.LongestPositiveStreakUsers)} ({Model.PageStats.LongestPositiveStreakLength} in a row)"
+                        : null); }
+
+                @{ StatRow("Longest scoreless streak 💀",
+                    Model.PageStats.LongestNegativeStreakLength > 1
+                        ? $"{string.Join(", ", Model.PageStats.LongestNegativeStreakUsers)} ({Model.PageStats.LongestNegativeStreakLength} in a row)"
+                        : null); }
+
                 @if (Model.PageStats.TopResults.Count > 0)
                 {
                     <tr>

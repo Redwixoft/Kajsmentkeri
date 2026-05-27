@@ -68,6 +68,10 @@ public class DetailsModel : PageModel
         public List<(string Score, int Count)> TopPredictions { get; set; } = new();
         public List<string> MostChaoticMatches { get; set; } = new();
         public int MostChaoticMatchVariety { get; set; }
+        public int LongestPositiveStreakLength { get; set; }
+        public List<string> LongestPositiveStreakUsers { get; set; } = new();
+        public int LongestNegativeStreakLength { get; set; }
+        public List<string> LongestNegativeStreakUsers { get; set; } = new();
     }
 
     public List<Match> Matches { get; set; } = new();
@@ -627,6 +631,45 @@ public class DetailsModel : PageModel
             result.MostChaoticMatches = matchVarieties
                 .Where(x => x.Variety == result.MostChaoticMatchVariety)
                 .Select(x => x.Label).ToList();
+        }
+
+        // Longest positive / negative streaks across participants
+        var sortedScoredMatches = scoredMatches.OrderBy(m => m.StartTimeUtc).ToList();
+        var userNameLookup = Users.ToDictionary(u => u.UserId, u => u.UserName);
+        var bestPosStreak = 0;
+        var bestPosUsers = new List<string>();
+        var bestNegStreak = 0;
+        var bestNegUsers = new List<string>();
+
+        foreach (var userId in ParticipantUserIds.Where(id => userNameLookup.ContainsKey(id)))
+        {
+            int posStreak = 0, negStreak = 0, maxPos = 0, maxNeg = 0;
+            foreach (var m in sortedScoredMatches)
+            {
+                var gotPoints = PredictionMap.TryGetValue((m.Id, userId), out var pred) && pred.Points > 0;
+                if (gotPoints) { posStreak++; negStreak = 0; }
+                else           { negStreak++; posStreak = 0; }
+                if (posStreak > maxPos) maxPos = posStreak;
+                if (negStreak > maxNeg) maxNeg = negStreak;
+            }
+
+            var name = userNameLookup[userId];
+            if      (maxPos > bestPosStreak) { bestPosStreak = maxPos; bestPosUsers = [name]; }
+            else if (maxPos == bestPosStreak && maxPos > 0) bestPosUsers.Add(name);
+
+            if      (maxNeg > bestNegStreak) { bestNegStreak = maxNeg; bestNegUsers = [name]; }
+            else if (maxNeg == bestNegStreak && maxNeg > 0) bestNegUsers.Add(name);
+        }
+
+        if (bestPosStreak > 1)
+        {
+            result.LongestPositiveStreakLength = bestPosStreak;
+            result.LongestPositiveStreakUsers = bestPosUsers.OrderBy(u => u).ToList();
+        }
+        if (bestNegStreak > 1)
+        {
+            result.LongestNegativeStreakLength = bestNegStreak;
+            result.LongestNegativeStreakUsers = bestNegUsers.OrderBy(u => u).ToList();
         }
 
         return result;
