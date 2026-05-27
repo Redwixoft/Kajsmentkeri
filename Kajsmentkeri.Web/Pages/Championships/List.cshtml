@@ -123,12 +123,12 @@
                 Model.CurrentSort == asc ? " ↑" : Model.CurrentSort == desc ? " ↓" : "";
         }
         <tr>
-            <th><a asp-page="./List" asp-route-sortOrder="@Model.NameSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Name@Arrow("name", "name_desc")</a></th>
-            <th><a asp-page="./List" asp-route-sortOrder="@Model.YearSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Year@Arrow("year", "")</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.NameSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Name@(Arrow("name", "name_desc"))</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.YearSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Year@(Arrow("year", ""))</a></th>
             <th>Standings</th>
-            <th><a asp-page="./List" asp-route-sortOrder="@Model.WinnersSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Winners@Arrow("winners", "winners_desc")</a></th>
-            <th><a asp-page="./List" asp-route-sortOrder="@Model.LuckersSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Luckers@Arrow("luckers", "luckers_desc")</a></th>
-            <th><a asp-page="./List" asp-route-sortOrder="@Model.OnlyOnesSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Only Ones@Arrow("onlyones", "onlyones_desc")</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.WinnersSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Winners@(Arrow("winners", "winners_desc"))</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.LuckersSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Luckers@(Arrow("luckers", "luckers_desc"))</a></th>
+            <th><a asp-page="./List" asp-route-sortOrder="@Model.OnlyOnesSort" asp-route-sportType="@(Model.SportType.HasValue ? (int?)Model.SportType : null)" class="text-decoration-none text-dark">Only Ones@(Arrow("onlyones", "onlyones_desc"))</a></th>
             @if (Model.IsAdmin)
             {
                 <th></th>
