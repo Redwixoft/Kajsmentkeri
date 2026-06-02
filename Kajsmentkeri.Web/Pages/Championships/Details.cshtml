@@ -94,10 +94,22 @@
         <a class="btn btn-warning text-dark" asp-page="/Championships/Edit" asp-route-id="@Model.Championship!.Id">
             ✏️ Edit Championship
         </a>
-        @if (Model.Championship.SupportsChampionshipWinnerPrediction && !Model.Championship.IsChampionshipEnded && Model.Matches.All(m => m.HomeScore.HasValue && m.AwayScore.HasValue))
+        @{
+            var decisiveMatches = Model.Matches.Where(m => m.IsFinalMatch == true || m.IsBronzeMedalMatch == true).ToList();
+            var allMatchesDone = decisiveMatches.Count > 0
+                ? decisiveMatches.All(m => m.HomeScore.HasValue && m.AwayScore.HasValue)
+                : Model.Matches.All(m => m.HomeScore.HasValue && m.AwayScore.HasValue);
+        }
+        @if (Model.Championship.SupportsChampionshipWinnerPrediction && !Model.Championship.IsChampionshipEnded && allMatchesDone)
         {
             <button type="button" class="btn btn-danger ms-auto" data-bs-toggle="modal" data-bs-target="#endChampionshipModal">
                 🏁 End Championship
+            </button>
+        }
+        @if (Model.Championship.IsChampionshipEnded)
+        {
+            <button type="button" class="btn btn-warning text-dark ms-auto" data-bs-toggle="modal" data-bs-target="#recalculateChampionshipModal">
+                🔄 Recalculate
             </button>
         }
     </div>
@@ -219,10 +231,13 @@
                         <td colspan="20" class="text-start fst-italic px-3 py-2" style="font-size: 0.85rem;">💬 @Model.MotivationalText</td>
                     </tr>
                 }
+                @{
+                    var maxLeaderboardRank = Model.UserRanks.Count > 0 ? Model.UserRanks.Values.Max() : 0;
+                }
                 @for (int i = 0; i < Model.Leaderboard.Count; i++)
                 {
                     var entry = Model.Leaderboard[i];
-                    var rank = i + 1;
+                    var rank = Model.UserRanks.GetValueOrDefault(entry.UserId, i + 1);
 
                     var nameCellClass = rank switch
                     {
@@ -240,7 +255,7 @@
                     Model.UserDiffStats.TryGetValue(entry.UserId, out var diff);
 
                     <tr>
-                        <td>@($"{(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : rank == Model.Leaderboard.Count ? "💩 " : rank.ToString())}")</td>
+                        <td>@($"{(rank == 1 ? "🥇 " : rank == 2 ? "🥈 " : rank == 3 ? "🥉 " : rank == maxLeaderboardRank && maxLeaderboardRank > 3 ? "💩 " : rank.ToString())}")</td>
                         <td class="@nameCellClass">
                             @if (Model.CurrentUserId == entry.UserId)
                             {
@@ -251,12 +266,27 @@
                             }
                             @if (userWinnerPred != null)
                             {
-                                <img src="/images/flags/@(userWinnerPred.TeamName).png" class="team-flag me-1" alt="@userWinnerPred.TeamName" title="Predicted winner: @userWinnerPred.TeamName" onerror="this.style.display='none'" />
+                                var showRealFlag1 = Model.HasChampionshipStarted || userWinnerPred.UserId == Model.CurrentUserId;
+                                var flagName1 = showRealFlag1 ? userWinnerPred.TeamName : "Unknown";
+                                var flagTitle1 = showRealFlag1 ? $"Predicted winner: {userWinnerPred.TeamName}" : "Predicted winner: hidden";
+                                <img src="/images/flags/@(flagName1).png" class="team-flag me-1" alt="@flagName1" title="@flagTitle1" onerror="this.style.display='none'" />
                             }
                             @entry.UserName
+                            @if (Model.PreviousChampionWinnerId == entry.UserId)
+                            {
+                                <span title="Previous champion (@Model.PreviousChampionshipLabel)" style="font-size: 0.8em; cursor: help;">👑</span>
+                            }
+                            @if (Model.PreviousChampionLoserId == entry.UserId && Model.PreviousChampionLoserId != Model.PreviousChampionWinnerId)
+                            {
+                                <span title="Previous last place (@Model.PreviousChampionshipLabel)" style="font-size: 0.8em; cursor: help;">🤡</span>
+                            }
                             @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == entry.UserId && kvp.Value.IsHighConfidence))
                             {
                                 <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
+                            }
+                            @if (Model.UsersWithActiveSafeLocks.Contains(entry.UserId))
+                            {
+                                <span title="Has an active safe lock" style="font-size: 0.8em; cursor: help;">🔐</span>
                             }
                             @if (Model.CurrentUserId == entry.UserId)
                             {
@@ -353,7 +383,10 @@
                                             }
                                             @if (userWinnerPredSummary != null)
                                             {
-                                                <img src="/images/flags/@(userWinnerPredSummary.TeamName).png" class="team-flag me-1" alt="@userWinnerPredSummary.TeamName" title="Predicted winner: @userWinnerPredSummary.TeamName" onerror="this.style.display='none'" />
+                                                var showRealFlag3 = Model.HasChampionshipStarted || userWinnerPredSummary.UserId == Model.CurrentUserId;
+                                                var flagName3 = showRealFlag3 ? userWinnerPredSummary.TeamName : "Unknown";
+                                                var flagTitle3 = showRealFlag3 ? $"Predicted winner: {userWinnerPredSummary.TeamName}" : "Predicted winner: hidden";
+                                                <img src="/images/flags/@(flagName3).png" class="team-flag me-1" alt="@flagName3" title="@flagTitle3" onerror="this.style.display='none'" />
                                             }
                                             @Model.Users.FirstOrDefault(u => u.UserId == pred.UserId)?.UserName
                                         </td>
@@ -398,9 +431,20 @@
                     }
                     @if (userWinnerPredHeader != null)
                     {
-                        <img src="/images/flags/@(userWinnerPredHeader.TeamName).png" class="team-flag me-1" alt="@userWinnerPredHeader.TeamName" title="Predicted winner: @userWinnerPredHeader.TeamName" onerror="this.style.display='none'" />
+                        var showRealFlag2 = Model.HasChampionshipStarted || userWinnerPredHeader.UserId == Model.CurrentUserId;
+                        var flagName2 = showRealFlag2 ? userWinnerPredHeader.TeamName : "Unknown";
+                        var flagTitle2 = showRealFlag2 ? $"Predicted winner: {userWinnerPredHeader.TeamName}" : "Predicted winner: hidden";
+                        <img src="/images/flags/@(flagName2).png" class="team-flag me-1" alt="@flagName2" title="@flagTitle2" onerror="this.style.display='none'" />
                     }
                     @user.UserName
+                    @if (Model.PreviousChampionWinnerId == user.UserId)
+                    {
+                        <span title="Previous champion (@Model.PreviousChampionshipLabel)" style="font-size: 0.8em; cursor: help;">👑</span>
+                    }
+                    @if (Model.PreviousChampionLoserId == user.UserId && Model.PreviousChampionLoserId != Model.PreviousChampionWinnerId)
+                    {
+                        <span title="Previous last place (@Model.PreviousChampionshipLabel)" style="font-size: 0.8em; cursor: help;">🤡</span>
+                    }
                     @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == user.UserId && kvp.Value.IsHighConfidence))
                     {
                         <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
@@ -456,6 +500,29 @@
                                     data-championship-id="@Model.Championship!.Id"
                                     title="@(myMatchPrediction?.IsHighConfidence == true ? "Clear high confidence" : "Mark as high confidence (doubles your points!)")">
                                 🚀
+                            </button>
+                        }
+                        @{
+                            var isFinalMatch = match.IsFinalMatch == true;
+                            var isBronzeMatch = match.IsBronzeMedalMatch == true;
+                            var matchAvailableForSafeLock = isBronzeMatch || (isFinalMatch && Model.BronzeMedalMatchResultAvailable);
+                            var canShowSafeLock = Model.CurrentUserId.HasValue
+                                && Model.SafeLockMatchIds.Contains(match.Id)
+                                && !myPredLocked
+                                && matchAvailableForSafeLock
+                                && Model.EligibleTrackedUsers.Count > 0;
+                            var hasSafeLock = Model.CurrentUserSafeLocks.ContainsKey(match.Id);
+                        }
+                        @if (canShowSafeLock || hasSafeLock)
+                        {
+                            <button type="button"
+                                    class="btn btn-sm ms-2 safe-lock-btn @(hasSafeLock ? "btn-success safe-lock-active" : "btn-outline-secondary")"
+                                    data-match-id="@match.Id"
+                                    data-home-team="@match.HomeTeam"
+                                    data-away-team="@match.AwayTeam"
+                                    title="@(hasSafeLock ? "Safe Lock active – click to edit" : "Set Safe Lock")"
+                                    onclick="openSafeLockModal('@match.Id', '@match.HomeTeam', '@match.AwayTeam')">
+                                🔐
                             </button>
                         }
                     </div>
@@ -594,9 +661,12 @@
                     void StatRow(string label, string? value)
                     {
                         if (value == null) return;
+                        var parenIdx = value.LastIndexOf(" (");
+                        var mainPart = parenIdx >= 0 ? value[..parenIdx] : value;
+                        var hintPart = parenIdx >= 0 ? value[parenIdx..] : null;
                         <tr>
-                            <td class="text-muted" style="width: 55%;">@label</td>
-                            <td class="fw-semibold">@value</td>
+                            <td style="width: 55%;">@label</td>
+                            <td class="fw-semibold">@mainPart@if (hintPart != null){<span class="text-muted fw-normal">@hintPart</span>}</td>
                         </tr>
                     }
                 }
@@ -610,7 +680,7 @@
                 @if (Model.PageStats.MostPredictedTeams.Count > 0)
                 {
                     <tr>
-                        <td class="text-muted">
+                        <td>
                             Most predicted team
                             <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline"
                                     data-bs-toggle="popover" data-bs-placement="top" data-bs-trigger="focus"
@@ -632,7 +702,7 @@
                 @if (Model.PageStats.MostCorrectWinnerTeams.Count > 0)
                 {
                     <tr>
-                        <td class="text-muted">Most correctly predicted team (winner)</td>
+                        <td>Most correctly predicted team (winner)</td>
                         <td class="fw-semibold">
                             @for (int i = 0; i < Model.PageStats.MostCorrectWinnerTeams.Count; i++)
                             {
@@ -648,7 +718,7 @@
                 @if (Model.PageStats.MostExactScoreTeams.Count > 0)
                 {
                     <tr>
-                        <td class="text-muted">Most correctly predicted team (exact score)</td>
+                        <td>Most correctly predicted team (exact score)</td>
                         <td class="fw-semibold">
                             @for (int i = 0; i < Model.PageStats.MostExactScoreTeams.Count; i++)
                             {
@@ -689,7 +759,7 @@
                 @if (Model.PageStats.TopResults.Count > 0)
                 {
                     <tr>
-                        <td class="text-muted">Most common result@(Model.PageStats.TopResults.Count > 1 ? "s (tied)" : "")</td>
+                        <td>Most common result@(Model.PageStats.TopResults.Count > 1 ? "s (tied)" : "")</td>
                         <td class="fw-semibold">
                             @for (int i = 0; i < Model.PageStats.TopResults.Count; i++)
                             {
@@ -704,7 +774,7 @@
                 @if (Model.PageStats.TopPredictions.Count > 0)
                 {
                     <tr>
-                        <td class="text-muted">Most common prediction@(Model.PageStats.TopPredictions.Count > 1 ? "s (tied)" : "")</td>
+                        <td>Most common prediction@(Model.PageStats.TopPredictions.Count > 1 ? "s (tied)" : "")</td>
                         <td class="fw-semibold">
                             @for (int i = 0; i < Model.PageStats.TopPredictions.Count; i++)
                             {
@@ -719,7 +789,7 @@
                 @if (Model.PageStats.MostChaoticMatches.Count > 0)
                 {
                     <tr>
-                        <td class="text-muted">Most chaotic match@(Model.PageStats.MostChaoticMatches.Count > 1 ? "es (tied)" : "") 🌪️</td>
+                        <td>Most chaotic match@(Model.PageStats.MostChaoticMatches.Count > 1 ? "es (tied)" : "") 🌪️</td>
                         <td class="fw-semibold">
                             @for (int i = 0; i < Model.PageStats.MostChaoticMatches.Count; i++)
                             {
@@ -754,24 +824,19 @@
         if (prediction.Points == 0)
             return $"bg-danger {textColor}";
 
-        var rules = Model.Championship?.ScoringRules;
-        if (rules == null) return "";
+        if (!prediction.GotWinner)
+            return "";
 
-        var multiplier = prediction.IsHighConfidence ? 2 : 1;
-        var win = rules.PointsForCorrectWinner * multiplier;
-        var exact = (rules.PointsForCorrectWinner + rules.PointsForExactScore) * multiplier;
-        var only = (rules.PointsForCorrectWinner + rules.PointsForExactScore + rules.PointsForOnlyCorrectWinner) * multiplier;
+        if (prediction.IsOnlyCorrect && prediction.GotExactScore)
+            return "bg-warning text-dark"; // Gold: winner + only one + exact score
 
-        if (rules.PointsForOnlyCorrectWinner > 0 && prediction.Points == only)
-            return "bg-warning text-dark"; // Gold
+        if (prediction.IsOnlyCorrect)
+            return $"bg-purple {textColor}"; // Purple: winner + only one
 
-        if (prediction.Points == exact)
-            return $"bg-primary {textColor}"; // Blue
+        if (prediction.GotExactScore)
+            return $"bg-primary {textColor}"; // Blue: winner + exact score
 
-        if (prediction.Points == win)
-            return $"bg-success {textColor}"; // Green
-
-        return "";
+        return $"bg-success {textColor}"; // Green: correct winner
     }
 
     public string GetStartTimeString(DateTime utcDateTime)
@@ -1065,6 +1130,28 @@
 
     @if (Model.IsAdmin)
     {
+        <!-- Recalculate Championship Modal -->
+        <div class="modal fade" id="recalculateChampionshipModal" tabindex="-1" aria-labelledby="recalculateChampionshipModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" asp-page-handler="RecalculateChampionship">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title" id="recalculateChampionshipModalLabel">Recalculate Championship?</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>This will re-run the winner points calculation based on the current match results and scoring rules, updating all championship winner prediction points.</p>
+                            <p>Are you sure you want to recalculate <strong>@Model.Championship!.Name</strong>?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning text-dark">Yes, Recalculate</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- End Championship Confirmation Modal -->
         <div class="modal fade" id="endChampionshipModal" tabindex="-1" aria-labelledby="endChampionshipModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -1366,7 +1453,179 @@
         </div>
     </div>
 
+    <!-- Safe Lock Modal -->
+    <div class="modal fade" id="safeLockModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🔐 Safe Lock – <span id="safeLockMatchName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-2">
+                        Your prediction will automatically update when the tracked user changes their predicted winner.<br />
+                        ⚡ <strong>Fires every time</strong> the tracked user's predicted winner changes. It will overwrite any manual change you make afterwards.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Track predictions of:</label>
+                        <select id="safeLockTrackedUser" class="form-select">
+                            @foreach (var u in Model.EligibleTrackedUsers)
+                            {
+                                <option value="@u.UserId">@u.UserName</option>
+                            }
+                        </select>
+                    </div>
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr><th>If they predict...</th><th colspan="3" class="text-center">My prediction</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="safeLockHomeLabel" class="fw-semibold"></td>
+                                <td><input type="number" id="slHomeWinHome" class="form-control form-control-sm" style="width:60px" min="0" max="99" value="0" /></td>
+                                <td class="text-center">:</td>
+                                <td><input type="number" id="slHomeWinAway" class="form-control form-control-sm" style="width:60px" min="0" max="99" value="0" /></td>
+                            </tr>
+                            @if (Model.Championship!.IsDrawEnabled)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">Draw</td>
+                                    <td><input type="number" id="slDrawHome" class="form-control form-control-sm" style="width:60px" min="0" max="99" value="0" /></td>
+                                    <td class="text-center">:</td>
+                                    <td><input type="number" id="slDrawAway" class="form-control form-control-sm" style="width:60px" min="0" max="99" value="0" /></td>
+                                </tr>
+                            }
+                            <tr>
+                                <td id="safeLockAwayLabel" class="fw-semibold"></td>
+                                <td><input type="number" id="slAwayWinHome" class="form-control form-control-sm" style="width:60px" min="0" max="99" value="0" /></td>
+                                <td class="text-center">:</td>
+                                <td><input type="number" id="slAwayWinAway" class="form-control form-control-sm" style="width:60px" min="0" max="99" value="0" /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <input type="hidden" id="safeLockCurrentMatchId" value="" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger d-none" id="safeLockRemoveBtn" onclick="removeSafeLock()">Remove Safe Lock</button>
+                    <button type="button" class="btn btn-success" onclick="saveSafeLock()">Save Safe Lock</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        @{
+            var safeLockMap = new System.Collections.Generic.Dictionary<string, object>();
+            foreach (var kv in Model.CurrentUserSafeLocks)
+            {
+                var sl = kv.Value;
+                safeLockMap[kv.Key.ToString()] = new
+                {
+                    trackedUserId = sl.TrackedUserId.ToString(),
+                    homeWinHome = sl.HomeWinPredictedHome,
+                    homeWinAway = sl.HomeWinPredictedAway,
+                    awayWinHome = sl.AwayWinPredictedHome,
+                    awayWinAway = sl.AwayWinPredictedAway,
+                    drawHome = sl.DrawPredictedHome,
+                    drawAway = sl.DrawPredictedAway
+                };
+            }
+        }
+        const safeLocksByMatch = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(safeLockMap));
+
+        function openSafeLockModal(matchId, homeTeam, awayTeam) {
+            document.getElementById('safeLockMatchName').textContent = homeTeam + ' - ' + awayTeam;
+            document.getElementById('safeLockHomeLabel').textContent = homeTeam + ' wins';
+            document.getElementById('safeLockAwayLabel').textContent = awayTeam + ' wins';
+            document.getElementById('safeLockCurrentMatchId').value = matchId;
+
+            const removeBtn = document.getElementById('safeLockRemoveBtn');
+            const currentSafeLock = safeLocksByMatch[matchId] ?? null;
+
+            if (currentSafeLock) {
+                // Pre-fill existing safe lock values
+                const trackedSelect = document.getElementById('safeLockTrackedUser');
+                for (let opt of trackedSelect.options) {
+                    if (opt.value === currentSafeLock.trackedUserId) { opt.selected = true; break; }
+                }
+                document.getElementById('slHomeWinHome').value = currentSafeLock.homeWinHome;
+                document.getElementById('slHomeWinAway').value = currentSafeLock.homeWinAway;
+                document.getElementById('slAwayWinHome').value = currentSafeLock.awayWinHome;
+                document.getElementById('slAwayWinAway').value = currentSafeLock.awayWinAway;
+                const drawHome = document.getElementById('slDrawHome');
+                const drawAway = document.getElementById('slDrawAway');
+                if (drawHome) drawHome.value = currentSafeLock.drawHome ?? 0;
+                if (drawAway) drawAway.value = currentSafeLock.drawAway ?? 0;
+                removeBtn.classList.remove('d-none');
+            } else {
+                // Reset fields
+                document.getElementById('slHomeWinHome').value = 0;
+                document.getElementById('slHomeWinAway').value = 0;
+                document.getElementById('slAwayWinHome').value = 0;
+                document.getElementById('slAwayWinAway').value = 0;
+                const drawHome = document.getElementById('slDrawHome');
+                const drawAway = document.getElementById('slDrawAway');
+                if (drawHome) drawHome.value = 0;
+                if (drawAway) drawAway.value = 0;
+                removeBtn.classList.add('d-none');
+            }
+
+            new bootstrap.Modal(document.getElementById('safeLockModal')).show();
+        }
+
+        async function saveSafeLock() {
+            const matchId = document.getElementById('safeLockCurrentMatchId').value;
+            const trackedUserId = document.getElementById('safeLockTrackedUser').value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+            const formData = new FormData();
+            formData.append('SafeLockMatchId', matchId);
+            formData.append('SafeLockTrackedUserId', trackedUserId);
+            formData.append('SafeLockHomeWinHome', document.getElementById('slHomeWinHome').value);
+            formData.append('SafeLockHomeWinAway', document.getElementById('slHomeWinAway').value);
+            formData.append('SafeLockAwayWinHome', document.getElementById('slAwayWinHome').value);
+            formData.append('SafeLockAwayWinAway', document.getElementById('slAwayWinAway').value);
+            const drawHome = document.getElementById('slDrawHome');
+            const drawAway = document.getElementById('slDrawAway');
+            if (drawHome) formData.append('SafeLockDrawHome', drawHome.value);
+            if (drawAway) formData.append('SafeLockDrawAway', drawAway.value);
+            if (token) formData.append('__RequestVerificationToken', token.value);
+
+            try {
+                const response = await fetch('?handler=SetSafeLock', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (e) {
+                alert('An error occurred.');
+            }
+        }
+
+        async function removeSafeLock() {
+            const matchId = document.getElementById('safeLockCurrentMatchId').value;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+
+            const formData = new FormData();
+            formData.append('SafeLockMatchId', matchId);
+            if (token) formData.append('__RequestVerificationToken', token.value);
+
+            try {
+                const response = await fetch('?handler=RemoveSafeLock', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (e) {
+                alert('An error occurred.');
+            }
+        }
+
         document.querySelectorAll('.high-confidence-toggle').forEach(btn => {
             btn.addEventListener('click', async function () {
                 const matchId = btn.getAttribute('data-match-id');

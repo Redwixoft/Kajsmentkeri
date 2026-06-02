@@ -7,6 +7,7 @@ namespace Kajsmentkeri.Application.Interfaces;
 public interface ILeaderboardService
 {
     Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(Guid championshipId);
+    void InvalidateLeaderboard(Guid championshipId);
     Task<List<LeaderboardEntryDto>> GetGlobalLeaderboardAsync(ChampionshipType? type = null);
     Task<LineGraphViewModel> GetLeaderboardProgressAsync(Guid championshipId);
     Task<Dictionary<Guid, List<(int Position, string ChampionshipName, int Year)>>> GetMedalCountsAsync(ChampionshipType? type = null);
@@ -23,4 +24,5 @@ public interface ILeaderboardService
         IList<Match> scoredMatches,
         IList<Prediction> predictions,
         IReadOnlyDictionary<Guid, string> userNames);
+    Task<(Guid? WinnerUserId, Guid? LoserUserId, string ChampionshipLabel)?> GetPreviousChampionshipExtremesAsync(Guid currentChampionshipId, ChampionshipType type);
 }

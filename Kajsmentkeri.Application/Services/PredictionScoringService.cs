@@ -8,10 +8,14 @@ namespace Kajsmentkeri.Application.Services;
 public class PredictionScoringService : IPredictionScoringService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
+    private readonly ILeaderboardService _leaderboardService;
+    private readonly ISafeLockService _safeLockService;
 
-    public PredictionScoringService(IDbContextFactory<AppDbContext> dbContextFactory)
+    public PredictionScoringService(IDbContextFactory<AppDbContext> dbContextFactory, ILeaderboardService leaderboardService, ISafeLockService safeLockService)
     {
         _dbContextFactory = dbContextFactory;
+        _leaderboardService = leaderboardService;
+        _safeLockService = safeLockService;
     }
 
     public async Task RecalculateForMatchAsync(Guid matchId)
@@ -28,6 +32,9 @@ public class PredictionScoringService : IPredictionScoringService
 
         CalculateMatchPredictions(match);
         await context.SaveChangesAsync();
+
+        _leaderboardService.InvalidateLeaderboard(match.ChampionshipId);
+        await _safeLockService.ValidateSafeLocksAfterRescoreAsync(match.ChampionshipId);
     }
 
     public async Task RecalculateForChampionshipAsync(Guid championshipId)
@@ -83,6 +90,9 @@ public class PredictionScoringService : IPredictionScoringService
         }
 
         await context.SaveChangesAsync();
+
+        _leaderboardService.InvalidateLeaderboard(championshipId);
+        await _safeLockService.ValidateSafeLocksAfterRescoreAsync(championshipId);
     }
 
     private void CalculateMatchPredictions(Match match)

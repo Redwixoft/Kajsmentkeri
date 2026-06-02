@@ -54,6 +54,9 @@ public class EditModel : PageModel
 
         [Required]
         public DateTime StartTime { get; set; }
+
+        public bool IsFinalMatch { get; set; }
+        public bool IsBronzeMedalMatch { get; set; }
     }
 
     public class PredictionViewModel
@@ -92,6 +95,8 @@ public class EditModel : PageModel
         Input.HomeTeam = match.HomeTeam;
         Input.AwayTeam = match.AwayTeam;
         Input.StartTime = _timeService.ToBratislava(match.StartTimeUtc);
+        Input.IsFinalMatch = match.IsFinalMatch ?? false;
+        Input.IsBronzeMedalMatch = match.IsBronzeMedalMatch ?? false;
 
         await LoadPredictionsAsync();
 
@@ -142,7 +147,7 @@ public class EditModel : PageModel
         if (match == null)
             return NotFound();
 
-        await _matchService.UpdateMatchAsync(MatchId, Input.HomeTeam, Input.AwayTeam, Input.StartTime);
+        await _matchService.UpdateMatchAsync(MatchId, Input.HomeTeam, Input.AwayTeam, Input.StartTime, Input.IsFinalMatch, Input.IsBronzeMedalMatch);
 
         return RedirectToPage("/Championships/Edit", new { id = match.ChampionshipId });
     }

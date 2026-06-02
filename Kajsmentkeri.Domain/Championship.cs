@@ -24,4 +24,5 @@ public class Championship
     public decimal EntryFee { get; set; } = 10m;
     public bool RunnerUpPaysFree { get; set; } = true;
     public bool LastPlacePaysDouble { get; set; } = true;
+    public bool IsDrawEnabled { get; set; }
 }

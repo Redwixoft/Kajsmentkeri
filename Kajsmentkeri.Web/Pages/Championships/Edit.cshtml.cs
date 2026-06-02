@@ -87,6 +87,9 @@ public class EditModel : PageModel
         [Display(Name = "Allow High Confidence Prediction")]
         public bool AllowHighConfidencePrediction { get; set; }
 
+        [Display(Name = "Draws are possible (e.g. Football)")]
+        public bool IsDrawEnabled { get; set; }
+
         [Display(Name = "Championship Type")]
         public ChampionshipType Type { get; set; } = ChampionshipType.IceHockey;
 
@@ -137,6 +140,7 @@ public class EditModel : PageModel
             IsTest = championship.IsTest,
             SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction,
             AllowHighConfidencePrediction = championship.AllowHighConfidencePrediction,
+            IsDrawEnabled = championship.IsDrawEnabled,
             Type = championship.Type,
             EntryFee = championship.EntryFee,
             RunnerUpPaysFree = championship.RunnerUpPaysFree,
@@ -182,6 +186,7 @@ public class EditModel : PageModel
         championship.IsTest = Input.IsTest;
         championship.SupportsChampionshipWinnerPrediction = Input.SupportsChampionshipWinnerPrediction;
         championship.AllowHighConfidencePrediction = Input.AllowHighConfidencePrediction;
+        championship.IsDrawEnabled = Input.IsDrawEnabled;
         championship.Type = Input.Type;
         championship.EntryFee = Input.EntryFee;
         championship.RunnerUpPaysFree = Input.RunnerUpPaysFree;

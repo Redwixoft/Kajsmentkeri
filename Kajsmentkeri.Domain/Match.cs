@@ -15,5 +15,8 @@ public class Match
     public int? HomeScore { get; set; }
     public int? AwayScore { get; set; }
 
+    public bool? IsFinalMatch { get; set; }
+    public bool? IsBronzeMedalMatch { get; set; }
+
     public ICollection<Prediction> Predictions { get; set; } = new List<Prediction>();
 }

@@ -34,10 +34,16 @@ if (!builder.Environment.IsDevelopment())
     builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
 
+void ConfigureNpgsql(Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.NpgsqlDbContextOptionsBuilder o)
+{
+    o.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null);
+    o.CommandTimeout(30);
+}
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, ConfigureNpgsql));
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, ConfigureNpgsql));
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -65,6 +71,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+builder.Services.AddMemoryCache();
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<AppUser>>();
 
@@ -77,6 +84,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<IPercentagePredictionService, PercentagePredictionService>();
+builder.Services.AddScoped<ISafeLockService, SafeLockService>();
 
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
@@ -99,14 +107,14 @@ else
     app.UseHsts();
 }
 
-/*using (var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
     var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     identityDb.Database.Migrate();
-}*/
+}
 
 app.UseForwardedHeaders();
 

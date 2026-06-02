@@ -8,7 +8,11 @@
       "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\":*)",
       "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" build:*)",
       "Bash(\"/mnt/c/Program Files/dotnet/dotnet.exe\" ef:*)",
-      "Bash(/usr/share/dotnet/dotnet build:*)"
+      "Bash(/usr/share/dotnet/dotnet build:*)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Redwik\\\\IT\\\\Kajsmentkeri\" -Directory)",
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Redwik\\\\IT\\\\Kajsmentkeri\" -Recurse -Directory)",
+      "Bash(Select-Object -First 20)"
     ]
   }
 }

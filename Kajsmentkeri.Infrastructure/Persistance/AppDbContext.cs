@@ -15,6 +15,7 @@ public class AppDbContext : DbContext
     public DbSet<ChampionshipWinnerPrediction> ChampionshipWinnerPredictions => Set<ChampionshipWinnerPrediction>();
     public DbSet<PercentagePrediction> PercentagePredictions => Set<PercentagePrediction>();
     public DbSet<ChampionshipParticipation> ChampionshipParticipations => Set<ChampionshipParticipation>();
+    public DbSet<SafeLock> SafeLocks => Set<SafeLock>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -77,5 +78,16 @@ public class AppDbContext : DbContext
         // PredictionAuditLog — queried by MatchId in audit log lookups
         modelBuilder.Entity<PredictionAuditLog>()
             .HasIndex(p => p.MatchId);
+
+        // SafeLock
+        modelBuilder.Entity<SafeLock>()
+            .HasOne(sl => sl.Match)
+            .WithMany()
+            .HasForeignKey(sl => sl.MatchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<SafeLock>()
+            .HasIndex(sl => new { sl.OwnerUserId, sl.MatchId })
+            .IsUnique();
     }
 }

@@ -1,4 +1,5 @@
-﻿using Kajsmentkeri.Application.Interfaces;
+﻿using Kajsmentkeri.Application.DTOs;
+using Kajsmentkeri.Application.Interfaces;
 using Kajsmentkeri.Domain;
 using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ public class PredictionService : IPredictionService
     private readonly ILeaderboardService _leaderboardService;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITimeService _timeService;
+    private ISafeLockService? _safeLockService;
 
     public PredictionService(ICurrentUserService currentUser, ILeaderboardService leaderboardService, IDbContextFactory<AppDbContext> dbContextFactory, IServiceScopeFactory scopeFactory, ITimeService timeService)
     {
@@ -23,6 +25,10 @@ public class PredictionService : IPredictionService
         _scopeFactory = scopeFactory;
         _timeService = timeService;
     }
+
+    // Lazy to break circular dependency (SafeLockService depends on IPredictionService for lock times)
+    private ISafeLockService SafeLockService =>
+        _safeLockService ??= _scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ISafeLockService>();
 
     public async Task SubmitPredictionAsync(Guid matchId, int predictedHome, int predictedAway)
     {
@@ -49,6 +55,25 @@ public class PredictionService : IPredictionService
             var lockTime = await GetPredictionLockTimeAsync(match.ChampionshipId, matchId, userId);
             if (_timeService.UtcNow > lockTime)
             {
+                if (_currentUser.UserId != null && _currentUser.UserId != Guid.Empty)
+                {
+                    context.PredictionAuditLogs.Add(new PredictionAuditLog
+                    {
+                        Id = Guid.NewGuid(),
+                        MatchId = matchId,
+                        AdminId = _currentUser.UserId.Value,
+                        AdminName = _currentUser.UserName ?? "User",
+                        TargetUserId = userId,
+                        TargetUserName = _currentUser.UserName ?? "User",
+                        NewHomeScore = predictedHome,
+                        NewAwayScore = predictedAway,
+                        TimestampUtc = _timeService.UtcNow,
+                        IsAdminUpdate = false,
+                        IsRejected = true,
+                        MatchSummary = $"{match.HomeTeam} - {match.AwayTeam}"
+                    });
+                    await context.SaveChangesAsync();
+                }
                 throw new InvalidOperationException("Prediction for this match is already locked.");
             }
         }
@@ -105,6 +130,12 @@ public class PredictionService : IPredictionService
         }
 
         await context.SaveChangesAsync();
+
+        // Evaluate safe locks for user-initiated predictions only (not admin edits or cascades)
+        if (checkLock)
+        {
+            await SafeLockService.EvaluateSafeLocksAsync(matchId, userId, oldHome, oldAway, predictedHome, predictedAway);
+        }
     }
 
     public async Task<DateTime> GetPredictionLockTimeAsync(Guid championshipId, Guid matchId, Guid userId)
@@ -126,20 +157,26 @@ public class PredictionService : IPredictionService
         if (firstMatches.Select(m => m.Id).Contains(match.Id))
             return matchStart;
 
-        // Load leaderboard
+        // Load leaderboard and determine tied leaders/tails
         var leaderboard = await _leaderboardService.GetLeaderboardAsync(championshipId);
         if (leaderboard.Count == 0)
             return matchStart;
 
-        var first = leaderboard.First().UserId;
-        var last = leaderboard.Last().UserId;
+        var top = leaderboard.First();
+        var bottom = leaderboard.Last();
 
-        if (userId == first)
+        bool IsTied(LeaderboardEntryDto a, LeaderboardEntryDto b) =>
+            a.TotalPoints == b.TotalPoints &&
+            a.CorrectWinners == b.CorrectWinners &&
+            a.OneGoalMisses == b.OneGoalMisses &&
+            a.OnlyCorrect == b.OnlyCorrect &&
+            a.RarityPoints == b.RarityPoints;
+
+        if (leaderboard.Any(e => e.UserId == userId && IsTied(e, top)))
             return matchStart.AddMinutes(-10);
 
-        if (userId == last)
+        if (leaderboard.Any(e => e.UserId == userId && IsTied(e, bottom)))
             return matchStart.AddMinutes(5);
-
 
         return matchStart;
     }
@@ -148,6 +185,7 @@ public class PredictionService : IPredictionService
     {
         using var context = _dbContextFactory.CreateDbContext();
         return await context.Predictions
+            .AsNoTracking()
             .Where(p => p.Match.ChampionshipId == championshipId)
             .ToListAsync();
     }

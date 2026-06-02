@@ -18,17 +18,18 @@ public class DetailsModel : PageModel
     private readonly IPredictionScoringService _scoringService;
     private readonly ILeaderboardService _leaderboardService;
     private readonly ILogger<DetailsModel> _logger;
-
     private readonly ITimeService _timeService;
+    private readonly ISafeLockService _safeLockService;
 
-    public DetailsModel(UserManager<AppUser> userManager, 
-        IPredictionScoringService scoringService, 
-        ILeaderboardService leaderboardService, 
-        IChampionshipService championshipService, 
-        IMatchService matchService, 
-        IPredictionService predictionService, 
+    public DetailsModel(UserManager<AppUser> userManager,
+        IPredictionScoringService scoringService,
+        ILeaderboardService leaderboardService,
+        IChampionshipService championshipService,
+        IMatchService matchService,
+        IPredictionService predictionService,
         ILogger<DetailsModel> logger,
-        ITimeService timeService)
+        ITimeService timeService,
+        ISafeLockService safeLockService)
     {
         _userManager = userManager;
         _scoringService = scoringService;
@@ -38,6 +39,7 @@ public class DetailsModel : PageModel
         _predictionService = predictionService;
         _logger = logger;
         _timeService = timeService;
+        _safeLockService = safeLockService;
     }
 
     public Championship? Championship { get; set; }
@@ -82,8 +84,8 @@ public class DetailsModel : PageModel
     public Dictionary<Guid, int> UserRanks { get; set; } = new();
     public bool IsVisibilityRuleActive { get; set; }
     public HashSet<Guid> FirstMatchesIds { get; set; } = new();
-    public Guid? LeaderUserId { get; set; }
-    public Guid? TailUserId { get; set; }
+    public HashSet<Guid> LeaderUserIds { get; set; } = new();
+    public HashSet<Guid> TailUserIds { get; set; } = new();
 
     public bool IsCurrentUserParticipating { get; set; }
     public HashSet<Guid> ParticipantUserIds { get; set; } = new();
@@ -92,6 +94,19 @@ public class DetailsModel : PageModel
     public ChampionshipWinnerPrediction? MyWinnerPrediction { get; set; }
     public List<string> AllTeams { get; set; } = new();
     public List<ChampionshipWinnerPrediction> AllWinnerPredictions { get; set; } = new();
+    public bool HasChampionshipStarted { get; set; }
+
+    // Previous championship extremes
+    public Guid? PreviousChampionWinnerId { get; set; }
+    public Guid? PreviousChampionLoserId { get; set; }
+    public string PreviousChampionshipLabel { get; set; } = string.Empty;
+
+    // Safe lock
+    public HashSet<Guid> SafeLockMatchIds { get; set; } = new();
+    public Dictionary<Guid, SafeLock> CurrentUserSafeLocks { get; set; } = new();
+    public HashSet<Guid> UsersWithActiveSafeLocks { get; set; } = new();
+    public List<LeaderboardEntryDto> EligibleTrackedUsers { get; set; } = new();
+    public bool BronzeMedalMatchResultAvailable { get; set; } = true;
 
     [BindProperty]
     public Guid MatchId { get; set; }
@@ -111,6 +126,15 @@ public class DetailsModel : PageModel
     [BindProperty]
     public string WinnerNote { get; set; } = string.Empty;
 
+    [BindProperty] public Guid SafeLockMatchId { get; set; }
+    [BindProperty] public Guid SafeLockTrackedUserId { get; set; }
+    [BindProperty] public int SafeLockHomeWinHome { get; set; }
+    [BindProperty] public int SafeLockHomeWinAway { get; set; }
+    [BindProperty] public int SafeLockAwayWinHome { get; set; }
+    [BindProperty] public int SafeLockAwayWinAway { get; set; }
+    [BindProperty] public int? SafeLockDrawHome { get; set; }
+    [BindProperty] public int? SafeLockDrawAway { get; set; }
+
     public class UserColumn
     {
         public Guid UserId { get; set; }
@@ -128,6 +152,8 @@ public class DetailsModel : PageModel
         if (Championship == null)
             return NotFound();
 
+        var extremesTask = _leaderboardService.GetPreviousChampionshipExtremesAsync(id, Championship.Type);
+
         var currentUser = await _userManager.GetUserAsync(User);
         IsAdmin = currentUser?.IsAdmin == true;
         CurrentUserId = currentUser?.Id;
@@ -143,6 +169,18 @@ public class DetailsModel : PageModel
         // Merge formal participants with users who already have predictions (backwards compatibility)
         ParticipantUserIds = new HashSet<Guid>(participantIds);
         ParticipantUserIds.UnionWith(usersWithPredictions);
+
+        // Add zero-entry rows for participants not yet on the leaderboard
+        var leaderboardUserIds = Leaderboard.Select(e => e.UserId).ToHashSet();
+        var userNameLookup = users.ToDictionary(u => u.Id, u => u.UserName ?? "?");
+        foreach (var participantId in ParticipantUserIds.Where(id => !leaderboardUserIds.Contains(id)))
+        {
+            Leaderboard.Add(new LeaderboardEntryDto
+            {
+                UserId = participantId,
+                UserName = userNameLookup.GetValueOrDefault(participantId, "?")
+            });
+        }
 
         IsCurrentUserParticipating = CurrentUserId.HasValue && ParticipantUserIds.Contains(CurrentUserId.Value);
 
@@ -189,9 +227,13 @@ public class DetailsModel : PageModel
         var finishedMatchesCount = Matches.Count(m => m.HomeScore.HasValue && m.AwayScore.HasValue);
         IsVisibilityRuleActive = Championship.EnforceLeaderboardVisibilityRules && finishedMatchesCount >= 8;
 
+        // Competition ranking: tied entries share the same position (1, 1, 3, not 1, 2, 3)
+        int compRank = 1;
         for (int i = 0; i < Leaderboard.Count; i++)
         {
-            UserRanks[Leaderboard[i].UserId] = i + 1;
+            if (i > 0 && !AreLeaderboardEntriesTied(Leaderboard[i], Leaderboard[i - 1]))
+                compRank = i + 1;
+            UserRanks[Leaderboard[i].UserId] = compRank;
         }
 
         var userNameMap = users
@@ -202,6 +244,17 @@ public class DetailsModel : PageModel
             .OrderBy(m => m.StartTimeUtc)
             .ToList();
         Graph = _leaderboardService.BuildLeaderboardProgress(scoredMatches, predictions, userNameMap);
+
+        var firstMatchUtc = Matches.OrderBy(m => m.StartTimeUtc).FirstOrDefault()?.StartTimeUtc;
+        HasChampionshipStarted = firstMatchUtc.HasValue && firstMatchUtc.Value <= _timeService.UtcNow;
+
+        var extremes = await extremesTask;
+        if (extremes != null)
+        {
+            PreviousChampionWinnerId = extremes.Value.WinnerUserId;
+            PreviousChampionLoserId = extremes.Value.LoserUserId;
+            PreviousChampionshipLabel = extremes.Value.ChampionshipLabel;
+        }
 
         if (Championship.SupportsChampionshipWinnerPrediction)
         {
@@ -224,10 +277,42 @@ public class DetailsModel : PageModel
             var myRank = UserRanks.GetValueOrDefault(CurrentUserId.Value, 0);
             if (myRank > 0)
             {
-                var pointGap = Leaderboard.Count > 1
-                    ? Leaderboard[0].TotalPoints - Leaderboard[myRank - 1].TotalPoints
+                var myEntry = Leaderboard.FirstOrDefault(e => e.UserId == CurrentUserId.Value);
+                var pointGap = myEntry != null && Leaderboard.Count > 1
+                    ? Leaderboard[0].TotalPoints - myEntry.TotalPoints
                     : 0;
                 MotivationalText = PickMotivationalText(myRank, Leaderboard.Count, pointGap);
+            }
+        }
+
+        // Safe lock: eligible matches are the final and the bronze medal match
+        var bronzeMatch = Matches.FirstOrDefault(m => m.IsBronzeMedalMatch == true);
+        BronzeMedalMatchResultAvailable = bronzeMatch == null || (bronzeMatch.HomeScore != null && bronzeMatch.AwayScore != null);
+
+        var finalMatches = Matches.Where(m => m.IsFinalMatch == true).ToList();
+        var bronzeMatches = bronzeMatch != null ? new List<Match> { bronzeMatch } : new List<Match>();
+        var eligibleMatches = finalMatches.Concat(bronzeMatches).ToList();
+
+        SafeLockMatchIds = eligibleMatches.Count > 0
+            ? eligibleMatches.Select(m => m.Id).ToHashSet()
+            : (Matches.Count > 0 ? new HashSet<Guid> { Matches.Last().Id } : new HashSet<Guid>());
+
+        if (SafeLockMatchIds.Count > 0)
+        {
+            UsersWithActiveSafeLocks = await _safeLockService.GetOwnerIdsWithSafeLocksAsync(SafeLockMatchIds);
+
+            if (CurrentUserId.HasValue)
+            {
+                foreach (var matchId in SafeLockMatchIds)
+                {
+                    var sl = await _safeLockService.GetSafeLockAsync(matchId, CurrentUserId.Value);
+                    if (sl != null) CurrentUserSafeLocks[matchId] = sl;
+                }
+
+                var myRank = UserRanks.GetValueOrDefault(CurrentUserId.Value, int.MaxValue);
+                EligibleTrackedUsers = Leaderboard
+                    .Where(e => UserRanks.GetValueOrDefault(e.UserId, int.MaxValue) < myRank)
+                    .ToList();
             }
         }
 
@@ -235,8 +320,10 @@ public class DetailsModel : PageModel
         FirstMatchesIds = Matches.OrderBy(m => m.StartTimeUtc).Take(8).Select(m => m.Id).ToHashSet();
         if (Leaderboard.Count > 0)
         {
-            LeaderUserId = Leaderboard.First().UserId;
-            TailUserId = Leaderboard.Last().UserId;
+            var leadRank = UserRanks[Leaderboard.First().UserId];
+            var tailRank = UserRanks[Leaderboard.Last().UserId];
+            LeaderUserIds = Leaderboard.Where(e => UserRanks[e.UserId] == leadRank).Select(e => e.UserId).ToHashSet();
+            TailUserIds = Leaderboard.Where(e => UserRanks[e.UserId] == tailRank).Select(e => e.UserId).ToHashSet();
         }
 
         return Page();
@@ -252,10 +339,10 @@ public class DetailsModel : PageModel
         if (FirstMatchesIds.Contains(matchId))
             return matchStart <= _timeService.UtcNow;
 
-        if (userId == LeaderUserId)
+        if (LeaderUserIds.Contains(userId))
             return matchStart.AddMinutes(-10) <= _timeService.UtcNow;
 
-        if (userId == TailUserId)
+        if (TailUserIds.Contains(userId))
             return matchStart.AddMinutes(5) <= _timeService.UtcNow;
 
         return matchStart <= _timeService.UtcNow;
@@ -308,7 +395,7 @@ public class DetailsModel : PageModel
         }
 
         var championship = await _championshipService.GetByIdAsync(match.ChampionshipId);
-        if (championship?.Type == ChampionshipType.IceHockey && home == away)
+        if (championship?.IsDrawEnabled == false && home == away)
         {
             return new JsonResult(new { success = false, message = "There are no ties in ice hockey you fucking moron!" });
         }
@@ -387,7 +474,29 @@ public class DetailsModel : PageModel
         {
             var timestamp = _timeService.ToBratislava(l.TimestampUtc).ToString("yyyy-MM-dd HH:mm:ss");
             string message;
-            if (l.IsAdminUpdate)
+            if (l.IsRejected)
+            {
+                message = $"<span class='text-danger'>🚫 [BLOCKED]</span> <b>{l.AdminName}</b> attempted to submit " +
+                          $"<b>{l.NewHomeScore}:{l.NewAwayScore}</b> on match <b>{l.MatchSummary}</b> but the match was already locked.";
+            }
+            else if (l.IsSafeLockCreated)
+            {
+                message = $"🔐 [SAFE LOCK SET] <b>{l.AdminName}</b> set a safe lock on <b>{l.MatchSummary}</b> " +
+                          $"tracking <b>{l.TargetUserName}</b>.";
+            }
+            else if (l.IsSafeLockRemoved)
+            {
+                message = $"🔓 [SAFE LOCK REMOVED] Safe lock by <b>{l.AdminName}</b> on <b>{l.MatchSummary}</b> " +
+                          $"(tracking <b>{l.TargetUserName}</b>) was removed.";
+            }
+            else if (l.IsSafeLockTrigger)
+            {
+                var outcome = l.NewHomeScore > l.NewAwayScore ? "Home Win"
+                    : l.NewHomeScore < l.NewAwayScore ? "Away Win" : "Draw";
+                message = $"🔐 [SAFE LOCK] <b>{l.TargetUserName}</b>'s prediction was set to " +
+                          $"<b>{l.NewHomeScore}:{l.NewAwayScore}</b> (triggered by <b>{l.AdminName}</b> switching to {outcome})";
+            }
+            else if (l.IsAdminUpdate)
             {
                 message = $"<span class='text-danger'>[ADMIN]</span> <b>{l.AdminName}</b> {(l.OldHomeScore == null ? "added" : "updated")} prediction for user <b>{l.TargetUserName}</b> " +
                           $"on match <b>{l.MatchSummary}</b>. " +
@@ -470,6 +579,44 @@ public class DetailsModel : PageModel
         return RedirectToPage(new { id });
     }
 
+    public async Task<IActionResult> OnPostSetSafeLockAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return new JsonResult(new { success = false, message = "User not logged in" }) { StatusCode = 401 };
+
+        try
+        {
+            await _safeLockService.SetSafeLockAsync(
+                SafeLockMatchId, user.Id, SafeLockTrackedUserId,
+                SafeLockHomeWinHome, SafeLockHomeWinAway,
+                SafeLockAwayWinHome, SafeLockAwayWinAway,
+                SafeLockDrawHome, SafeLockDrawAway);
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
+    }
+
+    public async Task<IActionResult> OnPostRemoveSafeLockAsync()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+            return new JsonResult(new { success = false, message = "User not logged in" }) { StatusCode = 401 };
+
+        try
+        {
+            await _safeLockService.RemoveSafeLockAsync(SafeLockMatchId, user.Id);
+            return new JsonResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = ex.Message });
+        }
+    }
+
     public async Task<IActionResult> OnPostEndChampionshipAsync(Guid id)
     {
         var user = await _userManager.GetUserAsync(User);
@@ -480,6 +627,25 @@ public class DetailsModel : PageModel
         {
             await _championshipService.EndChampionshipAsync(id);
             TempData["SuccessMessage"] = "Championship ended and winner points awarded!";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostRecalculateChampionshipAsync(Guid id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user?.IsAdmin != true)
+            return Forbid();
+
+        try
+        {
+            await _championshipService.RecalculateChampionshipAsync(id);
+            TempData["SuccessMessage"] = "Championship recalculated and winner points updated!";
         }
         catch (Exception ex)
         {
@@ -674,6 +840,13 @@ public class DetailsModel : PageModel
 
         return result;
     }
+
+    private static bool AreLeaderboardEntriesTied(LeaderboardEntryDto a, LeaderboardEntryDto b) =>
+        a.TotalPoints == b.TotalPoints &&
+        a.CorrectWinners == b.CorrectWinners &&
+        a.OneGoalMisses == b.OneGoalMisses &&
+        a.OnlyCorrect == b.OnlyCorrect &&
+        a.RarityPoints == b.RarityPoints;
 
     private static string PickMotivationalText(int rank, int total, int pointGap)
     {

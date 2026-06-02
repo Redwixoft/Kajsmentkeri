@@ -30,6 +30,17 @@
         <span asp-validation-for="Input.StartTime" class="text-danger"></span>
     </div>
 
+    <div class="mb-3 d-flex gap-4">
+        <div class="form-check">
+            <input asp-for="Input.IsFinalMatch" class="form-check-input" type="checkbox" />
+            <label asp-for="Input.IsFinalMatch" class="form-check-label fw-bold">Final Match</label>
+        </div>
+        <div class="form-check">
+            <input asp-for="Input.IsBronzeMedalMatch" class="form-check-input" type="checkbox" />
+            <label asp-for="Input.IsBronzeMedalMatch" class="form-check-label fw-bold">Bronze Medal Match</label>
+        </div>
+    </div>
+
     <button type="submit" class="btn btn-primary">Create</button>
 </form>
 

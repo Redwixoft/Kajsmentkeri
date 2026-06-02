@@ -121,6 +121,14 @@
                                 </div>
                             </div>
 
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input asp-for="Input.IsDrawEnabled" class="form-check-input" />
+                                    <label asp-for="Input.IsDrawEnabled" class="form-check-label fw-bold"></label>
+                                    <div class="form-text">When enabled, draw predictions are allowed and safe locks show a third row for draw outcomes.</div>
+                                </div>
+                            </div>
+
                             <div class="col-sm-4">
                                 <label asp-for="Input.PointsForChampionshipWinner" class="form-label fw-bold"></label>
                                 <input asp-for="Input.PointsForChampionshipWinner" class="form-control" type="number" />

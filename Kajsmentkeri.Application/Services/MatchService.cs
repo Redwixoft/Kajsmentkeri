@@ -16,7 +16,7 @@ public class MatchService : IMatchService
         _timeService = timeService;
     }
 
-    public async Task<Match> CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime)
+    public async Task<Match> CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime, bool? isFinalMatch = null, bool? isBronzeMedalMatch = null)
     {
         var match = new Match
         {
@@ -24,8 +24,8 @@ public class MatchService : IMatchService
             ChampionshipId = championshipId,
             HomeTeam = homeTeam,
             AwayTeam = awayTeam,
-            StartTimeUtc = startTime // Assuming TimeService handles UTC conversion or input is already UTC. Previous code used _timeService.ToUtc but it's cleaner to handle it before calling if possible, or just keep as is. Let's keep strict to previous impl but fix return.
-            // Actually, let's stick to _timeService.ToUtc(startTime) as before.
+            IsFinalMatch = isFinalMatch,
+            IsBronzeMedalMatch = isBronzeMedalMatch
         };
         match.StartTimeUtc = _timeService.ToUtc(startTime);
 
@@ -38,13 +38,14 @@ public class MatchService : IMatchService
     public async Task<Match?> GetMatchByIdAsync(Guid matchId)
     {
         using var context = _dbContextFactory.CreateDbContext();
-        return await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
+        return await context.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
     }
 
     public async Task<List<Match>> GetMatchesByChampionshipAsync(Guid championshipId)
     {
         using var context = _dbContextFactory.CreateDbContext();
         return await context.Matches
+            .AsNoTracking()
             .Include(m => m.Predictions)
             .Where(m => m.ChampionshipId == championshipId)
             .OrderBy(m => m.StartTimeUtc)
@@ -63,7 +64,7 @@ public class MatchService : IMatchService
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateMatchAsync(Guid matchId, string homeTeam, string awayTeam, DateTime startTime)
+    public async Task UpdateMatchAsync(Guid matchId, string homeTeam, string awayTeam, DateTime startTime, bool? isFinalMatch, bool? isBronzeMedalMatch)
     {
         using var context = _dbContextFactory.CreateDbContext();
         var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
@@ -72,6 +73,8 @@ public class MatchService : IMatchService
         match.HomeTeam = homeTeam;
         match.AwayTeam = awayTeam;
         match.StartTimeUtc = _timeService.ToUtc(startTime);
+        match.IsFinalMatch = isFinalMatch;
+        match.IsBronzeMedalMatch = isBronzeMedalMatch;
 
         await context.SaveChangesAsync();
     }

@@ -40,6 +40,9 @@ public class AddModel : PageModel
 
         [Required]
         public DateTime StartTime { get; set; }
+
+        public bool IsFinalMatch { get; set; }
+        public bool IsBronzeMedalMatch { get; set; }
     }
 
     public IActionResult OnGet()
@@ -57,7 +60,7 @@ public class AddModel : PageModel
         if (!ModelState.IsValid)
             return Page();
 
-        await _matchService.CreateMatchAsync(ChampionshipId, Input.HomeTeam, Input.AwayTeam, Input.StartTime);
+        await _matchService.CreateMatchAsync(ChampionshipId, Input.HomeTeam, Input.AwayTeam, Input.StartTime, Input.IsFinalMatch, Input.IsBronzeMedalMatch);
 
         return RedirectToPage("/Championships/Details", new { id = ChampionshipId });
     }

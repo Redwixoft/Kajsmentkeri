@@ -16,5 +16,9 @@ public class PredictionAuditLog
     public int NewAwayScore { get; set; }
     public DateTime TimestampUtc { get; set; }
     public bool IsAdminUpdate { get; set; }
+    public bool IsRejected { get; set; }
+    public bool IsSafeLockTrigger { get; set; }
+    public bool IsSafeLockCreated { get; set; }
+    public bool IsSafeLockRemoved { get; set; }
     public string MatchSummary { get; set; } = string.Empty; // e.g. "Canada - France"
 }

@@ -5,6 +5,7 @@ using Kajsmentkeri.Domain;
 using Kajsmentkeri.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kajsmentkeri.Application.Services;
@@ -13,18 +14,56 @@ public class LeaderboardService : ILeaderboardService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IMemoryCache _cache;
 
-    public LeaderboardService(IServiceScopeFactory scopeFactory, IDbContextFactory<AppDbContext> dbContextFactory)
+    private static string LeaderboardCacheKey(Guid championshipId) => $"leaderboard:{championshipId}";
+
+    public LeaderboardService(IServiceScopeFactory scopeFactory, IDbContextFactory<AppDbContext> dbContextFactory, IMemoryCache cache)
     {
         _scopeFactory = scopeFactory;
         _dbContextFactory = dbContextFactory;
+        _cache = cache;
+    }
+
+    public void InvalidateLeaderboard(Guid championshipId)
+    {
+        _cache.Remove(LeaderboardCacheKey(championshipId));
     }
 
     public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync(Guid championshipId)
     {
+        return await _cache.GetOrCreateAsync(LeaderboardCacheKey(championshipId), async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
+            return await BuildLeaderboardAsync(championshipId);
+        }) ?? new List<LeaderboardEntryDto>();
+    }
+
+    private async Task<List<LeaderboardEntryDto>> BuildLeaderboardAsync(Guid championshipId)
+    {
         using var context = _dbContextFactory.CreateDbContext();
-        var grouped = await context.Predictions
+
+        // Single scan: fetch the per-prediction fields needed for both the aggregate stats
+        // and the OnlyOneTries computation, instead of querying Predictions twice.
+        var predictions = await context.Predictions
             .Where(p => p.Match.ChampionshipId == championshipId)
+            .Select(p => new
+            {
+                p.UserId,
+                p.MatchId,
+                p.Points,
+                p.GotWinner,
+                p.OneGoalMiss,
+                p.IsOnlyCorrect,
+                p.GotExactScore,
+                p.RarityPart,
+                p.PredictedHome,
+                p.PredictedAway,
+                IsScored = p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue
+            })
+            .ToListAsync();
+
+        var grouped = predictions
             .GroupBy(p => p.UserId)
             .Select(g => new
             {
@@ -36,19 +75,15 @@ public class LeaderboardService : ILeaderboardService
                 ExactScores = g.Count(p => p.GotExactScore),
                 RarityPoints = g.Sum(p => p.RarityPart)
             })
-            .ToListAsync();
+            .ToList();
 
         var winnerPoints = await context.ChampionshipWinnerPredictions
             .Where(p => p.ChampionshipId == championshipId && p.PointsAwarded.HasValue)
             .ToDictionaryAsync(p => p.UserId, p => p.PointsAwarded!.Value);
 
-        // Compute OnlyOneTries: scored matches where the user was the sole predictor of their chosen outcome
-        var scoredPredictions = await context.Predictions
-            .Where(p => p.Match.ChampionshipId == championshipId && p.Match.HomeScore.HasValue && p.Match.AwayScore.HasValue)
-            .Select(p => new { p.MatchId, p.UserId, p.PredictedHome, p.PredictedAway })
-            .ToListAsync();
-
-        var onlyOneTries = scoredPredictions
+        // OnlyOneTries: scored matches where the user was the sole predictor of their chosen outcome
+        var onlyOneTries = predictions
+            .Where(p => p.IsScored)
             .GroupBy(p => new { p.MatchId, Winner = p.PredictedHome > p.PredictedAway ? "H" : p.PredictedHome < p.PredictedAway ? "A" : "D" })
             .Where(g => g.Count() == 1)
             .SelectMany(g => g)
@@ -106,7 +141,8 @@ public class LeaderboardService : ILeaderboardService
                 ExactScores = g.Count(p => p.GotExactScore),
                 RarityPoints = g.Sum(p => p.RarityPart),
                 TotalPredictions = g.Count(),
-                TotalScoredPredictions = g.Count(p => p.Match.HomeScore.HasValue)
+                TotalScoredPredictions = g.Count(p => p.Match.HomeScore.HasValue),
+                ChampionshipCount = g.Select(p => p.Match.ChampionshipId).Distinct().Count()
             })
             .ToListAsync();
 
@@ -116,15 +152,6 @@ public class LeaderboardService : ILeaderboardService
             .GroupBy(p => p.UserId)
             .Select(g => new { UserId = g.Key, Points = g.Sum(p => p.PointsAwarded!.Value) })
             .ToDictionaryAsync(p => p.UserId, p => p.Points);
-
-        var championshipCounts = await context.Predictions
-            .Where(p => !p.Match.Championship.IsTest)
-            .Where(p => type == null || p.Match.Championship.Type == type)
-            .Select(p => new { p.UserId, p.Match.ChampionshipId })
-            .Distinct()
-            .GroupBy(p => p.UserId)
-            .Select(g => new { UserId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.UserId, x => x.Count);
 
         // Compute OnlyOneTries: scored matches where the user was the sole predictor of their chosen outcome
         var allScoredPredictions = await context.Predictions
@@ -163,7 +190,7 @@ public class LeaderboardService : ILeaderboardService
                 ExactScores = g.ExactScores,
                 WinnerPredictionPoints = winnerPointsGlobal.GetValueOrDefault(g.UserId, 0),
                 RarityPoints = g.RarityPoints,
-                ChampionshipCount = championshipCounts.GetValueOrDefault(g.UserId, 0),
+                ChampionshipCount = g.ChampionshipCount,
                 TotalPredictions = g.TotalPredictions,
                 TotalScoredPredictions = g.TotalScoredPredictions
             })
@@ -424,21 +451,54 @@ public class LeaderboardService : ILeaderboardService
                 .ThenByDescending(e => e.RarityPoints)
                 .ToList();
 
-            for (int i = 0; i < Math.Min(3, ranked.Count); i++)
+            // Assign competition positions (1, 1, 3 — not 1, 2, 3) using all tiebreakers
+            int champPos = 1;
+            for (int i = 0; i < ranked.Count; i++)
             {
-                var userId = ranked[i].UserId;
-                if (!medals.TryGetValue(userId, out var list))
-                    medals[userId] = list = new List<(int, string, int)>();
-                list.Add((i + 1, championship.Name, championship.Year));
+                if (i > 0)
+                {
+                    var prev = ranked[i - 1];
+                    var curr = ranked[i];
+                    if (curr.Total != prev.Total || curr.CorrectWinners != prev.CorrectWinners ||
+                        curr.OneGoalMisses != prev.OneGoalMisses || curr.OnlyCorrect != prev.OnlyCorrect ||
+                        curr.RarityPoints != prev.RarityPoints)
+                    {
+                        champPos = i + 1;
+                    }
+                }
+
+                if (champPos <= 3)
+                {
+                    var userId = ranked[i].UserId;
+                    if (!medals.TryGetValue(userId, out var list))
+                        medals[userId] = list = new List<(int, string, int)>();
+                    list.Add((champPos, championship.Name, championship.Year));
+                }
             }
 
-            // Last place (only when there are more than 3 participants)
-            if (ranked.Count > 3)
+            // Last place: all users tied at the highest position number, only when that position > 3
+            if (ranked.Count > 0)
             {
-                var lastUserId = ranked[^1].UserId;
-                if (!medals.TryGetValue(lastUserId, out var lastList))
-                    medals[lastUserId] = lastList = new List<(int, string, int)>();
-                lastList.Add((ranked.Count, championship.Name, championship.Year));
+                int maxPos = champPos; // champPos ends on the last group's position
+                if (maxPos > 3)
+                {
+                    for (int i = ranked.Count - 1; i >= 0; i--)
+                    {
+                        // Walk back through all users sharing the last position
+                        var curr = ranked[i];
+                        var next = i + 1 < ranked.Count ? ranked[i + 1] : null;
+                        if (next != null &&
+                            (curr.Total != next.Total || curr.CorrectWinners != next.CorrectWinners ||
+                             curr.OneGoalMisses != next.OneGoalMisses || curr.OnlyCorrect != next.OnlyCorrect ||
+                             curr.RarityPoints != next.RarityPoints))
+                            break;
+
+                        var userId = curr.UserId;
+                        if (!medals.TryGetValue(userId, out var lastList))
+                            medals[userId] = lastList = new List<(int, string, int)>();
+                        lastList.Add((ranked.Count, championship.Name, championship.Year));
+                    }
+                }
             }
         }
 
@@ -517,20 +577,30 @@ public class LeaderboardService : ILeaderboardService
 
         var winnerPredLookup = winnerPredPoints.ToDictionary(p => (p.ChampionshipId, p.UserId), p => p.Points);
 
-        var standingsByChamp = new Dictionary<Guid, List<Guid>>();
+        // Compute tied ranks per championship
+        var rankedByChamp = new Dictionary<Guid, List<(Guid UserId, int Position)>>();
         foreach (var champId in ids)
         {
-            var ranked = scores
+            var ordered = scores
                 .Where(s => s.ChampionshipId == champId)
                 .Select(s => new { s.UserId, Total = s.Points + winnerPredLookup.GetValueOrDefault((champId, s.UserId), 0) })
                 .OrderByDescending(s => s.Total)
-                .Select(s => s.UserId)
                 .ToList();
-            standingsByChamp[champId] = ranked;
+
+            var ranked = new List<(Guid UserId, int Position)>();
+            int compRank = 1;
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                if (i > 0 && ordered[i].Total != ordered[i - 1].Total)
+                    compRank = i + 1;
+                ranked.Add((ordered[i].UserId, compRank));
+            }
+            rankedByChamp[champId] = ranked;
         }
 
-        var allRelevantUserIds = standingsByChamp.Values
-            .SelectMany(list => list.Take(topN))
+        // Collect user IDs to load: all users at rank <= topN, plus the current user
+        var allRelevantUserIds = rankedByChamp.Values
+            .SelectMany(list => list.Where(r => r.Position <= topN).Select(r => r.UserId))
             .ToHashSet();
         if (currentUserId.HasValue)
             allRelevantUserIds.Add(currentUserId.Value);
@@ -544,20 +614,21 @@ public class LeaderboardService : ILeaderboardService
         var result = new Dictionary<Guid, List<(string UserName, int Position)>>();
         foreach (var champId in ids)
         {
-            var ranked = standingsByChamp.TryGetValue(champId, out var r) ? r : new List<Guid>();
+            var ranked = rankedByChamp.TryGetValue(champId, out var r) ? r : new List<(Guid UserId, int Position)>();
             var entries = new List<(string UserName, int Position)>();
 
-            for (int i = 0; i < Math.Min(topN, ranked.Count); i++)
+            foreach (var (userId, position) in ranked.Where(r => r.Position <= topN))
             {
-                if (userNames.TryGetValue(ranked[i], out var name))
-                    entries.Add((name, i + 1));
+                if (userNames.TryGetValue(userId, out var name))
+                    entries.Add((name, position));
             }
 
             if (currentUserId.HasValue)
             {
-                var currentPos = ranked.IndexOf(currentUserId.Value);
-                if (currentPos >= topN && userNames.TryGetValue(currentUserId.Value, out var currentName))
-                    entries.Add((currentName, currentPos + 1));
+                var currentEntry = ranked.FirstOrDefault(r => r.UserId == currentUserId.Value);
+                if (currentEntry.UserId == currentUserId.Value && currentEntry.Position > topN
+                    && userNames.TryGetValue(currentUserId.Value, out var currentName))
+                    entries.Add((currentName, currentEntry.Position));
             }
 
             result[champId] = entries;
@@ -1188,5 +1259,46 @@ public class LeaderboardService : ILeaderboardService
             WorstTeam = worst.Team,
             WorstTeamCount = worst.Count
         };
+    }
+
+    public async Task<(Guid? WinnerUserId, Guid? LoserUserId, string ChampionshipLabel)?> GetPreviousChampionshipExtremesAsync(Guid currentChampionshipId, ChampionshipType type)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var previous = await context.Championships
+            .Where(c => c.Id != currentChampionshipId && c.Type == type && c.IsChampionshipEnded && !c.IsTest)
+            .OrderByDescending(c => c.Year)
+            .ThenByDescending(c => c.CreatedAt)
+            .Select(c => new { c.Id, c.Name, c.Year })
+            .FirstOrDefaultAsync();
+
+        if (previous == null)
+            return null;
+
+        var scores = await context.Predictions
+            .Where(p => p.Match.ChampionshipId == previous.Id)
+            .GroupBy(p => p.UserId)
+            .Select(g => new { UserId = g.Key, Points = g.Sum(p => p.Points) })
+            .ToListAsync();
+
+        var winnerPredPoints = await context.ChampionshipWinnerPredictions
+            .Where(p => p.ChampionshipId == previous.Id && p.PointsAwarded.HasValue)
+            .Select(p => new { p.UserId, Points = p.PointsAwarded!.Value })
+            .ToListAsync();
+
+        var winnerPredLookup = winnerPredPoints.ToDictionary(p => p.UserId, p => p.Points);
+
+        var ranked = scores
+            .Select(s => new { s.UserId, Total = s.Points + winnerPredLookup.GetValueOrDefault(s.UserId, 0) })
+            .OrderByDescending(s => s.Total)
+            .ToList();
+
+        if (ranked.Count == 0)
+            return null;
+
+        var winnerId = ranked[0].UserId;
+        var loserId = ranked[^1].UserId;
+
+        return (winnerId, ranked.Count > 1 ? loserId : (Guid?)null, $"{previous.Name} {previous.Year}");
     }
 }

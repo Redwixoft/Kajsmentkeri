@@ -94,7 +94,24 @@ tr:hover .match-rocket-btn {
     opacity: 1;
 }
 
+.safe-lock-btn {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+tr:hover .safe-lock-btn {
+    opacity: 1;
+}
+
+.safe-lock-active {
+    opacity: 1 !important;
+}
+
 .header-logo {
     height: 32px;
     width: auto;
+}
+
+.bg-purple {
+    background-color: #6f42c1 !important;
 }
