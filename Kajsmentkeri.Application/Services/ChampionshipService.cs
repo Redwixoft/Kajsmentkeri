@@ -150,33 +150,42 @@ public class ChampionshipService : IChampionshipService
             context.Predictions.RemoveRange(predictions);
         }
 
-        // 2. Delete Matches
+        // 2. Delete Safe Locks
+        var matchIds = championship.Matches.Select(m => m.Id).ToList();
+        if (matchIds.Any())
+        {
+            var safeLocks = await context.SafeLocks.Where(sl => matchIds.Contains(sl.MatchId)).ToListAsync();
+            if (safeLocks.Any())
+                context.SafeLocks.RemoveRange(safeLocks);
+        }
+
+        // 3. Delete Matches
         if (championship.Matches.Any())
         {
             context.Matches.RemoveRange(championship.Matches);
         }
 
-        // 3. Delete Scoring Rules
+        // 4. Delete Scoring Rules
         if (championship.ScoringRules != null)
         {
             context.ChampionshipScoringRules.Remove(championship.ScoringRules);
         }
         
-        // 4. Delete Winner Predictions
+        // 5. Delete Winner Predictions
         var winnerPredictions = await context.ChampionshipWinnerPredictions.Where(p => p.ChampionshipId == id).ToListAsync();
         if (winnerPredictions.Any())
         {
             context.ChampionshipWinnerPredictions.RemoveRange(winnerPredictions);
         }
 
-        // 5. Delete Participations
+        // 6. Delete Participations
         var participations = await context.ChampionshipParticipations.Where(p => p.ChampionshipId == id).ToListAsync();
         if (participations.Any())
         {
             context.ChampionshipParticipations.RemoveRange(participations);
         }
 
-        // 6. Delete Championship
+        // 7. Delete Championship
         context.Championships.Remove(championship);
 
         await context.SaveChangesAsync();
