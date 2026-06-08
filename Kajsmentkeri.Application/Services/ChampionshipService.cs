@@ -110,6 +110,7 @@ public class ChampionshipService : IChampionshipService
         existing.SupportsChampionshipWinnerPrediction = championship.SupportsChampionshipWinnerPrediction;
         existing.IsChampionshipEnded = championship.IsChampionshipEnded;
         existing.AllowHighConfidencePrediction = championship.AllowHighConfidencePrediction;
+        existing.IsDrawEnabled = championship.IsDrawEnabled;
         existing.Type = championship.Type;
         existing.EntryFee = championship.EntryFee;
         existing.RunnerUpPaysFree = championship.RunnerUpPaysFree;
