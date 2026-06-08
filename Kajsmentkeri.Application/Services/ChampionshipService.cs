@@ -314,6 +314,164 @@ public class ChampionshipService : IChampionshipService
             .ToListAsync();
     }
 
+    public async Task<Championship> CopyChampionshipAsync(Guid id)
+    {
+        if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)
+            throw new UnauthorizedAccessException("User must be logged in.");
+
+        using var context = _dbContextFactory.CreateDbContext();
+
+        var source = await context.Championships
+            .Include(c => c.ScoringRules)
+            .Include(c => c.Matches)
+                .ThenInclude(m => m.Predictions)
+            .FirstOrDefaultAsync(c => c.Id == id)
+            ?? throw new InvalidOperationException("Championship not found");
+
+        var safeLocks = await context.SafeLocks
+            .Where(sl => source.Matches.Select(m => m.Id).Contains(sl.MatchId))
+            .ToListAsync();
+
+        var winnerPredictions = await context.ChampionshipWinnerPredictions
+            .Where(p => p.ChampionshipId == id)
+            .ToListAsync();
+
+        var participations = await context.ChampionshipParticipations
+            .Where(p => p.ChampionshipId == id)
+            .ToListAsync();
+
+        var newChampionshipId = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+
+        var newChampionship = new Championship
+        {
+            Id = newChampionshipId,
+            Name = source.Name + " - COPY",
+            Year = source.Year,
+            Description = source.Description,
+            EnforceLeaderboardVisibilityRules = source.EnforceLeaderboardVisibilityRules,
+            SupportsChampionshipWinnerPrediction = source.SupportsChampionshipWinnerPrediction,
+            IsChampionshipEnded = source.IsChampionshipEnded,
+            IsTest = true,
+            AllowHighConfidencePrediction = source.AllowHighConfidencePrediction,
+            Type = source.Type,
+            EntryFee = source.EntryFee,
+            RunnerUpPaysFree = source.RunnerUpPaysFree,
+            LastPlacePaysDouble = source.LastPlacePaysDouble,
+            IsDrawEnabled = source.IsDrawEnabled,
+            CreatedById = _currentUser.UserId.Value,
+            CreatedAt = now,
+        };
+
+        context.Championships.Add(newChampionship);
+
+        var newScoringRules = new ChampionshipScoringRules
+        {
+            Id = Guid.NewGuid(),
+            ChampionshipId = newChampionshipId,
+            PointsForCorrectWinner = source.ScoringRules.PointsForCorrectWinner,
+            PointsForExactScore = source.ScoringRules.PointsForExactScore,
+            PointsForOnlyCorrectWinner = source.ScoringRules.PointsForOnlyCorrectWinner,
+            RarityPointsBonus = source.ScoringRules.RarityPointsBonus,
+            PointsForChampionshipWinner = source.ScoringRules.PointsForChampionshipWinner,
+            PointsForChampionshipRunnerUp = source.ScoringRules.PointsForChampionshipRunnerUp,
+            PointsForChampionshipThirdPlace = source.ScoringRules.PointsForChampionshipThirdPlace,
+            CreatedAt = now,
+        };
+
+        context.ChampionshipScoringRules.Add(newScoringRules);
+
+        // Build old match ID → new match ID map for remapping predictions and safe locks
+        var matchIdMap = new Dictionary<Guid, Guid>();
+
+        foreach (var match in source.Matches)
+        {
+            var newMatchId = Guid.NewGuid();
+            matchIdMap[match.Id] = newMatchId;
+
+            var newMatch = new Match
+            {
+                Id = newMatchId,
+                ChampionshipId = newChampionshipId,
+                HomeTeam = match.HomeTeam,
+                AwayTeam = match.AwayTeam,
+                StartTimeUtc = match.StartTimeUtc,
+                HomeScore = match.HomeScore,
+                AwayScore = match.AwayScore,
+                IsFinalMatch = match.IsFinalMatch,
+                IsBronzeMedalMatch = match.IsBronzeMedalMatch,
+            };
+
+            context.Matches.Add(newMatch);
+
+            foreach (var prediction in match.Predictions)
+            {
+                context.Predictions.Add(new Prediction
+                {
+                    Id = Guid.NewGuid(),
+                    MatchId = newMatchId,
+                    UserId = prediction.UserId,
+                    PredictedHome = prediction.PredictedHome,
+                    PredictedAway = prediction.PredictedAway,
+                    Points = prediction.Points,
+                    GotWinner = prediction.GotWinner,
+                    GotExactScore = prediction.GotExactScore,
+                    OneGoalMiss = prediction.OneGoalMiss,
+                    IsOnlyCorrect = prediction.IsOnlyCorrect,
+                    RarityPart = prediction.RarityPart,
+                    IsHighConfidence = prediction.IsHighConfidence,
+                });
+            }
+        }
+
+        foreach (var sl in safeLocks)
+        {
+            context.SafeLocks.Add(new SafeLock
+            {
+                Id = Guid.NewGuid(),
+                MatchId = matchIdMap[sl.MatchId],
+                OwnerUserId = sl.OwnerUserId,
+                TrackedUserId = sl.TrackedUserId,
+                HomeWinPredictedHome = sl.HomeWinPredictedHome,
+                HomeWinPredictedAway = sl.HomeWinPredictedAway,
+                DrawPredictedHome = sl.DrawPredictedHome,
+                DrawPredictedAway = sl.DrawPredictedAway,
+                AwayWinPredictedHome = sl.AwayWinPredictedHome,
+                AwayWinPredictedAway = sl.AwayWinPredictedAway,
+                CreatedAt = sl.CreatedAt,
+                LastTriggeredAt = sl.LastTriggeredAt,
+            });
+        }
+
+        foreach (var wp in winnerPredictions)
+        {
+            context.ChampionshipWinnerPredictions.Add(new ChampionshipWinnerPrediction
+            {
+                Id = Guid.NewGuid(),
+                ChampionshipId = newChampionshipId,
+                UserId = wp.UserId,
+                TeamName = wp.TeamName,
+                PointsAwarded = wp.PointsAwarded,
+                CreatedAt = wp.CreatedAt,
+            });
+        }
+
+        foreach (var p in participations)
+        {
+            context.ChampionshipParticipations.Add(new ChampionshipParticipation
+            {
+                Id = Guid.NewGuid(),
+                ChampionshipId = newChampionshipId,
+                UserId = p.UserId,
+                JoinedAt = p.JoinedAt,
+            });
+        }
+
+        await context.SaveChangesAsync();
+
+        return newChampionship;
+    }
+
     public async Task UpdateWinnerPaymentInfoAsync(Guid championshipId, string iban, string note)
     {
         if (!_currentUser.IsAuthenticated || _currentUser.UserId == null)

@@ -180,6 +180,9 @@
                         <a asp-page="/Championships/Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">
                             Edit
                         </a>
+                        <button type="button" class="btn btn-sm btn-secondary ms-1" data-bs-toggle="modal" data-bs-target="#copyModal" data-id="@item.Id" data-name="@item.Name">
+                            Copy
+                        </button>
                         <button type="button" class="btn btn-sm btn-danger ms-1" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="@item.Id" data-name="@item.Name">
                             Delete
                         </button>
@@ -189,6 +192,29 @@
         }
     </tbody>
 </table>
+
+<!-- Copy Confirmation Modal -->
+<div class="modal fade" id="copyModal" tabindex="-1" aria-labelledby="copyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Copy">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="copyModalLabel">Copy Championship</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Copy <strong id="copyTargetName"></strong>?</p>
+                    <p class="text-muted">A new TEST championship named <strong id="copyTargetNewName"></strong> will be created with all matches, predictions, results, and rules copied.</p>
+                    <input type="hidden" name="id" id="copyTargetId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Yes, Copy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -226,6 +252,17 @@
 
             nameInput.textContent = name;
             idInput.value = id;
+        });
+
+        var copyModal = document.getElementById('copyModal');
+        copyModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-id');
+            var name = button.getAttribute('data-name');
+
+            copyModal.querySelector('#copyTargetName').textContent = name;
+            copyModal.querySelector('#copyTargetNewName').textContent = name + ' - COPY';
+            copyModal.querySelector('#copyTargetId').value = id;
         });
     </script>
 }

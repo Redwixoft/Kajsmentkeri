@@ -139,4 +139,16 @@ public class ListModel : PageModel
         await _championshipService.DeleteChampionshipAsync(id);
         return RedirectToPage();
     }
+
+    public async Task<IActionResult> OnPostCopyAsync(Guid id)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser?.IsAdmin != true)
+        {
+            return Forbid();
+        }
+
+        await _championshipService.CopyChampionshipAsync(id);
+        return RedirectToPage();
+    }
 }

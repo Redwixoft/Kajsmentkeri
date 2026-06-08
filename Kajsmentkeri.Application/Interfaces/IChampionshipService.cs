@@ -17,4 +17,5 @@ public interface IChampionshipService
     Task<bool> IsParticipatingAsync(Guid championshipId, Guid userId);
     Task JoinChampionshipAsync(Guid championshipId, Guid userId);
     Task<List<Guid>> GetParticipantUserIdsAsync(Guid championshipId);
+    Task<Championship> CopyChampionshipAsync(Guid id);
 }

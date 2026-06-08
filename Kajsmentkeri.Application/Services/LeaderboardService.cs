@@ -1265,8 +1265,13 @@ public class LeaderboardService : ILeaderboardService
     {
         using var context = _dbContextFactory.CreateDbContext();
 
+        var currentYear = await context.Championships
+            .Where(c => c.Id == currentChampionshipId)
+            .Select(c => c.Year)
+            .FirstOrDefaultAsync();
+
         var previous = await context.Championships
-            .Where(c => c.Id != currentChampionshipId && c.Type == type && c.IsChampionshipEnded && !c.IsTest)
+            .Where(c => c.Year <= currentYear && c.Id != currentChampionshipId && c.Type == type && c.IsChampionshipEnded && !c.IsTest)
             .OrderByDescending(c => c.Year)
             .ThenByDescending(c => c.CreatedAt)
             .Select(c => new { c.Id, c.Name, c.Year })
