@@ -118,6 +118,9 @@ public class DetailsModel : PageModel
     public string PredictionInput { get; set; } = string.Empty;
 
     [BindProperty]
+    public bool SkipRandomPrompt { get; set; }
+
+    [BindProperty]
     public string ResultInput { get; set; } = string.Empty;
 
     [BindProperty]
@@ -400,6 +403,25 @@ public class DetailsModel : PageModel
             return new JsonResult(new { success = false, message = "There are no ties in ice hockey you fucking moron!" });
         }
 
+        if (!SkipRandomPrompt && Random.Shared.NextDouble() < 0.05)
+        {
+            var (randomHome, randomAway) = GenerateRandomPrediction(home, away, championship?.IsDrawEnabled != false);
+            var userScore = $"{home}:{away}";
+            var randomScore = $"{randomHome}:{randomAway}";
+            var message = RoastTemplates[Random.Shared.Next(RoastTemplates.Length)]
+                .Replace("USER_SCORE", userScore)
+                .Replace("RANDOM_SCORE", randomScore);
+
+            return new JsonResult(new
+            {
+                success = true,
+                requiresConfirmation = true,
+                message,
+                userScore,
+                randomScore
+            });
+        }
+
         try
         {
             await _predictionService.SubmitPredictionAsync(MatchId, home, away);
@@ -416,6 +438,31 @@ public class DetailsModel : PageModel
             _logger.LogError(ex, "Error saving prediction");
             return new JsonResult(new { success = false, message = ex.Message });
         }
+    }
+
+    private static readonly string[] RoastTemplates =
+    {
+        "Are you seriously rolling with USER_SCORE? Did you let your toddler pick that? Do yourself a favor and take RANDOM_SCORE instead, you absolute clown.",
+        "Wow. USER_SCORE. Bold strategy to announce to the whole group chat that you know absolutely nothing about sports. Just take RANDOM_SCORE and pretend you have a brain.",
+        "Are you blind, stupid, or both? USER_SCORE is a historically garbage take. Click here to swap it for RANDOM_SCORE before you embarrass yourself further.",
+        "USER_SCORE? Are you fucking high? A blind monkey throwing darts could pick a better score than that. Take RANDOM_SCORE and thank me later.",
+        "Look at this dumbass choosing USER_SCORE. It's not too late to delete this shit and use RANDOM_SCORE. Don't say I didn't warn you when you're at the bottom of the leaderboard.",
+        "Oh, honey... no. USER_SCORE is adorable, but we live in reality. Let's change that to RANDOM_SCORE so you have an actual prayer of getting points.",
+        "I've seen some awful predictions in my life, but your USER_SCORE really takes the cake. Want to swap that garbage for RANDOM_SCORE, or are you committed to losing?",
+        "Is USER_SCORE a typo, or are you just genuinely bad at this? Let me pity-upgrade you to RANDOM_SCORE.",
+        "Click 'Yes' if you want to lock in your pathetic USER_SCORE. Click 'No' if you want to admit defeat and let me give you a much better RANDOM_SCORE."
+    };
+
+    private static (int Home, int Away) GenerateRandomPrediction(int userHome, int userAway, bool allowDraw)
+    {
+        int home, away;
+        do
+        {
+            home = Random.Shared.Next(0, 5);
+            away = Random.Shared.Next(0, 5);
+        } while ((home == userHome && away == userAway) || (!allowDraw && home == away));
+
+        return (home, away);
     }
 
     public async Task<IActionResult> OnPostUpdateResultAsync(Guid id)
@@ -447,26 +494,25 @@ public class DetailsModel : PageModel
     {
         var logs = await _predictionService.GetAuditLogsForMatchAsync(matchId);
 
-        // Build a map of score → users who currently hold that prediction for this match
-        var predictionsByScore = new Dictionary<(int, int), List<(Guid UserId, string Name)>>();
-        var match = await _matchService.GetMatchByIdAsync(matchId);
-        if (match != null)
+        // Walk the log chronologically to figure out, for each entry, which other
+        // users already held that exact prediction at that point in time.
+        var userScores = new Dictionary<Guid, (int Home, int Away)>();
+        var userNames = new Dictionary<Guid, string>();
+        var othersByLogId = new Dictionary<Guid, List<string>>();
+        foreach (var l in logs.OrderBy(l => l.TimestampUtc))
         {
-            var allPredictions = await _predictionService.GetPredictionsForChampionshipAsync(match.ChampionshipId);
-            var matchPredictions = allPredictions.Where(p => p.MatchId == matchId).ToList();
-            var userIds = matchPredictions.Select(p => p.UserId).ToHashSet();
-            var userNameMap = await _userManager.Users
-                .Where(u => userIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Id.ToString());
+            userNames[l.TargetUserId] = l.TargetUserName;
 
-            foreach (var pred in matchPredictions)
-            {
-                var key = (pred.PredictedHome, pred.PredictedAway);
-                if (!predictionsByScore.ContainsKey(key))
-                    predictionsByScore[key] = new();
-                if (userNameMap.TryGetValue(pred.UserId, out var name))
-                    predictionsByScore[key].Add((pred.UserId, name));
-            }
+            if (l.IsRejected || l.IsSafeLockCreated || l.IsSafeLockRemoved)
+                continue;
+
+            var newScore = (l.NewHomeScore, l.NewAwayScore);
+            othersByLogId[l.Id] = userScores
+                .Where(kv => kv.Key != l.TargetUserId && kv.Value == newScore)
+                .Select(kv => userNames.TryGetValue(kv.Key, out var n) ? n : kv.Key.ToString())
+                .ToList();
+
+            userScores[l.TargetUserId] = newScore;
         }
 
         var formattedLogs = new List<object>();
@@ -511,16 +557,8 @@ public class DetailsModel : PageModel
                           $"{(l.OldHomeScore == null ? "" : $"(was {l.OldHomeScore}:{l.OldAwayScore} before)")}.";
             }
 
-            var scoreKey = (l.NewHomeScore, l.NewAwayScore);
-            if (predictionsByScore.TryGetValue(scoreKey, out var usersWithSamePred))
-            {
-                var others = usersWithSamePred
-                    .Where(u => u.UserId != l.TargetUserId)
-                    .Select(u => u.Name)
-                    .ToList();
-                if (others.Count > 0)
-                    message += $" Same prediction was already added by: {string.Join(", ", others)}.";
-            }
+            if (othersByLogId.TryGetValue(l.Id, out var others) && others.Count > 0)
+                message += $" Same prediction was already added by: {string.Join(", ", others)}.";
 
             formattedLogs.Add(new { timestamp, message });
         }

@@ -1041,21 +1041,10 @@
 
                             const result = await response.json();
 
-                            if (result.success) {
-                                const displayId = form.getAttribute('data-display-id');
-                                const displayEl = document.getElementById(displayId);
-
-                                if (displayEl) {
-                                    // Update displayed text
-                                    const textSpan = displayEl.querySelector('span');
-                                    if (textSpan) textSpan.textContent = value;
-
-                                    // Toggle visibility
-                                    form.classList.add('d-none');
-                                    displayEl.style.display = 'block';
-                                } else {
-                                    location.reload();
-                                }
+                            if (result.requiresConfirmation) {
+                                showRandomPredictionModal(form, result);
+                            } else if (result.success) {
+                                applyPredictionDisplay(form, value);
                             } else {
                                 alert("Error saving: " + result.message);
                             }
@@ -1069,6 +1058,74 @@
                     }
                 });
             });
+
+            function applyPredictionDisplay(form, scoreText) {
+                const displayId = form.getAttribute('data-display-id');
+                const displayEl = document.getElementById(displayId);
+
+                if (displayEl) {
+                    // Update displayed text
+                    const textSpan = displayEl.querySelector('span');
+                    if (textSpan) textSpan.textContent = scoreText;
+
+                    // Toggle visibility
+                    form.classList.add('d-none');
+                    displayEl.style.display = 'block';
+                } else {
+                    location.reload();
+                }
+            }
+
+            async function finalizePrediction(form, scoreText) {
+                const input = form.querySelector("input[name='PredictionInput']");
+                input.value = scoreText;
+
+                const formData = new FormData(form);
+                formData.set('PredictionInput', scoreText);
+                formData.set('SkipRandomPrompt', 'true');
+
+                try {
+                    const response = await fetch('?handler=SubmitPredictionAjax', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        applyPredictionDisplay(form, scoreText);
+                    } else {
+                        alert("Error saving: " + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert("An error occurred while saving.");
+                }
+            }
+
+            function showRandomPredictionModal(form, result) {
+                document.getElementById('randomPredictionMessage').textContent = result.message;
+
+                const keepBtn = document.getElementById('keepUserScoreBtn');
+                const randomBtn = document.getElementById('useRandomScoreBtn');
+                keepBtn.textContent = `Keep ${result.userScore}`;
+                randomBtn.textContent = `Use ${result.randomScore}`;
+
+                keepBtn.onclick = () => {
+                    bootstrap.Modal.getInstance(document.getElementById('randomPredictionModal')).hide();
+                    finalizePrediction(form, result.userScore);
+                };
+                randomBtn.onclick = () => {
+                    bootstrap.Modal.getInstance(document.getElementById('randomPredictionModal')).hide();
+                    finalizePrediction(form, result.randomScore);
+                };
+
+                new bootstrap.Modal(document.getElementById('randomPredictionModal')).show();
+            }
 
             const ctx = document.getElementById('leaderboardChart').getContext('2d');
 
@@ -1123,6 +1180,24 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Random Prediction Roast Modal -->
+    <div class="modal fade" id="randomPredictionModal" tabindex="-1" aria-labelledby="randomPredictionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="randomPredictionModalLabel">Are you sure about that?</h5>
+                </div>
+                <div class="modal-body">
+                    <p id="randomPredictionMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="keepUserScoreBtn"></button>
+                    <button type="button" class="btn btn-danger" id="useRandomScoreBtn"></button>
                 </div>
             </div>
         </div>
