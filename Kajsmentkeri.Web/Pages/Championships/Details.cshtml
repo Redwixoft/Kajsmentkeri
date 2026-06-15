@@ -591,8 +591,8 @@
                             var myRank = Model.UserRanks.GetValueOrDefault(Model.CurrentUserId.Value, int.MaxValue);
                             var targetRank = Model.UserRanks.GetValueOrDefault(user.UserId, int.MaxValue);
                             
-                            // Rule: See others only if they are below you (targetRank > myRank)
-                            if (myRank >= targetRank)
+                            // Rule: See others only if they are below you (targetRank < myRank)
+                            if (myRank <= targetRank)
                             {
                                 isVisible = false;
                             }
