@@ -52,7 +52,7 @@ public class PredictionService : IPredictionService
 
         if (checkLock)
         {
-            var lockTime = await GetPredictionLockTimeAsync(match.ChampionshipId, matchId, userId);
+            var lockTime = await GetPredictionLockTimeAsync(context, match, userId);
             if (_timeService.UtcNow > lockTime)
             {
                 if (_currentUser.UserId != null && _currentUser.UserId != Guid.Empty)
@@ -146,7 +146,19 @@ public class PredictionService : IPredictionService
         if (match == null)
             throw new Exception("Match not found");
 
+        return await GetPredictionLockTimeAsync(context, match, userId);
+    }
+
+    public async Task<DateTime> GetPredictionLockTimeAsync(Match match, Guid userId)
+    {
+        using var context = _dbContextFactory.CreateDbContext();
+        return await GetPredictionLockTimeAsync(context, match, userId);
+    }
+
+    private async Task<DateTime> GetPredictionLockTimeAsync(AppDbContext context, Match match, Guid userId)
+    {
         var matchStart = match.StartTimeUtc;
+        var championshipId = match.ChampionshipId;
 
         // If it's in the first matches in the championship
         var firstMatches = context.Matches
@@ -154,7 +166,7 @@ public class PredictionService : IPredictionService
             .OrderBy(m => m.StartTimeUtc)
             .Take(8);
 
-        if (firstMatches.Select(m => m.Id).Contains(match.Id))
+        if (await firstMatches.Select(m => m.Id).ContainsAsync(match.Id))
             return matchStart;
 
         // Load leaderboard and determine tied leaders/tails
@@ -308,7 +320,7 @@ public class PredictionService : IPredictionService
         if (!match.Championship.AllowHighConfidencePrediction)
             throw new InvalidOperationException("High confidence predictions are not allowed for this championship.");
 
-        var lockTime = await GetPredictionLockTimeAsync(match.ChampionshipId, matchId, _currentUser.UserId.Value);
+        var lockTime = await GetPredictionLockTimeAsync(context, match, _currentUser.UserId.Value);
         if (_timeService.UtcNow > lockTime)
             throw new InvalidOperationException("Prediction for this match is already locked.");
 

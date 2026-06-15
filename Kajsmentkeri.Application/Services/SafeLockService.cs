@@ -36,6 +36,18 @@ public class SafeLockService : ISafeLockService
             .FirstOrDefaultAsync(sl => sl.MatchId == matchId && sl.OwnerUserId == ownerUserId);
     }
 
+    public async Task<Dictionary<Guid, SafeLock>> GetSafeLocksForOwnerAsync(IEnumerable<Guid> matchIds, Guid ownerUserId)
+    {
+        var ids = matchIds.ToList();
+        if (ids.Count == 0) return new Dictionary<Guid, SafeLock>();
+
+        using var context = _dbContextFactory.CreateDbContext();
+        var safeLocks = await context.SafeLocks
+            .Where(sl => ids.Contains(sl.MatchId) && sl.OwnerUserId == ownerUserId)
+            .ToListAsync();
+        return safeLocks.ToDictionary(sl => sl.MatchId);
+    }
+
     public async Task<HashSet<Guid>> GetOwnerIdsWithSafeLocksAsync(IEnumerable<Guid> matchIds)
     {
         var ids = matchIds.ToList();
@@ -115,17 +127,18 @@ public class SafeLockService : ISafeLockService
         // Resolve user names for audit log
         using var auditScope = _scopeFactory.CreateScope();
         var userManager = auditScope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-        var ownerUser = await userManager.FindByIdAsync(ownerUserId.ToString());
-        var trackedUser = await userManager.FindByIdAsync(trackedUserId.ToString());
+        var auditUserNames = await userManager.Users
+            .Where(u => u.Id == ownerUserId || u.Id == trackedUserId)
+            .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Unknown");
 
         context.PredictionAuditLogs.Add(new PredictionAuditLog
         {
             Id = Guid.NewGuid(),
             MatchId = matchId,
             AdminId = ownerUserId,
-            AdminName = ownerUser?.UserName ?? "Unknown",
+            AdminName = auditUserNames.GetValueOrDefault(ownerUserId, "Unknown"),
             TargetUserId = trackedUserId,
-            TargetUserName = trackedUser?.UserName ?? "Unknown",
+            TargetUserName = auditUserNames.GetValueOrDefault(trackedUserId, "Unknown"),
             NewHomeScore = 0,
             NewAwayScore = 0,
             TimestampUtc = _timeService.UtcNow,
@@ -146,8 +159,9 @@ public class SafeLockService : ISafeLockService
 
         using var scope = _scopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-        var ownerUser = await userManager.FindByIdAsync(ownerUserId.ToString());
-        var trackedUser = await userManager.FindByIdAsync(existing.TrackedUserId.ToString());
+        var auditUserNames = await userManager.Users
+            .Where(u => u.Id == ownerUserId || u.Id == existing.TrackedUserId)
+            .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Unknown");
 
         context.SafeLocks.Remove(existing);
         context.PredictionAuditLogs.Add(new PredictionAuditLog
@@ -155,9 +169,9 @@ public class SafeLockService : ISafeLockService
             Id = Guid.NewGuid(),
             MatchId = matchId,
             AdminId = ownerUserId,
-            AdminName = ownerUser?.UserName ?? "Unknown",
+            AdminName = auditUserNames.GetValueOrDefault(ownerUserId, "Unknown"),
             TargetUserId = existing.TrackedUserId,
-            TargetUserName = trackedUser?.UserName ?? "Unknown",
+            TargetUserName = auditUserNames.GetValueOrDefault(existing.TrackedUserId, "Unknown"),
             NewHomeScore = 0,
             NewAwayScore = 0,
             TimestampUtc = _timeService.UtcNow,
@@ -194,8 +208,14 @@ public class SafeLockService : ISafeLockService
             if (safeLocks.Count == 0) continue;
 
             var match = await context.Matches.FirstAsync(m => m.Id == matchId);
-            var trackedUser = await userManager.FindByIdAsync(affectedUser.ToString());
-            var trackedUserName = trackedUser?.UserName ?? "Unknown";
+
+            var relevantUserIds = new HashSet<Guid> { affectedUser };
+            relevantUserIds.UnionWith(safeLocks.Select(sl => sl.OwnerUserId));
+            var userNames = await userManager.Users
+                .Where(u => relevantUserIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Unknown");
+
+            var trackedUserName = userNames.GetValueOrDefault(affectedUser, "Unknown");
 
             foreach (var sl in safeLocks)
             {
@@ -210,8 +230,7 @@ public class SafeLockService : ISafeLockService
                 if (targetHome < 0) continue;
 
                 // Check if owner's lock time has passed
-                var ownerLockTime = await _predictionService.GetPredictionLockTimeAsync(
-                    match.ChampionshipId, matchId, sl.OwnerUserId);
+                var ownerLockTime = await _predictionService.GetPredictionLockTimeAsync(match, sl.OwnerUserId);
                 if (_timeService.UtcNow > ownerLockTime) continue;
 
                 var ownerPrediction = await context.Predictions
@@ -221,8 +240,7 @@ public class SafeLockService : ISafeLockService
                     ? (WinnerOutcome?)GetOutcome(ownerPrediction.PredictedHome, ownerPrediction.PredictedAway)
                     : null;
 
-                var ownerUser = await userManager.FindByIdAsync(sl.OwnerUserId.ToString());
-                var ownerUserName = ownerUser?.UserName ?? "Unknown";
+                var ownerUserName = userNames.GetValueOrDefault(sl.OwnerUserId, "Unknown");
 
                 int? oldH = ownerPrediction?.PredictedHome;
                 int? oldA = ownerPrediction?.PredictedAway;
@@ -282,36 +300,37 @@ public class SafeLockService : ISafeLockService
 
         if (invalidLocks.Count == 0) return;
 
+        // Invalid when tracked user is no longer strictly better-ranked than owner
+        var locksToRemove = invalidLocks
+            .Where(sl => ranks.GetValueOrDefault(sl.TrackedUserId, int.MaxValue) >= ranks.GetValueOrDefault(sl.OwnerUserId, int.MaxValue))
+            .ToList();
+
+        if (locksToRemove.Count == 0) return;
+
         using var scope = _scopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var userIds = locksToRemove.SelectMany(sl => new[] { sl.OwnerUserId, sl.TrackedUserId }).Distinct().ToList();
+        var userNames = await userManager.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Unknown");
 
-        foreach (var sl in invalidLocks)
+        foreach (var sl in locksToRemove)
         {
-            var ownerRank = ranks.GetValueOrDefault(sl.OwnerUserId, int.MaxValue);
-            var trackedRank = ranks.GetValueOrDefault(sl.TrackedUserId, int.MaxValue);
-
-            // Invalid when tracked user is no longer strictly better-ranked than owner
-            if (trackedRank >= ownerRank)
+            context.SafeLocks.Remove(sl);
+            context.PredictionAuditLogs.Add(new PredictionAuditLog
             {
-                var ownerUser = await userManager.FindByIdAsync(sl.OwnerUserId.ToString());
-                var trackedUser = await userManager.FindByIdAsync(sl.TrackedUserId.ToString());
-
-                context.SafeLocks.Remove(sl);
-                context.PredictionAuditLogs.Add(new PredictionAuditLog
-                {
-                    Id = Guid.NewGuid(),
-                    MatchId = sl.MatchId,
-                    AdminId = sl.OwnerUserId,
-                    AdminName = ownerUser?.UserName ?? "Unknown",
-                    TargetUserId = sl.TrackedUserId,
-                    TargetUserName = trackedUser?.UserName ?? "Unknown",
-                    NewHomeScore = 0,
-                    NewAwayScore = 0,
-                    TimestampUtc = _timeService.UtcNow,
-                    IsSafeLockRemoved = true,
-                    MatchSummary = $"{sl.Match.HomeTeam} - {sl.Match.AwayTeam}"
-                });
-            }
+                Id = Guid.NewGuid(),
+                MatchId = sl.MatchId,
+                AdminId = sl.OwnerUserId,
+                AdminName = userNames.GetValueOrDefault(sl.OwnerUserId, "Unknown"),
+                TargetUserId = sl.TrackedUserId,
+                TargetUserName = userNames.GetValueOrDefault(sl.TrackedUserId, "Unknown"),
+                NewHomeScore = 0,
+                NewAwayScore = 0,
+                TimestampUtc = _timeService.UtcNow,
+                IsSafeLockRemoved = true,
+                MatchSummary = $"{sl.Match.HomeTeam} - {sl.Match.AwayTeam}"
+            });
         }
 
         await context.SaveChangesAsync();

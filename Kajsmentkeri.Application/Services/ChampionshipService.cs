@@ -9,11 +9,13 @@ public class ChampionshipService : IChampionshipService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
     private readonly ICurrentUserService _currentUser;
+    private readonly ILeaderboardService _leaderboardService;
 
-    public ChampionshipService(ICurrentUserService currentUser, IDbContextFactory<AppDbContext> dbContextFactory)
+    public ChampionshipService(ICurrentUserService currentUser, IDbContextFactory<AppDbContext> dbContextFactory, ILeaderboardService leaderboardService)
     {
         _currentUser = currentUser;
         _dbContextFactory = dbContextFactory;
+        _leaderboardService = leaderboardService;
     }
 
     public async Task<List<Championship>> GetAllAsync()
@@ -81,6 +83,7 @@ public class ChampionshipService : IChampionshipService
         context.Championships.Add(championship);
         await context.SaveChangesAsync();
 
+        _leaderboardService.InvalidateLeaderboard(championship.Id);
         return championship;
     }
 
@@ -90,6 +93,7 @@ public class ChampionshipService : IChampionshipService
         context.Championships.Add(championship);
         await context.SaveChangesAsync();
 
+        _leaderboardService.InvalidateLeaderboard(championship.Id);
         return championship;
     }
 
@@ -190,6 +194,8 @@ public class ChampionshipService : IChampionshipService
         context.Championships.Remove(championship);
 
         await context.SaveChangesAsync();
+
+        _leaderboardService.InvalidateLeaderboard(id);
     }
 
     public async Task EndChampionshipAsync(Guid championshipId)
@@ -236,6 +242,8 @@ public class ChampionshipService : IChampionshipService
 
         championship.IsChampionshipEnded = true;
         await context.SaveChangesAsync();
+
+        _leaderboardService.InvalidateLeaderboard(championshipId);
     }
 
     public async Task RecalculateChampionshipAsync(Guid championshipId)
@@ -280,6 +288,8 @@ public class ChampionshipService : IChampionshipService
         }
 
         await context.SaveChangesAsync();
+
+        _leaderboardService.InvalidateLeaderboard(championshipId);
     }
 
     public async Task<bool> IsParticipatingAsync(Guid championshipId, Guid userId)
@@ -470,6 +480,7 @@ public class ChampionshipService : IChampionshipService
 
         await context.SaveChangesAsync();
 
+        _leaderboardService.InvalidateLeaderboard(newChampionshipId);
         return newChampionship;
     }
 

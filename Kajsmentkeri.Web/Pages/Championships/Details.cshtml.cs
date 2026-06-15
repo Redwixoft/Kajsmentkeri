@@ -149,7 +149,6 @@ public class DetailsModel : PageModel
         var championshipTask = _championshipService.GetByIdAsync(id);
         var leaderboardTask = _leaderboardService.GetLeaderboardAsync(id);
         var matchesTask = _matchService.GetMatchesByChampionshipAsync(id);
-        var predictionsTask = _predictionService.GetPredictionsForChampionshipAsync(id);
 
         Championship = await championshipTask;
         if (Championship == null)
@@ -163,8 +162,7 @@ public class DetailsModel : PageModel
 
         Leaderboard = await leaderboardTask;
         Matches = await matchesTask;
-        var predictions = await predictionsTask;
-        var users = await _userManager.Users.ToListAsync();
+        var predictions = Matches.SelectMany(m => m.Predictions).ToList();
 
         var participantIds = await _championshipService.GetParticipantUserIdsAsync(id);
         var usersWithPredictions = predictions.Select(p => p.UserId).Distinct().ToHashSet();
@@ -172,6 +170,12 @@ public class DetailsModel : PageModel
         // Merge formal participants with users who already have predictions (backwards compatibility)
         ParticipantUserIds = new HashSet<Guid>(participantIds);
         ParticipantUserIds.UnionWith(usersWithPredictions);
+
+        var relevantUserIds = new HashSet<Guid>(ParticipantUserIds);
+        if (CurrentUserId.HasValue)
+            relevantUserIds.Add(CurrentUserId.Value);
+
+        var users = await _userManager.Users.Where(u => relevantUserIds.Contains(u.Id)).ToListAsync();
 
         // Add zero-entry rows for participants not yet on the leaderboard
         var leaderboardUserIds = Leaderboard.Select(e => e.UserId).ToHashSet();
@@ -189,7 +193,6 @@ public class DetailsModel : PageModel
 
         // Sort users: logged-in first, then others alphabetically
         Users = users
-            .Where(u => u.Id == CurrentUserId || ParticipantUserIds.Contains(u.Id))
             .OrderBy(u => u.Id == CurrentUserId ? 0 : 1)
             .ThenBy(u => u.UserName)
             .Select(u => new UserColumn
@@ -306,11 +309,7 @@ public class DetailsModel : PageModel
 
             if (CurrentUserId.HasValue)
             {
-                foreach (var matchId in SafeLockMatchIds)
-                {
-                    var sl = await _safeLockService.GetSafeLockAsync(matchId, CurrentUserId.Value);
-                    if (sl != null) CurrentUserSafeLocks[matchId] = sl;
-                }
+                CurrentUserSafeLocks = await _safeLockService.GetSafeLocksForOwnerAsync(SafeLockMatchIds, CurrentUserId.Value);
 
                 var myRank = UserRanks.GetValueOrDefault(CurrentUserId.Value, int.MaxValue);
                 EligibleTrackedUsers = Leaderboard

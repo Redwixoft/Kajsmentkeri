@@ -42,6 +42,14 @@ public class AppDbContext : DbContext
             .HasForeignKey(p => p.MatchId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Postgres does not auto-create FK indexes — these serve the
+        // championship-filtered match queries and prediction-to-match joins
+        modelBuilder.Entity<Match>()
+            .HasIndex(m => new { m.ChampionshipId, m.StartTimeUtc });
+
+        modelBuilder.Entity<Prediction>()
+            .HasIndex(p => p.MatchId);
+
         // No AppUser nav – but we still reference UserId
         // So enforce one prediction per user per match
         modelBuilder.Entity<Prediction>()
