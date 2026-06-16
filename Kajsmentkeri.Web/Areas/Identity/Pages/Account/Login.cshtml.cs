@@ -122,7 +122,11 @@ namespace Kajsmentkeri.Web.Areas.Identity.Pages.Account
                     return Page();
                 }
 
-                var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                // Always issue a persistent cookie so the 30-day expiry actually applies.
+                // Without this, an unchecked "Remember me" produces a session cookie, which
+                // Safari (especially iOS) discards aggressively on app restart/backgrounding,
+                // logging users out far more often than on Chrome/Firefox.
+                var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, isPersistent: true, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
