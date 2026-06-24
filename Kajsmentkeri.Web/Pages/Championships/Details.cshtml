@@ -207,6 +207,7 @@
                     <th>One-goal misses</th>
                     <th>Luckers</th>
                     <th>Only ones</th>
+                    <th class="hidden-stat d-none">Only one tries</th>
                     <th class="hidden-stat d-none">Rarity pts</th>
                     <th class="hidden-stat d-none">
                         Score diff
@@ -298,6 +299,7 @@
                         <td>@entry.OneGoalMisses</td>
                         <td>@entry.ExactScores</td>
                         <td>@entry.OnlyCorrect</td>
+                        <td class="hidden-stat d-none">@entry.OnlyOneTries</td>
                         <td class="hidden-stat d-none">@(Model.Championship?.ScoringRules?.RarityPointsBonus > 0 ? entry.RarityPoints.ToString("0.####") : "—")</td>
                         <td class="hidden-stat d-none">@diff.ScoreDiff</td>
                         <td class="hidden-stat d-none">@diff.ExactDiff</td>
@@ -733,7 +735,7 @@
 
                 @{ StatRow("Championship Lucker 🍀",
                     Model.PageStats.ChampionshipLucker != null
-                        ? $"{Model.PageStats.ChampionshipLucker} ({Model.PageStats.ChampionshipLuckerCount} exact scores, lowest one-goal miss / exact score ratio)"
+                        ? $"{Model.PageStats.ChampionshipLucker} (lowest one-goal miss / exact score ratio)"
                         : null); }
 
                 @{ StatRow("Championship Underdog 😤",
@@ -742,8 +744,8 @@
                         : null); }
 
                 @{ StatRow("Most daring — and wrong 🤡",
-                    Model.PageStats.MostFailedOnlyOnesTrier != null
-                        ? $"{Model.PageStats.MostFailedOnlyOnesTrier} ({Model.PageStats.MostFailedOnlyOnesCount} failed solo predictions)"
+                    Model.PageStats.MostFailedOnlyOnesTriers.Count > 0
+                        ? $"{string.Join(", ", Model.PageStats.MostFailedOnlyOnesTriers)} ({Model.PageStats.MostFailedOnlyOnesCount} failed solo predictions)"
                         : null); }
 
                 @{ StatRow("Longest correct streak 🔥",

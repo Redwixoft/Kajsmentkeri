@@ -62,9 +62,8 @@ public class DetailsModel : PageModel
         public List<string> MostExactScoreTeams { get; set; } = new();
         public int MostExactScoreTeamCount { get; set; }
         public string? ChampionshipLucker { get; set; }
-        public int ChampionshipLuckerCount { get; set; }
         public string? ChampionshipUnderdog { get; set; }
-        public string? MostFailedOnlyOnesTrier { get; set; }
+        public List<string> MostFailedOnlyOnesTriers { get; set; } = new();
         public int MostFailedOnlyOnesCount { get; set; }
         public List<(string Score, int Count)> TopResults { get; set; } = new();
         public List<(string Score, int Count)> TopPredictions { get; set; } = new();
@@ -763,27 +762,40 @@ public class DetailsModel : PageModel
                 .Select(kv => kv.Key).OrderBy(t => t).ToList();
         }
 
-        // Championship Lucker — most exact scores in leaderboard
-        var lucker = Leaderboard.MaxBy(e => e.ExactScores);
-        if (lucker != null && lucker.ExactScores > 0)
-        {
+        // Championship Lucker — lowest one-goal miss / exact score ratio (must have at least one exact score).
+        // Ties broken by most exact scores, then name, for deterministic results.
+        var lucker = Leaderboard
+            .Where(e => e.ExactScores > 0)
+            .OrderBy(e => (double)e.OneGoalMisses / e.ExactScores)
+            .ThenByDescending(e => e.ExactScores)
+            .ThenBy(e => e.UserName)
+            .FirstOrDefault();
+        if (lucker != null)
             result.ChampionshipLucker = lucker.UserName;
-            result.ChampionshipLuckerCount = lucker.ExactScores;
-        }
 
-        // Championship Underdog — highest one-goal miss / exact score ratio (0 exact scores = worst)
+        // Championship Underdog — highest one-goal miss / exact score ratio (0 exact scores = worst).
+        // Ties broken by most one-goal misses, then name, for deterministic results.
         var underdog = Leaderboard
             .Where(e => e.OneGoalMisses > 0)
-            .MaxBy(e => (double)e.OneGoalMisses / (e.ExactScores + 0.5));
+            .OrderByDescending(e => (double)e.OneGoalMisses / (e.ExactScores + 0.5))
+            .ThenByDescending(e => e.OneGoalMisses)
+            .ThenBy(e => e.UserName)
+            .FirstOrDefault();
         if (underdog != null)
             result.ChampionshipUnderdog = underdog.UserName;
 
-        // Most failed only-one tries
-        var failedTrier = Leaderboard.MaxBy(e => e.OnlyOneTries - e.OnlyCorrect);
-        if (failedTrier != null && failedTrier.OnlyOneTries - failedTrier.OnlyCorrect > 0)
+        // Most failed only-one tries — all users tied at the top are shown
+        var maxFailedOnlyOnes = Leaderboard.Count > 0
+            ? Leaderboard.Max(e => e.OnlyOneTries - e.OnlyCorrect)
+            : 0;
+        if (maxFailedOnlyOnes > 0)
         {
-            result.MostFailedOnlyOnesTrier = failedTrier.UserName;
-            result.MostFailedOnlyOnesCount = failedTrier.OnlyOneTries - failedTrier.OnlyCorrect;
+            result.MostFailedOnlyOnesCount = maxFailedOnlyOnes;
+            result.MostFailedOnlyOnesTriers = Leaderboard
+                .Where(e => e.OnlyOneTries - e.OnlyCorrect == maxFailedOnlyOnes)
+                .Select(e => e.UserName)
+                .OrderBy(u => u)
+                .ToList();
         }
 
         // Most common results — all tied at top count (normalized, per unique match)
