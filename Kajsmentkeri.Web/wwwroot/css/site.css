@@ -115,3 +115,6 @@ tr:hover .safe-lock-btn {
 .bg-purple {
     background-color: #6f42c1 !important;
 }
+.match-line-after > td {
+    border-bottom: 3px solid #212529;
+}

@@ -18,5 +18,7 @@ public class Match
     public bool? IsFinalMatch { get; set; }
     public bool? IsBronzeMedalMatch { get; set; }
 
+    public bool LineAfter { get; set; }
+
     public ICollection<Prediction> Predictions { get; set; } = new List<Prediction>();
 }

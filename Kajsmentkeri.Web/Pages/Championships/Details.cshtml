@@ -281,7 +281,7 @@
                             {
                                 <span title="Previous last place (@Model.PreviousChampionshipLabel)" style="font-size: 0.8em; cursor: help;">🤡</span>
                             }
-                            @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == entry.UserId && kvp.Value.IsHighConfidence))
+                            @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == entry.UserId && kvp.Value.IsHighConfidence && Model.Matches.Any(m => m.Id == kvp.Key.MatchId && m.HomeScore.HasValue && m.AwayScore.HasValue)))
                             {
                                 <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
                             }
@@ -447,7 +447,7 @@
                     {
                         <span title="Previous last place (@Model.PreviousChampionshipLabel)" style="font-size: 0.8em; cursor: help;">🤡</span>
                     }
-                    @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == user.UserId && kvp.Value.IsHighConfidence))
+                    @if (Model.Championship?.AllowHighConfidencePrediction == true && Model.PredictionMap.Any(kvp => kvp.Key.UserId == user.UserId && kvp.Value.IsHighConfidence && Model.Matches.Any(m => m.Id == kvp.Key.MatchId && m.HomeScore.HasValue && m.AwayScore.HasValue)))
                     {
                         <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
                     }
@@ -475,7 +475,7 @@
             var isMyHighConfidenceRow = myMatchPrediction?.IsHighConfidence == true;
             var myPredLocked = Model.CurrentUserId.HasValue && Model.IsPredictionLockedSync(match.Id, Model.CurrentUserId.Value);
             var canToggleHCForRow = Model.CurrentUserId.HasValue && !myPredLocked && myMatchPrediction != null && Model.Championship!.AllowHighConfidencePrediction && !currentUserHcLocked;
-            <tr title="@(isMyHighConfidenceRow ? "Your high confidence prediction!" : "")" style="@(isMyHighConfidenceRow ? "outline: 2px solid #fd7e14; outline-offset: -1px;" : "")">
+            <tr class="@(match.LineAfter ? "match-line-after" : "")" title="@(isMyHighConfidenceRow ? "Your high confidence prediction!" : "")" style="@(isMyHighConfidenceRow ? "outline: 2px solid #fd7e14; outline-offset: -1px;" : "")">
                 <td>
                     <div class="d-flex align-items-center justify-content-center">
                         @if (matchStarted)

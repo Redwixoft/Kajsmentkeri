@@ -16,7 +16,7 @@ public class MatchService : IMatchService
         _timeService = timeService;
     }
 
-    public async Task<Match> CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime, bool? isFinalMatch = null, bool? isBronzeMedalMatch = null)
+    public async Task<Match> CreateMatchAsync(Guid championshipId, string homeTeam, string awayTeam, DateTime startTime, bool? isFinalMatch = null, bool? isBronzeMedalMatch = null, bool lineAfter = false)
     {
         var match = new Match
         {
@@ -25,7 +25,8 @@ public class MatchService : IMatchService
             HomeTeam = homeTeam,
             AwayTeam = awayTeam,
             IsFinalMatch = isFinalMatch,
-            IsBronzeMedalMatch = isBronzeMedalMatch
+            IsBronzeMedalMatch = isBronzeMedalMatch,
+            LineAfter = lineAfter
         };
         match.StartTimeUtc = _timeService.ToUtc(startTime);
 
@@ -64,7 +65,7 @@ public class MatchService : IMatchService
         await context.SaveChangesAsync();
     }
 
-    public async Task UpdateMatchAsync(Guid matchId, string homeTeam, string awayTeam, DateTime startTime, bool? isFinalMatch, bool? isBronzeMedalMatch)
+    public async Task UpdateMatchAsync(Guid matchId, string homeTeam, string awayTeam, DateTime startTime, bool? isFinalMatch, bool? isBronzeMedalMatch, bool lineAfter = false)
     {
         using var context = _dbContextFactory.CreateDbContext();
         var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
@@ -75,6 +76,7 @@ public class MatchService : IMatchService
         match.StartTimeUtc = _timeService.ToUtc(startTime);
         match.IsFinalMatch = isFinalMatch;
         match.IsBronzeMedalMatch = isBronzeMedalMatch;
+        match.LineAfter = lineAfter;
 
         await context.SaveChangesAsync();
     }
