@@ -480,7 +480,7 @@ public class DetailsModel : PageModel
             return await OnGetAsync(id); // Redisplay page with errors
         }
 
-        await _matchService.UpdateMatchResultAsync(MatchId, home, away);
+        await _matchService.UpdateMatchResultAsync(MatchId, home, away, user.Id, user.UserName);
         await _scoringService.RecalculateForMatchAsync(MatchId);
 
         _logger.LogInformation($"{nameof(DetailsModel)}.{nameof(OnPostUpdateResultAsync)} (Championship - Result POST) start: {_timeService.UtcNow}");
@@ -501,7 +501,7 @@ public class DetailsModel : PageModel
         {
             userNames[l.TargetUserId] = l.TargetUserName;
 
-            if (l.IsRejected || l.IsSafeLockCreated || l.IsSafeLockRemoved)
+            if (l.IsRejected || l.IsSafeLockCreated || l.IsSafeLockRemoved || l.IsHighConfidenceSet || l.IsHighConfidenceRemoved || l.IsResultUpdate)
                 continue;
 
             var newScore = (l.NewHomeScore, l.NewAwayScore);
@@ -532,6 +532,22 @@ public class DetailsModel : PageModel
             {
                 message = $"🔓 [SAFE LOCK REMOVED] Safe lock by <b>{l.AdminName}</b> on <b>{l.MatchSummary}</b> " +
                           $"(tracking <b>{l.TargetUserName}</b>) was removed.";
+            }
+            else if (l.IsResultUpdate)
+            {
+                message = $"⚽ [RESULT] <b>{l.AdminName}</b> {(l.OldHomeScore == null ? "set" : "updated")} the result of " +
+                          $"<b>{l.MatchSummary}</b> to <b>{l.NewHomeScore}:{l.NewAwayScore}</b>" +
+                          $"{(l.OldHomeScore == null ? "" : $" (was {l.OldHomeScore}:{l.OldAwayScore} before)")}.";
+            }
+            else if (l.IsHighConfidenceSet)
+            {
+                message = $"🚀 [HIGH CONFIDENCE] <b>{l.TargetUserName}</b> marked their prediction " +
+                          $"<b>{l.NewHomeScore}:{l.NewAwayScore}</b> on <b>{l.MatchSummary}</b> as high confidence.";
+            }
+            else if (l.IsHighConfidenceRemoved)
+            {
+                message = $"🚀 [HIGH CONFIDENCE REMOVED] <b>{l.TargetUserName}</b> removed high confidence from their prediction " +
+                          $"<b>{l.NewHomeScore}:{l.NewAwayScore}</b> on <b>{l.MatchSummary}</b>.";
             }
             else if (l.IsSafeLockTrigger)
             {

@@ -53,14 +53,35 @@ public class MatchService : IMatchService
             .ToListAsync();
     }
 
-    public async Task UpdateMatchResultAsync(Guid matchId, int homeScore, int awayScore)
+    public async Task UpdateMatchResultAsync(Guid matchId, int homeScore, int awayScore, Guid? actorId = null, string? actorName = null)
     {
         using var context = _dbContextFactory.CreateDbContext();
         var match = await context.Matches.FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null) throw new InvalidOperationException("Match not found");
 
+        var oldHome = match.HomeScore;
+        var oldAway = match.AwayScore;
+
         match.HomeScore = homeScore;
         match.AwayScore = awayScore;
+
+        if (actorId != null && (oldHome != homeScore || oldAway != awayScore))
+        {
+            context.PredictionAuditLogs.Add(new PredictionAuditLog
+            {
+                Id = Guid.NewGuid(),
+                MatchId = matchId,
+                AdminId = actorId.Value,
+                AdminName = actorName ?? "User",
+                OldHomeScore = oldHome,
+                OldAwayScore = oldAway,
+                NewHomeScore = homeScore,
+                NewAwayScore = awayScore,
+                TimestampUtc = _timeService.UtcNow,
+                IsResultUpdate = true,
+                MatchSummary = $"{match.HomeTeam} - {match.AwayTeam}"
+            });
+        }
 
         await context.SaveChangesAsync();
     }

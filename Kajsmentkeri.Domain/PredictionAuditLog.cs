@@ -20,5 +20,8 @@ public class PredictionAuditLog
     public bool IsSafeLockTrigger { get; set; }
     public bool IsSafeLockCreated { get; set; }
     public bool IsSafeLockRemoved { get; set; }
+    public bool IsHighConfidenceSet { get; set; }
+    public bool IsHighConfidenceRemoved { get; set; }
+    public bool IsResultUpdate { get; set; }
     public string MatchSummary { get; set; } = string.Empty; // e.g. "Canada - France"
 }

@@ -353,6 +353,22 @@ public class PredictionService : IPredictionService
             prediction.IsHighConfidence = false;
         }
 
+        context.PredictionAuditLogs.Add(new PredictionAuditLog
+        {
+            Id = Guid.NewGuid(),
+            MatchId = matchId,
+            AdminId = _currentUser.UserId.Value,
+            AdminName = _currentUser.UserName ?? "User",
+            TargetUserId = _currentUser.UserId.Value,
+            TargetUserName = _currentUser.UserName ?? "User",
+            NewHomeScore = prediction.PredictedHome,
+            NewAwayScore = prediction.PredictedAway,
+            TimestampUtc = _timeService.UtcNow,
+            IsHighConfidenceSet = prediction.IsHighConfidence,
+            IsHighConfidenceRemoved = !prediction.IsHighConfidence,
+            MatchSummary = $"{match.HomeTeam} - {match.AwayTeam}"
+        });
+
         await context.SaveChangesAsync();
     }
 }
