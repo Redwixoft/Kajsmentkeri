@@ -476,7 +476,12 @@
             var myPredLocked = Model.CurrentUserId.HasValue && Model.IsPredictionLockedSync(match.Id, Model.CurrentUserId.Value);
             var canToggleHCForRow = Model.CurrentUserId.HasValue && !myPredLocked && myMatchPrediction != null && Model.Championship!.AllowHighConfidencePrediction && !currentUserHcLocked;
             <tr class="@(match.LineAfter ? "match-line-after" : "")" title="@(isMyHighConfidenceRow ? "Your high confidence prediction!" : "")" style="@(isMyHighConfidenceRow ? "outline: 2px solid #fd7e14; outline-offset: -1px;" : "")">
-                <td>
+                @{
+                    var matchNameCellClass = match.IsFinalMatch == true ? "bg-warning text-dark"
+                        : match.IsBronzeMedalMatch == true ? "bg-warning bg-opacity-50 text-dark"
+                        : "";
+                }
+                <td class="@matchNameCellClass">
                     <div class="d-flex align-items-center justify-content-center">
                         @if (matchStarted)
                         {
