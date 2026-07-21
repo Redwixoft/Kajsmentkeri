@@ -285,10 +285,6 @@
                             {
                                 <span title="High confidence prediction used!" style="cursor: help;">🚀</span>
                             }
-                            @if (Model.UsersWithActiveSafeLocks.Contains(entry.UserId))
-                            {
-                                <span title="Has an active safe lock" style="font-size: 0.8em; cursor: help;">🔐</span>
-                            }
                             @if (Model.CurrentUserId == entry.UserId)
                             {
                                 <span>👈</span>
@@ -609,6 +605,7 @@
                     var cellId = $"edit-{match.Id}-{user.UserId}";
                     var canEdit = isOwnColumn && !isPredictionLocked && Model.IsCurrentUserParticipating;
                     var canToggleHighConfidence = isOwnColumn && !isPredictionLocked && hasPrediction && Model.Championship!.AllowHighConfidencePrediction;
+                    var userHasSafeLockOnMatch = Model.SafeLockOwnersByMatch.TryGetValue(match.Id, out var safeLockOwners) && safeLockOwners.Contains(user.UserId);
 
                     <td class="prediction-cell @predictionCss">
 
@@ -630,6 +627,11 @@
                                 else if (hasPrediction)
                                 {
                                     <span title="Hidden until match starts">🔒</span>
+                                }
+
+                                @if (userHasSafeLockOnMatch)
+                                {
+                                    <span title="Has an active safe lock on this match" class="ms-1" style="cursor: help;">🔐</span>
                                 }
 
                                 @if (canEdit)

@@ -48,17 +48,19 @@ public class SafeLockService : ISafeLockService
         return safeLocks.ToDictionary(sl => sl.MatchId);
     }
 
-    public async Task<HashSet<Guid>> GetOwnerIdsWithSafeLocksAsync(IEnumerable<Guid> matchIds)
+    public async Task<Dictionary<Guid, HashSet<Guid>>> GetOwnerIdsWithSafeLocksByMatchAsync(IEnumerable<Guid> matchIds)
     {
         var ids = matchIds.ToList();
-        if (ids.Count == 0) return new HashSet<Guid>();
+        if (ids.Count == 0) return new Dictionary<Guid, HashSet<Guid>>();
 
         using var context = _dbContextFactory.CreateDbContext();
-        var ownerIds = await context.SafeLocks
+        var safeLocks = await context.SafeLocks
             .Where(sl => ids.Contains(sl.MatchId))
-            .Select(sl => sl.OwnerUserId)
+            .Select(sl => new { sl.MatchId, sl.OwnerUserId })
             .ToListAsync();
-        return ownerIds.ToHashSet();
+        return safeLocks
+            .GroupBy(sl => sl.MatchId)
+            .ToDictionary(g => g.Key, g => g.Select(sl => sl.OwnerUserId).ToHashSet());
     }
 
     public async Task SetSafeLockAsync(Guid matchId, Guid ownerUserId, Guid trackedUserId,

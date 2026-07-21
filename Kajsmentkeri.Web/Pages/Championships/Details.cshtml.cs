@@ -103,7 +103,7 @@ public class DetailsModel : PageModel
     // Safe lock
     public HashSet<Guid> SafeLockMatchIds { get; set; } = new();
     public Dictionary<Guid, SafeLock> CurrentUserSafeLocks { get; set; } = new();
-    public HashSet<Guid> UsersWithActiveSafeLocks { get; set; } = new();
+    public Dictionary<Guid, HashSet<Guid>> SafeLockOwnersByMatch { get; set; } = new();
     public List<LeaderboardEntryDto> EligibleTrackedUsers { get; set; } = new();
     public bool BronzeMedalMatchResultAvailable { get; set; } = true;
 
@@ -304,7 +304,7 @@ public class DetailsModel : PageModel
 
         if (SafeLockMatchIds.Count > 0)
         {
-            UsersWithActiveSafeLocks = await _safeLockService.GetOwnerIdsWithSafeLocksAsync(SafeLockMatchIds);
+            SafeLockOwnersByMatch = await _safeLockService.GetOwnerIdsWithSafeLocksByMatchAsync(SafeLockMatchIds);
 
             if (CurrentUserId.HasValue)
             {
