@@ -523,8 +523,9 @@
                                     data-match-id="@match.Id"
                                     data-home-team="@match.HomeTeam"
                                     data-away-team="@match.AwayTeam"
-                                    title="@(hasSafeLock ? "Safe Lock active – click to edit" : "Set Safe Lock")"
-                                    onclick="openSafeLockModal('@match.Id', '@match.HomeTeam', '@match.AwayTeam')">
+                                    disabled="@(myPredLocked ? "disabled" : null)"
+                                    title="@(myPredLocked ? "Safe Lock locked – no longer editable" : hasSafeLock ? "Safe Lock active – click to edit" : "Set Safe Lock")"
+                                    onclick="@(myPredLocked ? "" : $"openSafeLockModal('{match.Id}', '{match.HomeTeam}', '{match.AwayTeam}')")">
                                 🔐
                             </button>
                         }

@@ -74,6 +74,10 @@ public class SafeLockService : ISafeLockService
             .FirstOrDefaultAsync(m => m.Id == matchId);
         if (match == null) throw new InvalidOperationException("Match not found.");
 
+        var lockTime = await _predictionService.GetPredictionLockTimeAsync(match, ownerUserId);
+        if (_timeService.UtcNow > lockTime)
+            throw new InvalidOperationException("Safe lock can no longer be set or changed once your prediction for this match is locked.");
+
         // For the final match, require the bronze medal match to have been played first.
         // The bronze medal match itself has no such prerequisite.
         if (match.IsFinalMatch == true)
@@ -158,6 +162,10 @@ public class SafeLockService : ISafeLockService
             .Include(sl => sl.Match)
             .FirstOrDefaultAsync(sl => sl.MatchId == matchId && sl.OwnerUserId == ownerUserId);
         if (existing == null) return;
+
+        var lockTime = await _predictionService.GetPredictionLockTimeAsync(existing.Match, ownerUserId);
+        if (_timeService.UtcNow > lockTime)
+            throw new InvalidOperationException("Safe lock can no longer be removed once your prediction for this match is locked.");
 
         using var scope = _scopeFactory.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
