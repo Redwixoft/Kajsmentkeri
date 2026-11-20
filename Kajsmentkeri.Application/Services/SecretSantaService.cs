@@ -20,23 +20,37 @@ public class SecretSantaService : ISecretSantaService
         _configuration = configuration;
     }
 
-    private int RulesPerUser => _configuration.GetValue("SecretSanta:RulesPerUser", 4);
-
-    private List<string> RulePool =>
-        (_configuration.GetSection("SecretSanta:Rules").Get<string[]>() ?? Array.Empty<string>())
-            .Select(r => r.Trim())
-            .Where(r => r.Length > 0)
-            .Distinct()
+    // Each inner list is one group; a user gets exactly one rule from every group.
+    private List<List<string>> RuleGroups =>
+        _configuration.GetSection("SecretSanta:RuleGroups").GetChildren()
+            .Select(g => (g.Get<string[]>() ?? Array.Empty<string>())
+                .Select(r => r.Trim())
+                .Where(r => r.Length > 0)
+                .Distinct()
+                .ToList())
+            .Where(g => g.Count > 0)
             .ToList();
+
+    // Show rules in group order (colour, property, letter, extra) regardless of storage order.
+    private List<string> OrderByGroup(IEnumerable<string> rules)
+    {
+        var groups = RuleGroups;
+        int GroupIndex(string rule)
+        {
+            var i = groups.FindIndex(g => g.Contains(rule));
+            return i < 0 ? int.MaxValue : i;
+        }
+        return rules.OrderBy(GroupIndex).ToList();
+    }
 
     public async Task<IReadOnlyList<string>> GetUserRulesAsync(Guid userId)
     {
         await using var context = await _dbContextFactory.CreateDbContextAsync();
-        return await context.SecretSantaRuleAssignments
+        var rules = await context.SecretSantaRuleAssignments
             .Where(a => a.UserId == userId)
-            .OrderBy(a => a.AssignedAtUtc).ThenBy(a => a.Id)
             .Select(a => a.RuleText)
             .ToListAsync();
+        return OrderByGroup(rules);
     }
 
     public async Task<IReadOnlyList<string>> AssignRulesAsync(Guid userId, string nickname)
@@ -55,25 +69,30 @@ public class SecretSantaService : ISecretSantaService
 
             var existing = await context.SecretSantaRuleAssignments
                 .Where(a => a.UserId == userId)
-                .OrderBy(a => a.AssignedAtUtc).ThenBy(a => a.Id)
                 .Select(a => a.RuleText)
                 .ToListAsync();
             if (existing.Count > 0)
             {
                 await tx.CommitAsync();
-                return (IReadOnlyList<string>)existing;
+                return (IReadOnlyList<string>)OrderByGroup(existing);
             }
 
             var taken = (await context.SecretSantaRuleAssignments
                 .Select(a => a.RuleText)
                 .ToListAsync()).ToHashSet();
 
-            var available = RulePool.Where(r => !taken.Contains(r)).ToList();
-            var count = RulesPerUser;
-            if (available.Count < count)
-                throw new InvalidOperationException("There are not enough unassigned rules left. Please contact the administrator.");
+            var groups = RuleGroups;
+            if (groups.Count == 0)
+                throw new InvalidOperationException("No Secret Santa rules are configured. Please contact the administrator.");
 
-            var picked = available.OrderBy(_ => Random.Shared.Next()).Take(count).ToList();
+            var picked = new List<string>();
+            foreach (var group in groups)
+            {
+                var available = group.Where(r => !taken.Contains(r)).ToList();
+                if (available.Count == 0)
+                    throw new InvalidOperationException("There are no unassigned rules left. Please contact the administrator.");
+                picked.Add(available[Random.Shared.Next(available.Count)]);
+            }
             var now = DateTime.UtcNow;
             foreach (var rule in picked)
             {

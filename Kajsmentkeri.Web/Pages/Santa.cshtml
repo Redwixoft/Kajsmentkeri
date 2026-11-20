@@ -41,7 +41,18 @@
         <ul class="list-group mt-2">
             <li class="list-group-item"><strong>Date:</strong> @Model.EventDate</li>
             <li class="list-group-item"><strong>Time:</strong> @(Model.EventTime ?? "To be announced")</li>
-            <li class="list-group-item"><strong>Venue:</strong> @(Model.Venue ?? "To be announced")</li>
+            <li class="list-group-item"><strong>Meeting point:</strong> @(Model.Venue ?? "To be announced")</li>
+            @if (Model.Plan != null)
+            {
+                <li class="list-group-item"><strong>Plan:</strong> @Model.Plan</li>
+            }
         </ul>
+
+        @if (Model.ImportantNote != null)
+        {
+            <div class="alert alert-warning mt-3">
+                <strong>Important:</strong> @Model.ImportantNote
+            </div>
+        }
     }
 </div>
