@@ -18,9 +18,13 @@
 
     @if (Model.Rules.Count == 0)
     {
-        <p>Click the button below to draw your rules for the gift you will bring. Choose wisely — you only get one draw.</p>
+        <p>
+            By accepting this invitation, you agree to bring a Secret Santa gift. The gift has to follow
+            a set of rules that will be randomly assigned to you once you accept.
+        </p>
+        <p>After accepting, you will also see more details about the event, such as the venue and time.</p>
         <form method="post">
-            <button type="submit" class="btn btn-danger btn-lg" onclick="this.disabled=true; this.form.submit();">Get rules</button>
+            <button type="submit" class="btn btn-danger btn-lg" onclick="this.disabled=true; this.form.submit();">Accept</button>
         </form>
     }
     else
@@ -32,5 +36,12 @@
                 <li class="list-group-item">@rule</li>
             }
         </ol>
+
+        <h4 class="mt-4">Event details</h4>
+        <ul class="list-group mt-2">
+            <li class="list-group-item"><strong>Date:</strong> @Model.EventDate</li>
+            <li class="list-group-item"><strong>Time:</strong> @(Model.EventTime ?? "To be announced")</li>
+            <li class="list-group-item"><strong>Venue:</strong> @(Model.Venue ?? "To be announced")</li>
+        </ul>
     }
 </div>

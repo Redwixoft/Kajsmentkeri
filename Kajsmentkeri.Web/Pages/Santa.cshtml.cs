@@ -24,7 +24,11 @@ public class SantaModel : PageModel
 
     public IReadOnlyList<string> Rules { get; private set; } = Array.Empty<string>();
     public string EventDate => _configuration.GetValue<string>("SecretSanta:EventDate") ?? "3rd December";
+    public string? EventTime => NullIfBlank(_configuration.GetValue<string>("SecretSanta:EventTime"));
+    public string? Venue => NullIfBlank(_configuration.GetValue<string>("SecretSanta:Venue"));
     public string? ErrorMessage { get; private set; }
+
+    private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value;
 
     public async Task<IActionResult> OnGetAsync()
     {
