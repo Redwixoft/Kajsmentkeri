@@ -1,0 +1,36 @@
+@page "/santa"
+@model Kajsmentkeri.Web.Pages.SantaModel
+@{
+    ViewData["Title"] = "Secret Santa";
+}
+
+<div class="container mt-4" style="max-width: 640px;">
+    <h2>🎅 Secret Santa</h2>
+
+    <div class="alert alert-info">
+        You are invited to a <strong>Secret Santa</strong> session on <strong>@Model.EventDate</strong>!
+    </div>
+
+    @if (Model.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    @if (Model.Rules.Count == 0)
+    {
+        <p>Click the button below to draw your rules for the gift you will bring. Choose wisely — you only get one draw.</p>
+        <form method="post">
+            <button type="submit" class="btn btn-danger btn-lg" onclick="this.disabled=true; this.form.submit();">Get rules</button>
+        </form>
+    }
+    else
+    {
+        <h4 class="mt-3">Your gift has to follow these rules:</h4>
+        <ol class="list-group list-group-numbered mt-2">
+            @foreach (var rule in Model.Rules)
+            {
+                <li class="list-group-item">@rule</li>
+            }
+        </ol>
+    }
+</div>

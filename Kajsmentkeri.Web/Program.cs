@@ -85,6 +85,7 @@ builder.Services.AddScoped<ITimeService, TimeService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<IPercentagePredictionService, PercentagePredictionService>();
 builder.Services.AddScoped<ISafeLockService, SafeLockService>();
+builder.Services.AddScoped<ISecretSantaService, SecretSantaService>();
 
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 

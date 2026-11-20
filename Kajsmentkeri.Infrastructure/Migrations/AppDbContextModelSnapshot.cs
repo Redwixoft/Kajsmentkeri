@@ -17,7 +17,7 @@ namespace Kajsmentkeri.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.28")
+                .HasAnnotation("ProductVersion", "8.0.34")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -444,6 +444,38 @@ namespace Kajsmentkeri.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("SafeLocks");
+                });
+
+            modelBuilder.Entity("Kajsmentkeri.Domain.SecretSantaRuleAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RuleText")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserNickname")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RuleText")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SecretSantaRuleAssignments");
                 });
 
             modelBuilder.Entity("Kajsmentkeri.Domain.ChampionshipParticipation", b =>

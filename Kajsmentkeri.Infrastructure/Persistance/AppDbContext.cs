@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<PercentagePrediction> PercentagePredictions => Set<PercentagePrediction>();
     public DbSet<ChampionshipParticipation> ChampionshipParticipations => Set<ChampionshipParticipation>();
     public DbSet<SafeLock> SafeLocks => Set<SafeLock>();
+    public DbSet<SecretSantaRuleAssignment> SecretSantaRuleAssignments => Set<SecretSantaRuleAssignment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,5 +98,14 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<SafeLock>()
             .HasIndex(sl => new { sl.OwnerUserId, sl.MatchId })
             .IsUnique();
+
+        // SecretSantaRuleAssignment — each rule can belong to only one user
+        modelBuilder.Entity<SecretSantaRuleAssignment>(e =>
+        {
+            e.Property(a => a.UserNickname).HasMaxLength(256).IsRequired();
+            e.Property(a => a.RuleText).HasMaxLength(500).IsRequired();
+            e.HasIndex(a => a.RuleText).IsUnique();
+            e.HasIndex(a => a.UserId);
+        });
     }
 }
