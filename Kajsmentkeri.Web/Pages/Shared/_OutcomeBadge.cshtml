@@ -1,0 +1,13 @@
+@model bool?
+@if (Model == true)
+{
+    <span class="badge bg-success">Stalo sa</span>
+}
+else if (Model == false)
+{
+    <span class="badge bg-danger">Nestalo sa</span>
+}
+else
+{
+    <span class="badge bg-secondary">Výsledok zatiaľ neznámy</span>
+}

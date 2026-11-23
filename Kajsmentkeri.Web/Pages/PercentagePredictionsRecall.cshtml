@@ -1,0 +1,67 @@
+@page
+@model Kajsmentkeri.Web.Pages.PercentagePredictionsRecallModel
+@using Kajsmentkeri.Application.Interfaces
+@{
+    ViewData["Title"] = "Spomeň si na svoje tipy";
+}
+
+<div class="container mt-4">
+    <h2>Spomeň si na svoje tipy</h2>
+
+    @if (!Model.HasOriginal)
+    {
+        <div class="alert alert-info">
+            Pred rokom si nezadal percentuálne tipy, takže si nemáš na čo spomínať.
+            <a asp-page="/PercentagePredictionsConclusion">Pozrieť vyhodnotenie</a>
+        </div>
+    }
+    else if (Model.HasRecall)
+    {
+        @if (Request.Query.ContainsKey("success"))
+        {
+            <div class="alert alert-success">Ďakujeme, tvoje odpovede sú uložené.</div>
+        }
+        @if (Model.IsConclusionRevealed)
+        {
+            <div class="alert alert-info">
+                Všetci odpovedali. <a asp-page="/PercentagePredictionsConclusion">Pozri si vyhodnotenie</a>.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                Svoje odpovede si už odoslal. Vyhodnotenie sa zobrazí, keď odpovedia všetci.
+                <a asp-page="/PercentagePredictionsConclusion">Kto ešte chýba?</a>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="lead">Ako si myslíš, že si pred rokom odpovedal na túto otázku?</p>
+        <p class="text-muted">Pri každej otázke je uvedené, či sa udalosť počas roka stala. Zadaj hodnotu od 0 do 100, ktorú si podľa teba vtedy tipol.</p>
+        <hr />
+
+        <form method="post">
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            @for (var i = 0; i < IPercentagePredictionService.QuestionCount; i++)
+            {
+                var q = i + 1;
+                var value = i < Model.Answers.Count ? Model.Answers[i] : null;
+                <div class="mb-4">
+                    <label class="form-label d-block" for="answer-@q">
+                        @q. @Model.Questions[q]
+                        <partial name="_OutcomeBadge" model="Model.Outcomes[q]" />
+                    </label>
+                    <div class="input-group" style="max-width: 12rem;">
+                        <input id="answer-@q" name="Answers[@i]" type="number" class="form-control"
+                               min="0" max="100" step="1" required value="@value" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+            }
+
+            <button type="submit" class="btn btn-primary mt-2">Odoslať</button>
+        </form>
+    }
+</div>

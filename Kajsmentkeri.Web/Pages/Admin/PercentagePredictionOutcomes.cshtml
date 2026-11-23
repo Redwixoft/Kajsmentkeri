@@ -1,0 +1,40 @@
+@page
+@model Kajsmentkeri.Web.Pages.Admin.PercentagePredictionOutcomesModel
+@using Kajsmentkeri.Application.Interfaces
+@{
+    ViewData["Title"] = "Výsledky percentuálnych otázok";
+}
+
+<div class="container mt-4">
+    <h2>Výsledky percentuálnych otázok</h2>
+    <p class="text-muted">Nastav, či sa udalosť počas roka stala. Zmena sa okamžite prejaví na stránke so spomínaním aj vo vyhodnotení.</p>
+
+    @if (Request.Query.ContainsKey("saved"))
+    {
+        <div class="alert alert-success">Uložené.</div>
+    }
+
+    <form method="post">
+        @for (var i = 0; i < IPercentagePredictionService.QuestionCount; i++)
+        {
+            var q = i + 1;
+            var current = Model.Current[q];
+            <div class="mb-3 pb-3 border-bottom">
+                <div class="mb-1">@q. @Model.Questions[q]</div>
+                <div class="btn-group" role="group" aria-label="Výsledok otázky @q">
+                    <input type="radio" class="btn-check" name="Outcomes[@i]" id="o-@q-yes" value="true" checked="@(current == true)" />
+                    <label class="btn btn-outline-success btn-sm" for="o-@q-yes">Stalo sa</label>
+
+                    <input type="radio" class="btn-check" name="Outcomes[@i]" id="o-@q-no" value="false" checked="@(current == false)" />
+                    <label class="btn btn-outline-danger btn-sm" for="o-@q-no">Nestalo sa</label>
+
+                    <input type="radio" class="btn-check" name="Outcomes[@i]" id="o-@q-unknown" value="" checked="@(current == null)" />
+                    <label class="btn btn-outline-secondary btn-sm" for="o-@q-unknown">Neznáme</label>
+                </div>
+            </div>
+        }
+
+        <button type="submit" class="btn btn-primary">Uložiť</button>
+        <a asp-page="/PercentagePredictionsConclusion" class="btn btn-link">Vyhodnotenie</a>
+    </form>
+</div>

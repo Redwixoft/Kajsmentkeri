@@ -1,0 +1,122 @@
+@page
+@model Kajsmentkeri.Web.Pages.PercentagePredictionsConclusionModel
+@using Kajsmentkeri.Application.Interfaces
+@{
+    ViewData["Title"] = "Vyhodnotenie percentuálnych tipov";
+    var c = Model.Conclusion;
+    var maxPoints = c.KnownOutcomeCount * 100;
+
+    static string DiffText(int d) => d > 0 ? $"+{d}" : d.ToString();
+    static string DiffClass(int d) => Math.Abs(d) switch
+    {
+        0 => "text-success fw-bold",
+        <= 10 => "text-success",
+        <= 25 => "text-warning",
+        _ => "text-danger"
+    };
+    static string Medal(int rank) => rank switch { 1 => "🥇", 2 => "🥈", 3 => "🥉", _ => rank.ToString() };
+}
+
+<div class="container mt-4">
+    <h2>Vyhodnotenie percentuálnych tipov</h2>
+
+    @if (!c.IsRevealed)
+    {
+        @if (c.TotalParticipants == 0)
+        {
+            <div class="alert alert-info">Zatiaľ nie sú žiadne percentuálne tipy.</div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                Vyhodnotenie sa zobrazí, keď odpovedia všetci.
+                Odpovedalo <strong>@c.SubmittedRecalls z @c.TotalParticipants</strong>.
+            </div>
+            <p>Ešte chýbajú:</p>
+            <ul>
+                @foreach (var name in c.PendingUserNames)
+                {
+                    <li>@name</li>
+                }
+            </ul>
+            <a asp-page="/PercentagePredictionsRecall" class="btn btn-primary">Zadať svoje odpovede</a>
+        }
+    }
+    else
+    {
+        @if (c.KnownOutcomeCount < IPercentagePredictionService.QuestionCount)
+        {
+            <div class="alert alert-warning">
+                Výsledok je známy len pri @c.KnownOutcomeCount z @IPercentagePredictionService.QuestionCount otázok.
+                Body sa počítajú iba z nich.
+            </div>
+        }
+
+        <h3 class="mt-4">Najlepší tipéri</h3>
+        <p class="text-muted small">
+            Body za otázku: ak sa udalosť stala, dostaneš svoj tip (napr. 25 % → 25 b.), ak nie, dostaneš 100 − tip (25 % → 75 b.).
+            „Odchýlka pamäte“ je súčet rozdielov medzi pôvodným a spomínaným tipom.
+        </p>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle" style="max-width: 40rem;">
+                <thead>
+                    <tr>
+                        <th class="text-center">#</th>
+                        <th>Hráč</th>
+                        <th class="text-end">Body</th>
+                        <th class="text-end">Odchýlka pamäte</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in c.Ranking)
+                    {
+                        <tr>
+                            <td class="text-center">@Medal(r.Rank)</td>
+                            <td>@r.UserName</td>
+                            <td class="text-end fw-bold">@r.TotalPoints <span class="text-muted fw-normal small">/ @maxPoints</span></td>
+                            <td class="text-end">@r.TotalAbsoluteDifference</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="mt-5">Otázky</h3>
+        @foreach (var q in c.Questions)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <strong>@q.QuestionNumber.</strong> @Model.Questions[q.QuestionNumber]
+                    <partial name="_OutcomeBadge" model="q.Happened" />
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Hráč</th>
+                                    <th class="text-end">Pôvodný tip</th>
+                                    <th class="text-end">Spomínaný tip</th>
+                                    <th class="text-end">Rozdiel</th>
+                                    <th class="text-end">Body</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in q.Answers)
+                                {
+                                    <tr>
+                                        <td>@a.UserName</td>
+                                        <td class="text-end">@a.Original %</td>
+                                        <td class="text-end">@a.Recalled %</td>
+                                        <td class="text-end @DiffClass(a.Difference)">@DiffText(a.Difference)</td>
+                                        <td class="text-end">@(a.Points?.ToString() ?? "–")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

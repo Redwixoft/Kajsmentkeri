@@ -275,6 +275,72 @@ namespace Kajsmentkeri.Infrastructure.Migrations
                     b.ToTable("PercentagePredictions");
                 });
 
+            modelBuilder.Entity("Kajsmentkeri.Domain.PercentagePredictionOutcome", b =>
+                {
+                    b.Property<int>("QuestionNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<bool?>("Happened")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("QuestionNumber");
+
+                    b.ToTable("PercentagePredictionOutcomes");
+                });
+
+            modelBuilder.Entity("Kajsmentkeri.Domain.PercentagePredictionRecall", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Question1")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question10")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question2")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question3")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question4")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question5")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question6")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question7")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question8")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Question9")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("PercentagePredictionRecalls");
+                });
+
             modelBuilder.Entity("Kajsmentkeri.Domain.Prediction", b =>
                 {
                     b.Property<Guid>("Id")

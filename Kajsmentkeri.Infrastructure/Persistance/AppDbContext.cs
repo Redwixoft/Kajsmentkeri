@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
     public DbSet<PredictionAuditLog> PredictionAuditLogs => Set<PredictionAuditLog>();
     public DbSet<ChampionshipWinnerPrediction> ChampionshipWinnerPredictions => Set<ChampionshipWinnerPrediction>();
     public DbSet<PercentagePrediction> PercentagePredictions => Set<PercentagePrediction>();
+    public DbSet<PercentagePredictionRecall> PercentagePredictionRecalls => Set<PercentagePredictionRecall>();
+    public DbSet<PercentagePredictionOutcome> PercentagePredictionOutcomes => Set<PercentagePredictionOutcome>();
     public DbSet<ChampionshipParticipation> ChampionshipParticipations => Set<ChampionshipParticipation>();
     public DbSet<SafeLock> SafeLocks => Set<SafeLock>();
     public DbSet<SecretSantaRuleAssignment> SecretSantaRuleAssignments => Set<SecretSantaRuleAssignment>();
@@ -72,6 +74,16 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<PercentagePrediction>()
             .HasIndex(p => p.UserId)
             .IsUnique();
+
+        modelBuilder.Entity<PercentagePredictionRecall>()
+            .HasIndex(p => p.UserId)
+            .IsUnique();
+
+        modelBuilder.Entity<PercentagePredictionOutcome>(e =>
+        {
+            e.HasKey(o => o.QuestionNumber);
+            e.Property(o => o.QuestionNumber).ValueGeneratedNever();
+        });
 
         // ChampionshipParticipation
         modelBuilder.Entity<ChampionshipParticipation>()
